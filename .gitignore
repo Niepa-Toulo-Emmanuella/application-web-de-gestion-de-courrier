@@ -3,3 +3,5 @@
 
 # Ignorer les dossiers lourds qui ne doivent pas aller sur GitHub
 node_modules/
+
+GED_backend/
