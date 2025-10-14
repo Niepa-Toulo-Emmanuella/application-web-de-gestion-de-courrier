@@ -1,0 +1,69 @@
+<!-- 📄 views/bordereau_template.html -->
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <title>Bordereau de Transmission</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    .container { max-width: 900px; margin: auto; }
+    .row { margin-bottom: 10px; }
+    .row label { display: inline-block; width: 180px; font-weight: bold; }
+    textarea.full { width: 100%; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    table, th, td { border: 1px solid #ccc; }
+    th, td { padding: 8px; text-align: left; }
+    th { background-color: #f0f0f0; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>ENREGISTREMENT DE BORDEREAU DE COURRIER</h1>
+
+    <div class="row">
+      <label>Numéro de bordereau :</label>
+      <span>{{NUMERO}}</span>
+    </div>
+
+    <div class="row">
+      <label>Courrier sélectionné :</label>
+      <span>{{COURRIER}}</span>
+    </div>
+
+    <div class="row">
+      <label>Pièce jointe du courrier :</label>
+      <span>{{FICHIER_SCAN}}</span>
+    </div>
+
+    <div class="section">
+      <div class="row">
+        <label>Expéditeur :</label>
+        <span>{{EXPEDITEUR}}</span>
+      </div>
+      <div class="row">
+        <label>Référence N° :</label>
+        <span>{{REFERENCE}}</span>
+        <label>Date du courrier :</label>
+        <span>{{DATE_COURRIER}}</span>
+      </div>
+      <div class="row">
+        <label>Date d'arrivée :</label>
+        <span>{{DATE_ARRIVEE}}</span>
+        <label>Enregistrement N° :</label>
+        <span>{{NUMERO_ENREGISTREMENT}}</span>
+        <label>Heure :</label>
+        <span>{{HEURE}}</span>
+      </div>
+      <div class="row">
+        <label>Objet :</label>
+        <span>{{OBJET}}</span>
+      </div>
+    </div>
+
+    <div class="row">
+      <label>Observations :</label>
+      <span>{{OBSERVATIONS}}</span>
+    </div>
+  </div>
+</body>
+</html>
