@@ -65,6 +65,17 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+app.get('/testdb', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT NOW()');
+    res.send(`✅ Connexion réussie : ${result.rows[0].now}`);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('❌ Erreur de connexion à la base');
+  }
+});
+
+
 // ❌ Routes inconnues
 app.use('*', (req, res) => {
   res.status(404).json({
