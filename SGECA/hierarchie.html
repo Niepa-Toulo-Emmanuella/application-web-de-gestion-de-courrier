@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Interface Hiérarchie - Notifications</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+
+        h1 {
+            color: #1a237e;
+        }
+
+        .notif {
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            background: #f9f9f9;
+            border-left: 5px solid #1a237e;
+        }
+
+        .notif.lue {
+            opacity: 0.6;
+        }
+
+        button {
+            margin-top: 5px;
+            padding: 4px 8px;
+            background: #1a237e;
+            color: #fff;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>🔔 Notifications reçues</h1>
+    <div id="notifications"></div>
+
+    <script>
+        const token = localStorage.getItem("jwt");
+
+        async function chargerNotifications() {
+            const res = await fetch("http://localhost:3000/api/notifications", {
+                headers: { Authorization: "Bearer " + token }
+            });
+
+            const result = await res.json();
+            const container = document.getElementById("notifications");
+
+            container.innerHTML = "";
+
+            if (!result.success || result.data.length === 0) {
+                container.innerHTML = "<p>Aucune notification reçue.</p>";
+                return;
+            }
+
+            result.data.forEach(n => {
+                const div = document.createElement("div");
+                div.classList.add("notif");
+                if (n.lu) div.classList.add("lue");
+
+                div.innerHTML = `
+          <p><strong>${n.message}</strong></p>
+          <p><small>Reçu le : ${new Date(n.created_at).toLocaleString()}</small></p>
+          ${!n.lu ? `<button onclick="marquerCommeLue(${n.id}, this)">Marquer comme lue</button>` : ''}
+        `;
+
+                container.appendChild(div);
+            });
+        }
+
+        async function marquerCommeLue(id, btn) {
+            const res = await fetch(`http://localhost:3000/api/notifications/${id}/lue`, {
+                method: "PUT",
+                headers: { Authorization: "Bearer " + token }
+            });
+
+            const result = await res.json();
+            if (result.success) {
+                btn.parentElement.classList.add("lue");
+                btn.remove();
+            }
+        }
+
+        chargerNotifications();
+    </script>
+</body>
+
+</html>

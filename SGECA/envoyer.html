@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Envoyer un courrier</title>
+  <link rel="stylesheet" href="envoyer.css" />
+</head>
+
+<body>
+  <div class="background"></div>
+
+  <div class="container">
+    <h1>Envoyer un courrier</h1>
+    <form id="envoyerForm">
+      <div class="form-group">
+        <label for="numero_reference">Numéro de référence</label>
+        <input type="text" id="numero_reference" name="numero_reference" required />
+      </div>
+
+      <div class="form-group">
+        <label for="objet">Objet</label>
+        <input type="text" id="objet" name="objet" required />
+      </div>
+
+      <div class="form-group">
+        <label for="destinataire_id">Destinataire</label>
+        <select id="destinataire_id" name="destinataire_id" required>
+          <option value="">-- Sélectionner un destinataire --</option>
+          <!-- Destinataires chargés dynamiquement -->
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="description">Description</label>
+        <textarea id="description" name="description" rows="4" required></textarea>
+      </div>
+
+      <div class="form-group">
+        <label for="courrier_id">Choisir un courrier</label>
+        <select id="courrier_id" name="courrier_id" required>
+          <option value="">-- Sélectionner un courrier --</option>
+          <!-- On doit générer dynamiquement la liste des courriers depuis le backend -->
+        </select>
+      </div>
+
+      <div class="form-buttons">
+        <a href="bordereau.html" class="btn-link">Ajouter bordereau</a>
+        <button type="submit">Envoyer</button>
+        <button type="button" onclick="window.history.back()">Retour</button>
+      </div>
+    </form>
+
+    <!-- <script>
+      async function loadCourriers() {
+        const select = document.getElementById('courrier_id');
+        const token = localStorage.getItem('token');
+
+        if (!token) {
+          alert("Utilisateur non authentifié. Veuillez vous connecter.");
+          return;
+        }
+
+        try {
+          console.log('Début récupération des courriers...');
+          const res = await fetch('http://localhost:3000/api/courriers', {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          });
+
+          if (!res.ok) {
+            console.error('Erreur HTTP:', res.status, res.statusText);
+            return;
+          }
+
+          const courriers = await res.json();
+          console.log('Courriers récupérés:', courriers);
+
+          courriers.forEach(courrier => {
+            const option = document.createElement('option');
+            option.value = courrier.id;
+            option.textContent = `${courrier.numero_reference} - ${courrier.objet || ''}`;
+            select.appendChild(option);
+          });
+        } catch (err) {
+          console.error('Erreur chargement courriers', err);
+        }
+      }
+
+      async function loadDestinataires() {
+        const select = document.getElementById('destinataire_id');
+        const token = localStorage.getItem('token');
+
+        if (!token) {
+          alert("Utilisateur non authentifié. Veuillez vous connecter.");
+          return;
+        }
+
+        try {
+          console.log('Requête vers /api/destinataires avec token:', token);
+          const res = await fetch('http://localhost:3000/api/destinataires', {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+
+          console.log('Statut réponse destinataires:', res.status);
+
+          if (!res.ok) {
+            const text = await res.text();
+            console.error('Erreur HTTP:', res.status, res.statusText, text);
+            return;
+          }
+
+          const destinataires = await res.json();
+          console.log('Destinataires reçus:', destinataires);
+
+          destinataires.forEach(d => {
+            const option = document.createElement('option');
+            option.value = d.id;
+            option.textContent = d.nom + (d.prenom ? ` ${d.prenom}` : '');
+            select.appendChild(option);
+          });
+        } catch (err) {
+          console.error('Erreur chargement destinataires', err);
+        }
+      }
+
+
+      window.addEventListener('DOMContentLoaded', () => {
+        loadCourriers();
+        loadDestinataires();
+
+        // Récupération du bordereau enregistré en localStorage, si existant
+        const bordereauJSON = localStorage.getItem('bordereauData');
+        if (bordereauJSON) {
+          const bordereauData = JSON.parse(bordereauJSON);
+          console.log('Bordereau chargé depuis localStorage:', bordereauData);
+          window.bordereauData = bordereauData;
+
+          // Affichage d'un résumé du bordereau dans le formulaire
+          const summaryDiv = document.createElement('div');
+          summaryDiv.style.border = "1px solid #ccc";
+          summaryDiv.style.padding = "10px";
+          summaryDiv.style.margin = "10px 0";
+          summaryDiv.innerHTML = `
+            <strong>Bordereau chargé :</strong><br/>
+            Numéro : ${bordereauData.numero_reference || bordereauData.numero_bordereau || '(non renseigné)'}<br/>
+            Date : ${new Date(bordereauData.created_at || bordereauData.date_bordereau).toLocaleDateString() || '(non renseignée)'}<br/>
+            Remarque : ${bordereauData.remarque || '(Aucune)'}
+          `;
+          document.getElementById('envoyerForm').prepend(summaryDiv);
+        }
+      });
+
+      document.getElementById('envoyerForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const token = localStorage.getItem('token');
+        if (!token) {
+          alert("Utilisateur non authentifié. Veuillez vous connecter.");
+          return;
+        }
+
+        const destinataireId = e.target.destinataire_id.value;
+        if (!destinataireId) {
+          alert('Merci de sélectionner un destinataire.');
+          return;
+        }
+
+        const formData = {
+          courrier_id: e.target.courrier_id.value,
+          numero_reference: e.target.numero_reference.value,
+          objet: e.target.objet.value,
+          destinataire_id: destinataireId,
+          description: e.target.description.value,
+          bordereau_id: window.bordereauData?.id || null
+        };
+
+        console.log('Données du formulaire à envoyer:', formData);
+
+        if (!formData.courrier_id) {
+          alert('Merci de sélectionner un courrier.');
+          return;
+        }
+
+        try {
+          const res = await fetch('http://localhost:3000/api/courriers/envoyer', {
+            method: 'POST',
+            headers: { 
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(formData),
+          });
+
+          console.log('Réponse de l\'API envoyer:', res);
+
+          if (!res.ok) {
+            const errMsg = await res.text();
+            console.error('Erreur lors de l’envoi:', errMsg);
+            throw new Error('Erreur lors de l’envoi');
+          }
+
+          alert('Courrier envoyé avec succès !');
+          e.target.reset();
+          localStorage.removeItem('bordereauData');
+          window.bordereauData = null;
+        } catch (err) {
+          alert('Erreur: ' + err.message);
+        }
+      });
+    </script> -->
+
+  </div>
+</body>
+
+</html>

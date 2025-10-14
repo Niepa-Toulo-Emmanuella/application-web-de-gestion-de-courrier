@@ -1,0 +1,12 @@
+/* styles.css  */
+body { background: #f3f4f6; font-family: Arial, sans-serif; margin: 0; padding: 0; }
+header { background: #2563eb; color: white; padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; }
+nav ul { list-style: none; margin: 0; padding: 0; display: flex; background: #1e40af; }
+nav li { margin: 0; }
+nav a { color: white; padding: 10px 15px; display: block; text-decoration: none; }
+nav a:hover { background: #1d4ed8; }
+main { padding: 20px; }
+.login-box { /* comme ci-dessus */ padding: 30px; max-width: 300px; margin: auto; background: white; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+input, select, button { display: block; width: 100%; margin-bottom: 15px; padding: 10px; border: 1px solid #ccc; border-radius: 5px; }
+button { background-color: #2563eb; color: white; border: none; cursor: pointer; }
+button:hover { background-color: #1d4ed8; }

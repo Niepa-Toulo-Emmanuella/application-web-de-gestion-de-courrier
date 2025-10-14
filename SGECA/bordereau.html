@@ -1,0 +1,301 @@
+<!-- 📄 bordereau.html -->
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bordereau de Transmission</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: auto;
+    }
+
+    .row {
+      margin-bottom: 10px;
+    }
+
+    .row label {
+      display: inline-block;
+      width: 180px;
+      font-weight: bold;
+    }
+
+    input[readonly],
+    textarea[readonly] {
+      background-color: #f0f0f0;
+      border: 1px solid #ccc;
+    }
+
+    textarea.full {
+      width: 100%;
+    }
+
+    #messageNotif {
+      margin-top: 10px;
+      font-weight: bold;
+      color: green;
+    }
+
+    #messageNotif.error {
+      color: red;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+
+    table,
+    th,
+    td {
+      border: 1px solid #ccc;
+    }
+
+    th,
+    td {
+      padding: 8px;
+      text-align: left;
+    }
+
+    th {
+      background-color: #f0f0f0;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <form id="formulaire-bordereau">
+      <h1>ENREGISTREMENT DE BORDEREAU DE COURRIER</h1>
+
+      <div class="row">
+        <label>Numéro de bordereau généré :</label>
+        <input type="text" id="numero_bordereau" name="numero_bordereau" readonly />
+      </div>
+
+      <div class="row">
+        <label for="courrier_id">Sélectionner un courrier :</label>
+        <select id="courrier_id" name="courrier_id" required>
+          <option value="">-- Choisir --</option>
+        </select>
+      </div>
+
+      <div class="row">
+        <label>Pièce jointe du courrier :</label>
+        <div id="file-info">Aucun courrier sélectionné</div>
+      </div>
+
+      <div class="section">
+        <div class="row">
+          <label>Expéditeur :</label>
+          <input type="text" id="expediteur" name="expediteur" readonly />
+        </div>
+        <div class="row">
+          <label>Référence N° :</label>
+          <input type="text" id="reference" name="reference" readonly />
+          <label>Date du courrier :</label>
+          <input type="date" id="date_reception" name="date_reception" readonly />
+        </div>
+        <div class="row">
+          <label>Date d'arrivée :</label>
+          <input type="date" id="date_arrivee" name="date_arrivee" readonly />
+          <label>Enregistrement N° :</label>
+          <input type="text" id="numero_enregistrement" name="numero_enregistrement" readonly />
+          <label>Heure :</label>
+          <input type="time" id="heure" name="heure" readonly />
+        </div>
+        <div class="row">
+          <label>Objet :</label>
+          <textarea id="objet" name="objet" rows="2" readonly></textarea>
+        </div>
+      </div>
+
+      <div class="row">
+        <label>Observations :</label>
+        <textarea name="observations" rows="4" class="full"></textarea>
+      </div>
+
+      <button type="submit" id="envoyerBtn">Enregistrer</button>
+
+      <div id="messageNotif"></div>
+      <input type="hidden" id="bordereau_id_hidden" />
+    </form>
+
+    <!-- Liste des bordereaux en attente -->
+    <h2>Bordereaux en attente</h2>
+    <table id="bordereaux-en-attente">
+      <thead>
+        <tr>
+          <th>Numéro</th>
+          <th>Objet</th>
+          <th>Date arrivée</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <script>
+    const form = document.querySelector('#formulaire-bordereau');
+    const numeroBordereauInput = document.getElementById('numero_bordereau');
+    const bordereauIdHidden = document.getElementById('bordereau_id_hidden');
+    const notif = document.getElementById("messageNotif");
+    const courrierSelect = document.getElementById("courrier_id");
+
+    let courriersMap = {};
+
+    window.addEventListener("DOMContentLoaded", async () => {
+      const token = localStorage.getItem("jwt") || localStorage.getItem("token");
+
+      try {
+        // Charger les courriers
+        const res = await fetch("http://localhost:3000/api/courriers", {
+          headers: { Authorization: "Bearer " + token }
+        });
+        const result = await res.json();
+        if (result.success && Array.isArray(result.data)) {
+          result.data.forEach(courrier => {
+            courriersMap[courrier.id] = courrier;
+            const option = document.createElement("option");
+            option.value = courrier.id;
+            option.textContent = `${courrier.reference || 'Réf. inconnue'} - ${courrier.objet || 'Sans objet'}`;
+            courrierSelect.appendChild(option);
+          });
+        }
+
+        loadBordereauxEnAttente();
+
+      } catch (err) {
+        console.error("Erreur lors du chargement :", err);
+      }
+    });
+
+    courrierSelect.addEventListener("change", () => {
+      const courrierId = courrierSelect.value;
+      const fileInfo = document.getElementById('file-info');
+
+      if (!courrierId) {
+        fileInfo.innerHTML = "Aucun courrier sélectionné";
+        ['expediteur', 'reference', 'date_reception', 'date_arrivee',
+          'numero_enregistrement', 'heure', 'objet'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.value = '';
+          });
+        return;
+      }
+
+      const courrier = courriersMap[courrierId];
+      if (courrier) {
+        document.getElementById('expediteur').value = courrier.expediteur || "";
+        document.getElementById('reference').value = courrier.reference || "";
+        document.getElementById('date_reception').value = (courrier.date_reception || "").split("T")[0];
+        document.getElementById('date_arrivee').value = (courrier.date_arrivee || "").split("T")[0];
+        document.getElementById('numero_enregistrement').value = courrier.numero_enregistrement || "";
+        document.getElementById('heure').value = courrier.heure || "";
+        document.getElementById('objet').value = courrier.objet || "";
+        displayFileInfo(courrier.fichier_scan);
+      }
+    });
+
+    function displayFileInfo(fichierScan) {
+      const fileInfo = document.getElementById('file-info');
+      if (!fichierScan || fichierScan.trim() === '') {
+        fileInfo.innerHTML = `📄 Aucun fichier attaché`;
+        return;
+      }
+      const fileName = fichierScan.split('/').pop();
+      const downloadUrl = `http://localhost:3000/api/bordereaux/download/${encodeURIComponent(fileName)}`;
+      fileInfo.innerHTML = `📎 <a href="${downloadUrl}" target="_blank">${fileName}</a>`;
+    }
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const token = localStorage.getItem("jwt") || localStorage.getItem("token");
+
+      const courrierId = courrierSelect.value;
+      if (!courrierId) {
+        notif.textContent = "⚠️ Veuillez choisir un courrier.";
+        notif.classList.add("error");
+        return;
+      }
+
+      try {
+        const response = await fetch("http://localhost:3000/api/bordereaux", {
+          method: "POST",
+          headers: {
+            "Authorization": "Bearer " + token,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            courrier_id: courrierId,
+            expediteur_id: 1, // ID de l'utilisateur connecté
+            numero_reference: document.getElementById("reference").value,
+            date_courrier: document.getElementById("date_reception").value,
+            date_arrivee: document.getElementById("date_arrivee").value,
+            numero_enregistrement: document.getElementById("numero_enregistrement").value,
+            heure: document.getElementById("heure").value,
+            objet: document.getElementById("objet").value,
+            observations: document.querySelector("textarea[name='observations']").value
+          })
+        });
+
+        const result = await response.json();
+        if (result.success) {
+          notif.textContent = result.message;
+          notif.classList.remove("error");
+          notif.classList.add("success");
+
+          // afficher le numéro généré
+          numeroBordereauInput.value = result.data.numero;
+
+          loadBordereauxEnAttente();
+
+        } else {
+          notif.textContent = result.message || "Erreur lors de l'enregistrement";
+          notif.classList.add("error");
+        }
+      } catch (err) {
+        console.error("Erreur enregistrement :", err);
+        notif.textContent = "❌ Erreur serveur";
+        notif.classList.add("error");
+      }
+    });
+
+    async function loadBordereauxEnAttente() {
+      const token = localStorage.getItem("jwt") || localStorage.getItem("token");
+      try {
+        const res = await fetch("http://localhost:3000/api/bordereaux", {
+          headers: { Authorization: "Bearer " + token }
+        });
+        const result = await res.json();
+        const tbody = document.querySelector("#bordereaux-en-attente tbody");
+        tbody.innerHTML = "";
+
+        if (result.success && Array.isArray(result.data)) {
+          const enAttente = result.data.filter(b => b.statut === "en_attente");
+          enAttente.forEach(b => {
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+              <td>${b.numero}</td>
+              <td>${b.objet}</td>
+              <td>${b.date_arrivee.split("T")[0]}</td>
+            `;
+            tbody.appendChild(tr);
+          });
+        }
+      } catch (err) {
+        console.error("Erreur chargement bordereaux :", err);
+      }
+    }
+  </script>
+</body>
+
+</html>

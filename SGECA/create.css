@@ -1,0 +1,94 @@
+/* Fond avec image floutée */
+body {
+  font-family: Arial, sans-serif;
+  background: #1e2b3c;
+  margin: 0;
+  padding: 0;
+  position: relative;
+  min-height: 100vh;
+  overflow-y: auto;
+}
+
+/* Image de fond floutée */
+.background-blur {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: url('login.png'); /* Remplace par ton image */
+  background-size: cover;
+  background-position: center;
+  filter: blur(8px);
+  opacity: 0.4;
+  z-index: 0;
+}
+
+/* Conteneur du formulaire */
+.container {
+  position: relative;
+  z-index: 1;
+  max-width: 700px;
+  margin: 50px auto;
+  background-color: rgba(233, 95, 3, 0.92);
+  padding: 30px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* Titre */
+h1 {
+  text-align: center;
+  color: #ffffff;
+  margin-bottom: 30px;
+}
+
+/* Champs */
+.form-group {
+  margin-bottom: 20px;
+}
+
+label {
+  display: block;
+  font-weight: bold;
+  margin-bottom: 6px;
+  color: #ffffff;
+}
+
+input[type="text"],
+input[type="date"],
+input[type="time"],
+input[type="file"] {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #dcdde1;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+/* Actions en ligne */
+.form-actions-inline {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  margin-top: 30px;
+}
+
+/* Boutons */
+button,
+.btn-retour {
+  padding: 10px 25px;
+  background-color: #1e2b3c;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 16px;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background-color 0.3s ease;
+}
+
+button:hover,
+.btn-retour:hover {
+  background-color: #74b9ff;
+}

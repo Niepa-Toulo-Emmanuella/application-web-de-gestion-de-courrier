@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard - Agent Courrier</title>
+    <link rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            display: flex;
+            background-image: url('login.png');
+            /* 👉 ton image de fond */
+            background-size: cover;
+            background-position: center;
+        }
+
+        nav {
+            width: 250px;
+            background-color: rgba(26, 35, 126, 0.9);
+            /* Fond semi-transparent */
+            color: white;
+            height: 100vh;
+            padding-top: 20px;
+        }
+
+        nav h2 {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        nav ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        nav li {
+            padding: 15px 20px;
+            cursor: pointer;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        nav li:hover {
+            background-color: #3949ab;
+        }
+
+        main {
+            flex: 1;
+            padding: 30px;
+            background-color: rgba(245, 245, 245, 0.9);
+            /* Fond semi-transparent clair */
+        }
+
+        iframe {
+            width: 100%;
+            height: 90vh;
+            border: none;
+        }
+    </style>
+</head>
+
+<body>
+
+    <nav>
+        <h2>📂 Tableau de Bord</h2>
+        <ul>
+            <li onclick="loadPage('DashboardCourrier.html')">📬 Courrier</li>
+            <li onclick="loadPage('bordereau.html')">📝 Création de Bordereau </li>
+            <li onclick="loadPage('transmettre_bordereau.html')">📤 Transmission de Bordereau </li>
+            <li onclick="loadPage('tous_bordereaux.html')">📋 Tous les bordereaux</li>
+            <li onclick="loadPage('notifications_imputation.html')">🔔 Notifications</li>
+            <li onclick="loadPage('registre_transcription.html')">📑 Registre de transcription</li>
+            <li onclick="loadPage('registre_transmission.html')">📑 Registre de transmission</li>
+            <li onclick="logout()">🚪 Déconnexion</li>
+        </ul>
+    </nav>
+
+    <main>
+        <iframe id="contentFrame" src=""></iframe>
+    </main>
+
+    <script>
+        function loadPage(page) {
+            document.getElementById("contentFrame").src = page;
+        }
+
+        function logout() {
+            localStorage.removeItem("token");
+            alert("Déconnecté !");
+            window.location.href = "login.html";
+        }
+    </script>
+
+</body>
+
+</html>

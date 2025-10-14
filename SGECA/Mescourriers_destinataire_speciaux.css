@@ -1,0 +1,141 @@
+/* RESET */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+/* Structure de la page */
+body {
+  background-color: #1e2b3c;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Bannière (identique à renvoyer.html) */
+.main-header {
+  background-color: #e95f03;
+  color: #fff;
+  padding: 20px;
+  text-align: center;
+  position: relative;
+}
+
+.main-header h1 {
+  margin: 0;
+}
+
+.main-header .retour {
+  position: absolute;
+  right: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  background-color: #fff;
+  color: #e95f03;
+  padding: 8px 12px;
+  border-radius: 4px;
+  text-decoration: none;
+  font-weight: bold;
+  transition: background 0.3s, color 0.3s;
+}
+
+.main-header .retour:hover {
+  background-color: #e95f03;
+  color: #fff;
+  border: 1px solid white;
+}
+
+/* Zone principale avec effet de flou en fond */
+.main-area {
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background-color: #fff;
+  width: 100%;
+  overflow: hidden;
+}
+
+.main-area::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0;
+  right: 0; bottom: 0;
+  background-image: url('login.png'); /* adapte le nom si besoin */
+  background-size: cover;
+  background-position: center;
+  filter: blur(10px);
+  opacity: 0.4;
+  z-index: 0;
+}
+
+.main-area > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Conteneur des courriers */
+.container {
+  position: relative;
+  z-index: 1;
+  padding: 40px;
+  background: rgba(255, 255, 255, 0.85);
+  border-radius: 10px;
+  max-width: 1000px;
+  margin: 40px auto;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+}
+
+/* Table des courriers */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+}
+
+th, td {
+  padding: 12px 15px;
+  text-align: left;
+  border-bottom: 1px solid #ddd;
+}
+
+th {
+  background-color: #1e2b3c;
+  color: white;
+}
+
+tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+td a {
+  color: #1e2b3c;
+  text-decoration: underline;
+}
+
+/* Boutons */
+.btn {
+  padding: 8px 12px;
+  background-color: #1e2b3c;
+  color: white;
+  border: none;
+  text-decoration: none;
+  border-radius: 4px;
+  margin-right: 5px;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.btn:hover {
+  background-color: #1e2b3c;
+}
+
+.btn.retour {
+  background-color: #1e2b3c;
+}
+
+.btn.retour:hover {
+  background-color: #1e2b3c;
+}

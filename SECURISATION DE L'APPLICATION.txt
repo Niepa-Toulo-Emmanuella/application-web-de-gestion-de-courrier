@@ -1,0 +1,70 @@
+						SECURISATION DE L'APPLICATION
+
+Ah ouii, je vois très bien ce que tu veux faire : une **validation d’accès par l’administrateur à la première connexion**, ensuite l’utilisateur est libre d’accéder normalement — comme un système d’approbation manuelle 🔐
+
+C’est une super idée, surtout pour une application de **gestion de courriers** où la sécurité est importante !
+
+---
+
+### 🛠️ Voici le fonctionnement que tu peux mettre en place :
+
+#### 1. ✅ **L’utilisateur crée un compte avec son email et mot de passe**
+Tu peux utiliser l’authentification Supabase (`supabase.auth.signUp()`)
+
+#### 2. 📩 **Il entre aussi l’email de l’administrateur**
+Tu peux ajouter ce champ dans le formulaire d’inscription (ex : `email_admin`)
+
+#### 3. ⏳ **Le compte est créé, mais marqué comme "non autorisé"**
+Dans la base de données, tu crées une table `utilisateurs` avec un champ `est_autorise = false` (par défaut)
+
+#### 4. 🔔 **L’administrateur reçoit une notification**
+Par exemple : tu peux envoyer un **email via un webhook** ou afficher la demande dans un tableau admin pour validation manuelle.
+
+#### 5. ✅ **L’administrateur valide l’utilisateur**
+Depuis son interface, il change le champ `est_autorise = true`
+
+#### 6. 🚀 **Lors des connexions suivantes**, tu vérifies si l’utilisateur est autorisé
+Sinon, tu l’empêches d’accéder à l’app.
+
+---
+
+### 🧱 Exemple de structure de la table `utilisateurs`
+
+| id | email              | est_autorise | date_inscription |
+|----|--------------------|--------------|------------------|
+| 1  | user@mail.com      | false        | 2025-04-15       |
+
+---
+
+### 🔐 À chaque login :
+Quand l'utilisateur se connecte, tu fais :
+
+```js
+const session = await supabase.auth.getSession();
+const email = session.data.session.user.email;
+
+const { data } = await supabase
+  .from('utilisateurs')
+  .select('est_autorise')
+  .eq('email', email)
+  .single();
+
+if (!data?.est_autorise) {
+  alert("Votre compte est en attente de validation par l'administrateur.");
+  supabase.auth.signOut();
+}
+```
+
+---
+
+### 🔧 À faire :
+
+- Créer la table `utilisateurs`
+- Ajouter une interface admin simple pour approuver/refuser les comptes
+- Ajouter une page d’inscription avec champ `email_admin`
+- (Optionnel) Envoyer un email à l’admin (via un backend ou service externe comme [EmailJS](https://www.emailjs.com), [Mailgun], [SendGrid]…)
+
+---
+
+Si tu veux je peux te faire un plan ou même t’écrire les premières lignes de code pour gérer l’inscription + validation ✍️  
+Tu préfères faire ça côté **frontend uniquement**, ou tu veux un peu de **Node.js pour gérer l'envoi d'email ou la logique admin** ?

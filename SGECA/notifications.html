@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Notifications reçues</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 10px;
+      text-align: left;
+    }
+    th {
+      background: #00695c;
+      color: white;
+    }
+    a {
+      text-decoration: none;
+      color: #00695c;
+      font-weight: bold;
+    }
+    a:hover {
+      text-decoration: underline;
+    }
+    button {
+      padding: 5px 10px;
+      background: #00695c;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #004d40;
+    }
+  </style>
+</head>
+<body>
+  <h2>🔔 Notifications reçues</h2>
+
+  <table id="notifTable">
+    <thead>
+      <tr>
+        <th>Numéro</th>
+        <th>Objet</th>
+        <th>Expéditeur</th>
+        <th>Date</th>
+        <th>Bordereau</th>
+        <th>Courrier</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <script>
+    console.log("✅ Nouvelle version du script chargée");
+
+    async function loadNotifications() {
+      const token = localStorage.getItem("token");
+      if (!token) return alert("Token manquant");
+
+      try {
+        const res = await fetch("http://localhost:3000/api/notifications", {
+          headers: { "Authorization": "Bearer " + token }
+        });
+        const data = await res.json();
+
+        const tbody = document.querySelector("#notifTable tbody");
+        tbody.innerHTML = "";
+
+        if (data.success && data.data.length > 0) {
+          data.data.forEach(n => {
+            console.log("📬 Notification :", n);
+
+            // 📎 Bordereau
+            const bordereauLink = n.fichier_bordereau
+              ? `<a href="http://localhost:3000/api/bordereaux/download/${encodeURIComponent(n.fichier_bordereau)}" target="_blank">
+                  📎 ${n.fichier_bordereau.split('/').pop()}
+                </a>`
+              : "—";
+
+            // 📎 Courrier
+            const courrierFileName = n.fichier_scan ? n.fichier_scan.split('/').pop() : null;
+            const courrierLink = n.fichier_scan
+              ? `<a href="javascript:void(0)" onclick="telecharger(${n.courrier_id}, '${courrierFileName}')">
+                  📎 ${courrierFileName}
+                </a>`
+              : "—";
+
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+              <td>${n.numero}</td>
+              <td>${n.objet || ''}</td>
+              <td>${n.first_name || ''} ${n.last_name || ''}</td>
+              <td>${new Date(n.date_envoi).toLocaleString()}</td>
+              <td>${bordereauLink}</td>
+              <td>${courrierLink}</td>
+              <td>
+                <button onclick="imputer('${n.bordereau_id}')">Imputer</button>
+              </td>
+            `;
+            tbody.appendChild(tr);
+          });
+        } else {
+          tbody.innerHTML = "<tr><td colspan='7'>Aucune notification reçue</td></tr>";
+        }
+      } catch (err) {
+        console.error("❌ Erreur lors du chargement des notifications :", err);
+      }
+    }
+
+    // 📩 Télécharger le courrier via le backend
+    async function telecharger(courrierId, fileName) {
+      const token = localStorage.getItem("token");
+      if (!token) return alert("Token manquant");
+
+      try {
+        const res = await fetch(`http://localhost:3000/api/courriers/${courrierId}/download`, {
+          headers: { "Authorization": "Bearer " + token }
+        });
+
+        if (!res.ok) throw new Error("Erreur téléchargement");
+
+        const blob = await res.blob();
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+      } catch (err) {
+        console.error("❌ Erreur telecharger :", err);
+        alert("Erreur pendant le téléchargement du fichier");
+      }
+    }
+
+    // 🧾 Imputation
+    function imputer(bordereauId) {
+      sessionStorage.setItem("bordereau_id", bordereauId);
+      window.location.href = "imputation.html";
+    }
+
+    loadNotifications();
+  </script>
+</body>
+</html>

@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Boite de réception</title>
+  <link rel="stylesheet" href="Mescourriers_destinataire_speciaux.css">
+</head>
+<body>
+  <div class="main-area">
+    <header class="main-header">
+      <h1>Boite de réception</h1>
+      <a href="dashboard_destinataire_speciaux.html" class="btn retour">Retour</a>
+    </header>
+
+    <div class="container">
+      <table id="courriers-table">
+        <thead>
+          <tr>
+            <th>Référence</th>
+            <th>Objet</th>
+            <th>Expéditeur</th>
+            <th>Statut</th>
+            <th>Date</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Les courriers seront injectés ici -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    const courriers = [
+      {
+        reference: "REF-2025-0012",
+        objet: "Demande d'audience",
+        expéditeur: "Agent courrier",
+        statut: "traité",
+        date: "2025-05-25"
+      },
+    ];
+
+    const tableBody = document.querySelector("#courriers-table tbody");
+
+    courriers.forEach(courrier => {
+      const row = document.createElement("tr");
+      row.innerHTML = `
+        <td>${courrier.reference}</td>
+        <td>${courrier.objet}</td>
+        <td>${courrier.expéditeur}</td>
+        <td>${courrier.statut}</td>
+        <td>${courrier.date}</td>
+        <td><a href="#">Voir</a></td>
+      `;
+      tableBody.appendChild(row);
+    });
+  </script>
+</body>
+</html>

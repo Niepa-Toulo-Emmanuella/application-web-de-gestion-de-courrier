@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Gestion des utilisateurs</title>
+  <style>
+    body {
+      font-family: Arial;
+      margin: 20px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+
+    th,
+    td {
+      border: 1px solid #ccc;
+      padding: 8px;
+      text-align: left;
+    }
+
+    th {
+      background-color: #f44336;
+      color: white;
+    }
+
+    button {
+      margin: 2px;
+      cursor: pointer;
+    }
+
+    .toolbar {
+      display: flex;
+      justify-content: flex-start;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    /* MODALE */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      justify-content: center;
+      align-items: center;
+    }
+
+    .modal-content {
+      background-color: #fff;
+      padding: 20px;
+      width: 400px;
+      border-radius: 10px;
+    }
+
+    .close {
+      float: right;
+      cursor: pointer;
+      color: red;
+    }
+  </style>
+</head>
+
+<body>
+
+  <h1>👥 Utilisateurs</h1>
+
+  <div class="toolbar">
+    <label for="filtreRole">Filtrer par rôle : </label>
+    <select id="filtreRole" onchange="chargerUtilisateurs()">
+      <option value="">Tous</option>
+      <option value="admin">Admin</option>
+      <option value="agent">Agent</option>
+    </select>
+  </div>
+
+  <table id="usersTable">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Email</th>
+        <th>Nom</th>
+        <th>Rôle</th>
+        <th>Actif</th>
+        <th>Dernière connexion</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <!-- MODALE de modification -->
+  <div id="modalEdit" class="modal">
+    <div class="modal-content">
+      <span class="close" onclick="fermerModale()">&times;</span>
+      <h3>✏️ Modifier l'utilisateur</h3>
+      <form id="editForm">
+        <input type="hidden" id="edit_id">
+        <label>Prénom : <input type="text" id="edit_first_name" required></label><br><br>
+        <label>Nom : <input type="text" id="edit_last_name" required></label><br><br>
+        <label>Rôle :
+          <select id="edit_role">
+            <option value="admin">Admin</option>
+            <option value="agent">Agent</option>
+          </select>
+        </label><br><br>
+        <label>Mot de passe (optionnel) :
+          <input type="password" id="edit_password">
+        </label><br><br>
+        <button type="submit">💾 Enregistrer</button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    async function chargerUtilisateurs() {
+      const role = document.getElementById("filtreRole").value;
+      const url = role ? `http://localhost:3000/api/users?role=${role}` : 'http://localhost:3000/api/users';
+
+      try {
+        const response = await fetch(url);
+        const result = await response.json();
+        const users = result.data;
+        const tbody = document.querySelector("#usersTable tbody");
+        tbody.innerHTML = "";
+
+        users.forEach(user => {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td>${user.id}</td>
+            <td>${user.email}</td>
+            <td>${user.first_name || ''} ${user.last_name || ''}</td>
+            <td>${user.role}</td>
+            <td>${user.is_active ? '✅' : '❌'}</td>
+            <td>${user.last_login ? new Date(user.last_login).toLocaleString() : '—'}</td>
+            <td>
+              <button onclick="ouvrirModale(${user.id})">✏️ Modifier</button>
+              <button onclick="supprimerUtilisateur(${user.id})">🗑️ Supprimer</button>
+              <button onclick="toggleActif(${user.id}, ${user.is_active})">
+                ${user.is_active ? '❌ Désactiver' : '✅ Activer'}
+              </button>
+            </td>
+          `;
+          tbody.appendChild(tr);
+        });
+      } catch (error) {
+        alert("Erreur lors du chargement des utilisateurs : " + error.message);
+      }
+    }
+
+    async function ouvrirModale(id) {
+      try {
+        const res = await fetch(`http://localhost:3000/api/users/${id}`);
+        const data = await res.json();
+        const user = data.data;
+
+        document.getElementById('edit_id').value = id;
+        document.getElementById('edit_first_name').value = user.first_name || '';
+        document.getElementById('edit_last_name').value = user.last_name || '';
+        document.getElementById('edit_role').value = user.role;
+        document.getElementById('edit_password').value = '';
+
+        document.getElementById('modalEdit').style.display = "flex";
+      } catch (err) {
+        alert("Erreur lors du chargement de l'utilisateur.");
+      }
+    }
+
+    function fermerModale() {
+      document.getElementById('modalEdit').style.display = "none";
+    }
+
+    document.getElementById('editForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const id = document.getElementById('edit_id').value;
+      const first_name = document.getElementById('edit_first_name').value.trim();
+      const last_name = document.getElementById('edit_last_name').value.trim();
+      const role = document.getElementById('edit_role').value;
+      const password = document.getElementById('edit_password').value;
+
+      const body = { first_name, last_name, role };
+      if (password) body.password = password;
+
+      try {
+        const res = await fetch(`http://localhost:3000/api/users/${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body)
+        });
+
+        if (res.ok) {
+          fermerModale();
+          alert("✅ Utilisateur modifié !");
+          chargerUtilisateurs();
+        } else {
+          const error = await res.text();
+          alert("Erreur : " + error);
+        }
+      } catch (err) {
+        alert("Erreur réseau");
+      }
+    });
+
+    async function supprimerUtilisateur(id) {
+      if (!confirm("❗Voulez-vous vraiment supprimer cet utilisateur ?")) return;
+
+      try {
+        const response = await fetch(`http://localhost:3000/api/users/${id}`, {
+          method: 'DELETE'
+        });
+
+        if (!response.ok) {
+          const errText = await response.text();
+          throw new Error(errText || "Erreur inconnue");
+        }
+
+        alert("🗑️ Utilisateur supprimé.");
+        chargerUtilisateurs();
+      } catch (err) {
+        alert("Erreur lors de la suppression : " + err.message);
+      }
+    }
+
+    async function toggleActif(id, actif) {
+      const nouveauStatut = !actif;
+      try {
+        const response = await fetch(`http://localhost:3000/api/users/${id}/activate`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ is_active: nouveauStatut })
+        });
+        if (!response.ok) throw new Error("Erreur changement d'état");
+
+        chargerUtilisateurs();
+      } catch (err) {
+        alert("Erreur lors de l'activation/désactivation.");
+      }
+    }
+
+    chargerUtilisateurs();
+  </script>
+
+</body>
+
+</html>

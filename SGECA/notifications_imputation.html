@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Transmissions reçues</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      background: #f9f9f9;
+    }
+    h2 {
+      color: #00695c;
+      text-align: center;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+      background: white;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 8px;
+      text-align: left;
+    }
+    th {
+      background: #00695c;
+      color: white;
+    }
+    td {
+      word-break: break-word;
+    }
+    .center {
+      text-align: center;
+    }
+    tr:hover {
+      background-color: #f0f0f0;
+      cursor: pointer;
+    }
+
+    /* Modal */
+    #detailsModal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5);
+      justify-content: center;
+      align-items: center;
+    }
+    #modalContentWrapper {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      width: 80%;
+      max-width: 700px;
+      position: relative;
+    }
+    #closeModal {
+      position: absolute;
+      top: 10px; right: 15px;
+      cursor: pointer;
+      font-size: 20px;
+    }
+    h3, h4 {
+      margin-bottom: 10px;
+      color: #00695c;
+    }
+    p {
+      margin: 5px 0;
+    }
+    a.file-link {
+      color: #00695c;
+      text-decoration: none;
+    }
+    a.file-link:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <h2>📬 Transmissions reçues</h2>
+
+  <table id="transmissionsTable">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Expéditeur</th>
+        <th>Instructions</th>
+        <th>Durée (jours)</th>
+        <th>Observations</th>
+        <th>Date d’envoi</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td colspan="6" class="center">Chargement...</td></tr>
+    </tbody>
+  </table>
+
+  <!-- Modal -->
+  <div id="detailsModal">
+    <div id="modalContentWrapper">
+      <span id="closeModal">&times;</span>
+      <h3>Détails de la transmission</h3>
+      <div id="modalContent"></div>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE = "http://localhost:3000/api";
+    const token = localStorage.getItem("token");
+
+    function showDetails(t) {
+        const modal = document.getElementById('detailsModal');
+        const content = document.getElementById('modalContent');
+        modal.style.display = 'flex';
+
+        // Construire le lien complet pour le téléchargement
+        const imputationLink = t.fichier_imputation 
+            ? `/api/imputations/download/${encodeURIComponent(t.fichier_imputation)}` 
+            : null;
+
+        const bordereauLink = t.fichier_bordereau 
+            ? `/api/bordereaux/download/${encodeURIComponent(t.fichier_bordereau)}`
+            : null;
+            
+        const scanLink = t.fichier_scan 
+            ? `/api/courriers/download/${encodeURIComponent(t.fichier_scan)}`
+            : null;
+
+        console.log("Données reçues pour ce courrier :", t);
+
+        content.innerHTML = `
+            <h4>Bordereau d’imputation</h4>
+            <p><strong>ID :</strong> ${t.imputation_id || '-'}</p>
+            <p><strong>Instructions :</strong> ${t.instructions || '-'}</p>
+            <p><strong>Durée :</strong> ${t.duree_traitement || '-'} jours</p>
+            <p><strong>Observations :</strong> ${t.observations || '-'}</p>
+            ${imputationLink ? `<p><a class="file-link" href="${imputationLink}" target="_blank">📄 Voir le fichier de l’imputation</a></p>` : ''}
+
+            <h4>Bordereau de transmission</h4>
+            <p><strong>Expéditeur :</strong> ${t.expediteur_prenom || ''} ${t.expediteur_nom || ''}</p>
+            <p><strong>Destinataire :</strong> ${t.destinataire_prenom || ''} ${t.destinataire_nom || ''}</p>
+            ${bordereauLink ? `<p><a class="file-link" href="${bordereauLink}" target="_blank">📄 Voir le fichier du bordereau</a></p>` : ''}
+
+            <h4>Courrier</h4>
+            <p><strong>Référence :</strong> ${t.courrier_reference || '-'}</p>
+            <p><strong>Objet :</strong> ${t.courrier_objet || '-'}</p>
+            <p><strong>Date d’arrivée :</strong> ${t.courrier_date_arrivee ? new Date(t.courrier_date_arrivee).toLocaleDateString() : '-'}</p>
+            ${scanLink ? `<p><a class="file-link" href="${scanLink}" target="_blank">📄 Voir le fichier scanné</a></p>` : ''}
+        `;
+    }
+
+    document.getElementById('closeModal').onclick = () => {
+      document.getElementById('detailsModal').style.display = 'none';
+    };
+
+    async function loadTransmissions() {
+      const tbody = document.querySelector("#transmissionsTable tbody");
+      tbody.innerHTML = '<tr><td colspan="6" class="center">Chargement...</td></tr>';
+
+      if (!token) {
+        tbody.innerHTML = '<tr><td colspan="6" class="center">⚠️ Veuillez vous connecter</td></tr>';
+        return;
+      }
+
+      try {
+        const user = JSON.parse(atob(token.split('.')[1]));
+        const userId = user.userId || user.id;
+
+        const res = await fetch(`${API_BASE}/imputations/transmissions/${userId}`, {
+          headers: { "Authorization": "Bearer " + token }
+        });
+
+        if (!res.ok) throw new Error("Erreur HTTP " + res.status);
+        const data = await res.json();
+
+        if (data.success && data.data.length > 0) {
+          tbody.innerHTML = "";
+          console.log("Toutes les transmissions :", data.data);
+
+          data.data.forEach(t => {
+            const tr = document.createElement("tr");
+            tr.onclick = () => showDetails(t);
+            tr.innerHTML = `
+              <td>${t.id}</td>
+              <td>${t.expediteur_nom || ''} ${t.expediteur_prenom || ''}</td>
+              <td>${t.instructions || ''}</td>
+              <td>${t.duree_traitement || ''}</td>
+              <td>${t.observations || ''}</td>
+              <td>${t.date_depart ? new Date(t.date_depart).toLocaleString() : ''}</td>
+            `;
+            tbody.appendChild(tr);
+          });
+        } else {
+          tbody.innerHTML = '<tr><td colspan="6" class="center">Aucune transmission reçue</td></tr>';
+        }
+      } catch (err) {
+        console.error(err);
+        tbody.innerHTML = '<tr><td colspan="6" class="center">❌ Erreur réseau</td></tr>';
+      }
+    }
+
+    async function telechargerImputation(fichier_imputation) {
+        const token = localStorage.getItem("token");
+        const res = await fetch(`http://localhost:3000/api/imputations/download/${encodeURIComponent(fichier_imputation)}`, {
+            headers: { "Authorization": "Bearer " + token }
+        });
+
+        const blob = await res.blob();
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = fichier_imputation.split('/').pop();
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+    }
+
+
+    window.addEventListener("DOMContentLoaded", loadTransmissions);
+  </script>
+</body>
+</html>

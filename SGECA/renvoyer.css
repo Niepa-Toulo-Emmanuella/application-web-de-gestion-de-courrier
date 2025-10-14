@@ -1,0 +1,156 @@
+/* Reset */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+body {
+  background-color: #1e2b3c;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.main-header {
+  background-color: #e95f03;
+  color: #fff;
+  padding: 20px;
+  text-align: center;
+  position: relative;
+}
+
+.main-header .retour {
+  position: absolute;
+  right: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  background-color: #fff;
+  color: #e95f03;
+  padding: 8px 12px;
+  border-radius: 4px;
+  text-decoration: none;
+  font-weight: bold;
+  transition: background 0.3s, color 0.3s;
+}
+
+.main-header .retour:hover {
+  background-color: #e95f03;
+  color: #fff;
+  border: 1px solid white;
+}
+
+
+/* Main area */
+.main-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background-color: #fff;
+  width: 100%;
+}
+
+/* Header */
+.main-header {
+  background-color: #e95f03;
+  color: #fff;
+  padding: 20px;
+  text-align: center;
+}
+
+/* Content area */
+.content {
+  flex: 1;
+  padding: 30px 40px;
+  overflow-y: auto;
+}
+
+/* Table styling */
+.courriers-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 30px;
+  background-color: #fff;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.courriers-table th,
+.courriers-table td {
+  padding: 12px 15px;
+  border: 1px solid #ddd;
+  text-align: left;
+}
+
+.courriers-table th {
+  background-color: #f0f0f0;
+  font-weight: bold;
+}
+
+.courriers-table tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+/* Buttons */
+.btn {
+  padding: 8px 12px;
+  background-color: #1e2b3c;
+  color: white;
+  border: none;
+  text-decoration: none;
+  border-radius: 4px;
+  margin-right: 5px;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.btn:hover {
+  background-color: #1e2b3c;
+}
+
+.footer-actions {
+  text-align: center;
+  margin-top: 10px;
+}
+
+.btn.retour {
+  background-color: #1e2b3c;
+}
+
+.btn.retour:hover {
+  background-color: #1e2b3c;
+}
+
+.main-area {
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background-color: #fff;
+  width: 100%;
+  overflow: hidden;
+}
+
+/* Image floutée en arrière-plan */
+.main-area::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: url('login.png'); /* Change ce nom si ton image a un autre nom */
+  background-size: cover;
+  background-position: center;
+  filter: blur(10px);
+  opacity: 0.4;
+  z-index: 0;
+}
+
+/* Le contenu reste lisible au-dessus de l'image floue */
+.main-area > * {
+  position: relative;
+  z-index: 1;
+}

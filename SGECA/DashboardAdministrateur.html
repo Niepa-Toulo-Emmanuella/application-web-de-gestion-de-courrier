@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard - Administrateur</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            display: flex;
+        }
+
+        nav {
+            width: 250px;
+            background-color: #b71c1c;
+            color: white;
+            height: 100vh;
+            padding-top: 20px;
+        }
+
+        nav h2 {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        nav ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        nav li {
+            padding: 15px 20px;
+            cursor: pointer;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        nav li:hover {
+            background-color: #d32f2f;
+        }
+
+        main {
+            flex: 1;
+            padding: 30px;
+            background-color: #f5f5f5;
+        }
+
+        iframe {
+            width: 100%;
+            height: 90vh;
+            border: none;
+        }
+    </style>
+</head>
+
+<body>
+    <nav>
+        <h2>⚙️ Admin Panel</h2>
+        <ul>
+            <li onclick="loadPage('utilisateurs.html')">👥 Gérer les utilisateurs</li>
+            <li onclick="loadPage('roles.html')">🛡️ Gérer les rôles</li>
+            <li onclick="loadPage('create_user.html')">➕ Créer un utilisateur</li>
+            <!-- <li onclick="loadPage('edit_user.html')">✏️ Modifier un utilisateur</li>
+            <li onclick="loadPage('delete_user.html')">🗑️ Supprimer un utilisateur</li> -->
+            <li onclick="loadPage('journal.html')">📜 Journal des connexions</li>
+            <li onclick="loadPage('parametres.html')">⚙️ Paramètres système</li>
+            <li onclick="logout()">🚪 Déconnexion</li>
+        </ul>
+    </nav>
+
+    <main>
+        <iframe id="contentFrame" src=""></iframe>
+    </main>
+
+    <script>
+        function loadPage(page) {
+            document.getElementById("contentFrame").src = page;
+        }
+
+        function logout() {
+            localStorage.removeItem("token");
+            alert("Déconnecté !");
+            window.location.href = "login.html";
+        }
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard - SGECA</title>
+  <link rel="stylesheet" href="dashboardagent.css">
+</head>
+<body>
+  <div class="dashboard-container">
+    <aside class="sidebar">
+      <h2 class="logo">JURIMAIL</h2>
+      <ul class="nav-links">
+        <li><a href="create.html">Créer un courrier</a></li>
+        <li><a href="imputer.html">Imputer un courrier</a></li> 
+        <li><a href="envoyer.html">Envoyer un courrier</a></li> 
+        <li><a href="history.html">Historique</a></li>
+        <li><a href="Mescourriers.html">Mes Courriers</a></li>
+      </ul>
+    </aside>
+
+    <div class="main-area">
+      <header class="main-header">
+        <div class="search-bar">
+          <input type="text" placeholder="Rechercher un courrier..." />
+          <button>🔍</button>
+        </div>
+        <div class="user-info">
+          
+          <button onclick="logout()">Déconnexion</button>
+        </div>
+      </header>
+
+      <main class="content">
+        <h1>Bienvenue dans JURIMAIL ! Votre application de gestion de courriers administratifs.</h1>
+        <p>Sélectionnez une action dans le menu à gauche.</p>
+      </main>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

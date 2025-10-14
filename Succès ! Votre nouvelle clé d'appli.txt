@@ -1,0 +1,8 @@
+Succès ! Votre nouvelle clé d'application a été créée. Elle n'apparaîtra ici qu'une seule fois.
+
+ID de clé :
+005742f13ab194f0000000001
+nom de clé :
+courrier-cle
+applicationKey :
+K005PqOfLyIk7xzcufDRzV8Zx+y7jGI

@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Créer un utilisateur</title>
+</head>
+
+<body>
+    <h2>Créer un utilisateur</h2>
+
+    <div id="error" style="color: red;"></div>
+
+    <form id="createForm">
+        <label>Prénom : <input type="text" id="first_name" required></label><br><br>
+        <label>Nom : <input type="text" id="last_name" required></label><br><br>
+        <label>Email : <input type="email" id="email" required></label><br><br>
+        <label>Mot de passe : <input type="password" id="password" required></label><br><br>
+
+        <label>Rôle :
+            <select id="role" required>
+                <option value="" disabled selected>-- Choisir un rôle --</option>
+                <option value="admin">Admin</option>
+                <option value="agent">Agent</option>
+                <option value="directeur_cabinet">Directeur de Cabinet</option>
+                <option value="directeur_cabinet_adjoint">Directeur de Cabinet Adjoint</option>
+                <option value="igsjp">IGSJP</option>
+                <option value="chef_cabinet">Chef de Cabinet</option>
+                <option value="conseiller_technique">Conseiller Technique</option>
+                <option value="chef_secretariat_particulier">Chef de Secrétariat Particulier</option>
+                <option value="charge_detude">Chargé d'Étude</option>
+                <option value="les_directeurs">Les Directeurs</option>
+            </select>
+        </label><br><br>
+
+        <button type="submit">➕ Ajouter</button>
+    </form>
+
+    <script>
+        document.getElementById('createForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const first_name = document.getElementById('first_name').value.trim();
+            const last_name = document.getElementById('last_name').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value.trim();
+            const role = document.getElementById('role').value;
+
+            if (!first_name || !last_name || !email || !password || !role) {
+                alert("Veuillez remplir tous les champs.");
+                return;
+            }
+
+            const body = { first_name, last_name, email, password, role };
+
+            try {
+                const res = await fetch('http://localhost:3000/api/users', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+
+                if (res.ok) {
+                    alert("✅ Utilisateur créé avec succès !");
+                    window.location.href = "users.html"; // redirige vers la liste
+                } else {
+                    const errorText = await res.text();
+                    alert("❌ Erreur : " + errorText);
+                }
+            } catch (err) {
+                alert("❌ Erreur réseau.");
+                console.error(err);
+            }
+        });
+    </script>
+</body>
+
+</html>

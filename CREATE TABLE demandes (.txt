@@ -1,0 +1,30 @@
+CREATE TABLE demandes (
+    id SERIAL PRIMARY KEY,
+    utilisateur_id INT REFERENCES utilisateurs(id) ON DELETE CASCADE,
+    type_document ENUM('extrait_de_naissance', 'certificat_de_nationalite') NOT NULL,
+    statut ENUM('en attente', 'validée', 'refusée', 'traitée') DEFAULT 'en attente',
+    date_demande TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+
+CREATE TABLE paiements (
+    id SERIAL PRIMARY KEY,
+    utilisateur_id INT REFERENCES utilisateurs(id) ON DELETE CASCADE,
+    demande_id INT REFERENCES demandes(id) ON DELETE CASCADE,
+    montant DECIMAL(10,2) NOT NULL,
+    statut ENUM('en attente', 'payé', 'échoué') DEFAULT 'en attente',
+    methode_paiement ENUM('mobile_money', 'carte_bancaire') NOT NULL,
+    date_paiement TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+
+CREATE TABLE documents (
+    id SERIAL PRIMARY KEY,
+    demande_id INT REFERENCES demandes(id) ON DELETE CASCADE,
+    lien_fichier TEXT NOT NULL,
+    date_creation TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+utilisateurs (1) ---- (N) demandes
+demandes (1) ---- (1) paiements
+demandes (1) ---- (1) documents

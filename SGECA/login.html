@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Connexion - SGECA</title>
+  <link rel="stylesheet" href="styleslogin.css" />
+</head>
+
+<body>
+  <div class="login-container">
+    <form class="login-card" id="login-form">
+      <div class="avatar"></div>
+      <input type="email" id="email" placeholder="Email ID" required />
+      <input type="password" id="password" placeholder="Password" required />
+      <div class="options">
+        <label><input type="checkbox" id="rememberMe" /> Se souvenir de moi</label>
+        <a href="#" id="forgot-password">Mot de passe oublié ?</a>
+      </div>
+      <button type="submit" id="login-btn">Connexion</button>
+    </form>
+  </div>
+
+  <script>
+    // 🔹 Mapping des rôles vers les pages
+    const rolePages = {
+      admin: "DashboardAdministrateur.html",
+      agent: "DASHBOARD.html",
+      "directeur de cabinet": "DASHBOARD_HIERARCHIE_PRINCIPALE.html",
+      "directeur de cabinet adjoint": "DASHBOARD_HIERARCHIE_PRINCIPALE.html",
+      IGSJP: "DASHBOARD_SOUS_HIERARCHIE.html",
+      "chef de cabinet": "DASHBOARD_HIERARCHIE_PRINCIPALE.html",
+      "conseiller technique": "DASHBOARD_SOUS_HIERARCHIE.html",
+      "chef de secretariat particulier": "DASHBOARD_SOUS_HIERARCHIE.html",
+      "chargé d'etude": "DASHBOARD_SOUS_HIERARCHIE.html",
+      "les directeurs": "DADASHBOARD_SOUS_HIERARCHIE.html"
+    };
+
+    // 🔹 Vérifie si l'utilisateur est déjà connecté
+    window.addEventListener('load', async () => {
+      try {
+        const response = await fetch("http://localhost:3000/api/auth/verify", {
+          method: "GET",
+          credentials: 'include'
+        });
+        if (response.ok) {
+          const data = await response.json();
+          const role = data.user?.role;
+          redirigerSelonRole(role);
+        }
+      } catch (err) {
+        console.log("Utilisateur non connecté");
+      }
+    });
+
+    // 🔹 Soumission du formulaire
+    document.getElementById("login-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value.trim();
+      const rememberMe = document.getElementById("rememberMe").checked;
+      const loginBtn = document.getElementById("login-btn");
+
+      if (!email || !password) {
+        alert("Veuillez remplir tous les champs.");
+        return;
+      }
+
+      loginBtn.disabled = true;
+      loginBtn.textContent = "Connexion...";
+
+      try {
+        const response = await fetch("http://localhost:3000/api/auth/login", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: 'include',
+          body: JSON.stringify({ email, password, rememberMe }),
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.success) {
+          // 🔹 Stockage des informations utilisateur
+          localStorage.setItem("token", data.token);
+          localStorage.setItem("userId", data.user.id);
+          localStorage.setItem("role", data.user.role);
+
+          console.log(`[INFO LOGIN FRONT] ${email} connecté avec rôle ${data.user.role}`);
+
+          // 🔹 Redirection selon rôle
+          redirigerSelonRole(data.user.role);
+
+        } else {
+          alert(data.message || "Identifiants invalides.");
+        }
+      } catch (err) {
+        console.error("Erreur réseau :", err);
+        alert("Erreur réseau. Veuillez vérifier votre connexion.");
+      } finally {
+        loginBtn.disabled = false;
+        loginBtn.textContent = "Connexion";
+      }
+    });
+
+    // 🔹 Mot de passe oublié
+    document.getElementById("forgot-password").addEventListener("click", (e) => {
+      e.preventDefault();
+      const email = prompt("Entrez votre email pour réinitialiser le mot de passe :");
+      if (email) {
+        fetch("http://localhost:3000/api/auth/forgot-password", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email }),
+        })
+          .then(response => response.json())
+          .then(data => {
+            alert(data.message || "Email de réinitialisation envoyé.");
+          })
+          .catch(err => {
+            console.error("Erreur :", err);
+            alert("Erreur lors de l'envoi de l'email.");
+          });
+      }
+    });
+
+    // 🔹 Fonction de redirection selon le rôle
+    function redirigerSelonRole(role) {
+      if (rolePages[role]) {
+        window.location.href = rolePages[role];
+      } else {
+        alert("Rôle inconnu. Accès refusé.");
+        console.error(`[ERREUR FRONT] Rôle inconnu : ${role}`);
+      }
+    }
+  </script>
+</body>
+
+</html>

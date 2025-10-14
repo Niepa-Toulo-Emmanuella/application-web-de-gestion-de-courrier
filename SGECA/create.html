@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Créer un courrier</title>
+  <link rel="stylesheet" href="create.css" />
+</head>
+
+<body>
+  <div class="background-blur"></div>
+
+  <div class="container">
+    <h1>Créer un courrier</h1>
+    <form id="courrier-form" enctype="multipart/form-data">
+      <div class="form-group">
+        <label for="reference">Référence</label>
+        <input type="text" id="reference" name="reference" required />
+      </div>
+
+      <div class="form-group">
+        <label for="objet">Objet</label>
+        <input type="text" id="objet" name="objet" required />
+      </div>
+
+      <div class="form-group">
+        <label for="expediteur">Expéditeur</label>
+        <input type="text" id="expediteur" name="expediteur" required />
+      </div>
+
+      <div class="form-group">
+        <label for="destinataire">Destinataire</label>
+        <input type="text" id="destinataire" name="destinataire" required />
+      </div>
+
+      <div class="form-group">
+        <label for="date_reception">Date du courrier</label>
+        <input type="date" id="date_reception" name="date_reception" required />
+      </div>
+
+      <div class="form-group">
+        <label for="date_arrivee">Date d'arrivée</label>
+        <input type="date" id="date_arrivee" name="date_arrivee" required />
+      </div>
+
+      <div class="form-group">
+        <label for="numero_enregistrement">Numéro d'enregistrement</label>
+        <input type="text" id="numero_enregistrement" name="numero_enregistrement" required />
+      </div>
+
+      <div class="form-group">
+        <label for="heure">Heure</label>
+        <input type="time" id="heure" name="heure" required />
+      </div>
+
+      <div class="form-group">
+        <label for="scan">Ajouter une pièce jointe</label>
+        <input type="file" id="scan" name="scan" />
+      </div>
+
+      <div class="form-actions-inline">
+        <button type="submit">Enregistrer</button>
+        <a href="DashboardCourrier.html" class="btn-retour">Retour</a>
+      </div>
+    </form>
+
+  </div>
+
+  <script>
+    document.getElementById("courrier-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const form = document.getElementById("courrier-form");
+      const formData = new FormData(form);
+      const token = localStorage.getItem("token");
+
+      try {
+        const response = await fetch("http://localhost:3000/api/courriers", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`
+            // Ne PAS inclure "Content-Type" ici pour multipart/form-data
+          },
+          body: formData,
+        });
+
+        const contentType = response.headers.get("Content-Type");
+
+        if (contentType && contentType.includes("application/json")) {
+          const data = await response.json();
+          if (response.ok) {
+            alert("✅ Courrier créé avec succès !");
+            form.reset();
+          } else {
+            alert("❌ " + (data.message || "Erreur lors de la création"));
+          }
+        } else {
+          const rawText = await response.text();
+          console.error("Réponse inattendue :", rawText);
+          alert("❌ Le serveur a renvoyé une page HTML au lieu de JSON.");
+        }
+      } catch (error) {
+        console.error("Erreur réseau :", error);
+        alert("❌ Erreur réseau : " + error.message);
+      }
+    });
+  </script>
+</body>
+
+</html>

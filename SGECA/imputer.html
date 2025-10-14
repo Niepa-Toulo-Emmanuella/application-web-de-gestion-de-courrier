@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Imputer un courrier</title>
+  <link rel="stylesheet" href="imputer.css" />
+</head>
+<body>
+  <div class="background"></div>
+
+  <div class="container">
+    <h1>Imputer un courrier</h1>
+
+    <form id="imputer-form">
+      <div class="form-group">
+        <label for="description">Description / Observations</label>
+        <textarea id="description" name="description" rows="4" placeholder="Indiquer les raisons ou précisions sur l’imputation..." required></textarea>
+      </div>
+
+      <div class="form-group">
+        <label for="destinataire">Destinataire</label>
+        <select id="destinataire" name="destinataire" required>
+          <option value="">-- Sélectionner un destinataire --</option>
+          <option value="ChefServiceA">palais judiciaire de yopougon</option>
+          <option value="ChefServiceB">Chef de Service B</option>
+          <option value="SecretaireGeneral">Secrétaire Général</option>
+          <option value="DirecteurTech">Directeur Technique</option>
+        </select>
+      </div>
+
+      <div class="button-group">
+        <button type="button" onclick="ajouterCourrier()">Ajouter Courrier</button>
+        <button type="submit">Imputer</button>
+        <button type="button" onclick="retour()">Retour</button>
+      </div>
+    </form>
+  </div>
+
+  <script>
+    function ajouterCourrier() {
+      alert("Fonction Ajouter Courrier appelée.");
+    }
+
+    function retour() {
+      window.history.back();
+    }
+
+    document.getElementById("imputer-form").addEventListener("submit", function (e) {
+      e.preventDefault();
+      alert("Courrier imputé avec succès !");
+    });
+  </script>
+</body>
+</html>

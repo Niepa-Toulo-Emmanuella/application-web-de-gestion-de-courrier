@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <title>Menu Bordereaux</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      display: flex;
+      height: 100vh;
+    }
+    nav {
+      width: 200px;
+      background-color: #2c3e50;
+      display: flex;
+      flex-direction: column;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+    nav button {
+      background-color: #34495e;
+      color: white;
+      border: none;
+      padding: 15px 20px;
+      margin-bottom: 10px;
+      cursor: pointer;
+      font-size: 16px;
+      border-radius: 4px;
+      text-align: left;
+      transition: background-color 0.3s;
+    }
+    nav button:hover {
+      background-color: #1abc9c;
+    }
+    nav button:focus {
+      outline: 2px solid #16a085;
+    }
+    main {
+      flex: 1;
+      padding: 20px;
+      background-color: #ecf0f1;
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <button id="btn-nouveau">Nouveau bordereau</button>
+    <button id="btn-liste">Liste des bordereaux</button>
+    <button id="btn-detail">Détails</button>
+    <button id="btn-supprimer">Supprimer</button>
+  </nav>
+  <main id="contenu">
+    <h2>Bienvenue dans le module Bordereaux</h2>
+    <p>Utilisez le menu à gauche pour naviguer.</p>
+  </main>
+
+  <script>
+    const contenu = document.getElementById('contenu');
+
+    document.getElementById('btn-nouveau').addEventListener('click', () => {
+      contenu.innerHTML = '<h2>Créer un nouveau bordereau</h2><p>Formulaire ici...</p>';
+    });
+
+    document.getElementById('btn-liste').addEventListener('click', () => {
+      contenu.innerHTML = '<h2>Liste des bordereaux</h2><p>Tableau des bordereaux ici...</p>';
+    });
+
+    document.getElementById('btn-detail').addEventListener('click', () => {
+      contenu.innerHTML = '<h2>Détails d\'un bordereau</h2><p>Informations détaillées ici...</p>';
+    });
+
+    document.getElementById('btn-supprimer').addEventListener('click', () => {
+      contenu.innerHTML = '<h2>Supprimer un bordereau</h2><p>Formulaire ou confirmation ici...</p>';
+    });
+  </script>
+</body>
+</html>

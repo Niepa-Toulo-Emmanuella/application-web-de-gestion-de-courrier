@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Transmission d’un bordereau d’imputation</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; background: #f8f8f8; }
+    h2 { color: #00695c; }
+    form { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); max-width: 600px; }
+    label { display: block; margin-top: 10px; font-weight: bold; }
+    select, input, textarea { width: 100%; padding: 8px; margin-top: 5px; border-radius: 4px; border: 1px solid #ccc; }
+    button { margin-top: 15px; padding: 10px 15px; background: #00695c; color: white; border: none; border-radius: 5px; cursor: pointer; }
+    button:hover { background: #004d40; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; background: white; border-radius: 8px; overflow: hidden; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+    th { background: #00695c; color: white; }
+  </style>
+</head>
+<body>
+  <h2>📤 Transmission d’un bordereau d’imputation</h2>
+
+  <form id="transmissionForm">
+    <label for="imputationSelect">Bordereau d’imputation :</label>
+    <select id="imputationSelect" required>
+      <option value="">-- Sélectionner un bordereau d’imputation --</option>
+    </select>
+
+    <label for="destinataireSelect">Destinataire :</label>
+    <select id="destinataireSelect" required>
+      <option value="">-- Sélectionner un destinataire --</option>
+    </select>
+
+    <label for="instructions">Instructions :</label>
+    <textarea id="instructions" rows="3" placeholder="Saisir les instructions..."></textarea>
+
+    <label for="duree">Durée de traitement (en jours) :</label>
+    <input type="number" id="duree" min="1" placeholder="Ex: 3">
+
+    <label for="observations">Observations :</label>
+    <textarea id="observations" rows="3" placeholder="Saisir vos observations..."></textarea>
+
+    <button type="submit">Transmettre</button>
+  </form>
+
+  <h3>📄 Transmissions pour l’imputation sélectionnée :</h3>
+  <table id="transmissionsTable">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Destinataire</th>
+        <th>Expéditeur</th>
+        <th>Instructions</th>
+        <th>Durée</th>
+        <th>Observations</th>
+        <th>Date</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td colspan="7" style="text-align:center">Sélectionnez un bordereau pour voir les transmissions</td></tr>
+    </tbody>
+  </table>
+
+  <script>
+    const token = localStorage.getItem("token");
+    const API_BASE = "http://localhost:3000/api";
+
+    // Charger les bordereaux d’imputation
+    async function loadImputations() {
+        try {
+            const res = await fetch("http://localhost:3000/api/imputations", {
+            headers: { "Authorization": "Bearer " + token }
+            });
+            const data = await res.json();
+            const imputations = data.data || data; // selon ton backend
+            const select = document.getElementById("imputationSelect");
+            imputations.forEach(i => {
+            const option = document.createElement("option");
+            option.value = i.id;
+            option.textContent = `#${i.id} - ${i.numero || 'N/A'} | ${i.objet || 'Sans objet'}`;
+            select.appendChild(option);
+            });
+        } catch (err) {
+            console.error(err);
+        }
+    }
+
+    // Charger les destinataires
+    async function loadDestinataires() {
+        try {
+            const res = await fetch(`${API_BASE}/users`, { headers: { "Authorization": "Bearer " + token } });
+            const result = await res.json();
+            destinataireSelect.innerHTML = '<option value="">-- Choisir --</option>';
+
+            if (result.success) {
+            result.data.forEach(u => {
+                const option = document.createElement("option");
+                option.value = u.id;
+                option.textContent = `${u.first_name} ${u.last_name} (${u.role})`;
+                destinataireSelect.appendChild(option);
+            });
+            }
+        } catch (err) {
+            console.error("Erreur chargement destinataires:", err);
+        }
+    }
+
+    // Charger les transmissions pour un bordereau
+    async function loadTransmissions(imputationId) {
+    const tbody = document.getElementById("transmissionsTable").querySelector("tbody");
+    tbody.innerHTML = "<tr><td colspan='7' style='text-align:center'>Chargement...</td></tr>";
+
+    try {
+        const res = await fetch(`http://localhost:3000/api/imputations/${imputationId}/transmissions`, {
+        headers: { "Authorization": "Bearer " + token }
+        });
+        const data = await res.json();
+        if (data.success) {
+        if (data.data.length === 0) {
+            tbody.innerHTML = "<tr><td colspan='7' style='text-align:center'>Aucune transmission</td></tr>";
+        } else {
+            tbody.innerHTML = "";
+            data.data.forEach(t => {
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+                <td>${t.id}</td>
+                <td>${t.destinataire || ''}</td>
+                <td>${t.expediteur_nom || ''}</td>
+                <td>${t.instructions || ''}</td>
+                <td>${t.duree_traitement || ''}</td>
+                <td>${t.observations || ''}</td>
+                <td>${t.date_depart ? new Date(t.date_depart).toLocaleString() : ''}</td>
+            `;
+            tbody.appendChild(tr);
+            });
+        }
+        } else {
+        tbody.innerHTML = `<tr><td colspan='7' style='text-align:center'>Erreur: ${data.message}</td></tr>`;
+        }
+    } catch (err) {
+        console.error(err);
+        tbody.innerHTML = "<tr><td colspan='7' style='text-align:center'>Erreur réseau</td></tr>";
+    }
+    }
+
+    // Quand l’utilisateur change de bordereau
+    document.getElementById("imputationSelect").addEventListener("change", (e) => {
+    const imputationId = e.target.value;
+    if (imputationId) loadTransmissions(imputationId);
+    });
+
+    // Soumission du formulaire de transmission
+    document.getElementById("transmissionForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const imputation_id = document.getElementById("imputationSelect").value;
+    const destinataire_id = document.getElementById("destinataireSelect").value;
+    const instructions = document.getElementById("instructions").value;
+    const duree_traitement = document.getElementById("duree").value;
+    const observations = document.getElementById("observations").value;
+
+    if (!imputation_id || !destinataire_id) {
+        alert("Veuillez sélectionner un bordereau et un destinataire !");
+        return;
+    }
+
+    try {
+        const res = await fetch("http://localhost:3000/api/imputations/transmettre", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " + token
+        },
+        body: JSON.stringify({ imputation_id, destinataire_id, instructions, duree_traitement, observations })
+        });
+
+        const data = await res.json();
+        if (res.ok) {
+        alert("✅ Transmission enregistrée !");
+        document.getElementById("transmissionForm").reset();
+        loadTransmissions(imputation_id);
+        } else {
+        alert("❌ Erreur: " + (data.message || "Impossible d’enregistrer"));
+        }
+    } catch (err) {
+        console.error(err);
+        alert("❌ Erreur réseau");
+    }
+    });
+
+    loadImputations();
+    loadDestinataires();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,176 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body, html {
+  font-family: 'Segoe UI', sans-serif;
+  height: 100%;
+  background-color: #f2f4f6;
+}
+
+.dashboard-container {
+  display: flex;
+  height: 100vh;
+}
+
+.sidebar {
+  width: 240px;
+  background-color: #1e2b3c;
+  color: #fff;
+  padding: 20px;
+}
+
+.sidebar .logo {
+  font-size: 1.5rem;
+  margin-bottom: 30px;
+  color: #e95f03;
+  text-align: center;
+}
+
+.nav-links {
+  list-style: none;
+}
+
+.nav-links li {
+  margin: 20px 0;
+}
+
+.nav-links a {
+  text-decoration: none;
+  color: #fff;
+  font-weight: bold;
+  display: block;
+  padding: 10px 15px;
+  border-radius: 5px;
+  transition: background 0.2s;
+}
+
+.nav-links a:hover {
+  background-color: #e95f03;
+}
+
+.main-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.main-header {
+  background-color: #fff;
+  padding: 15px 30px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #ccc;
+}
+
+.search-bar {
+  display: flex;
+  width: 50%;
+}
+
+.search-bar input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid #ccc;
+  border-right: none;
+  border-radius: 8px 0 0 8px;
+}
+
+.search-bar button {
+  padding: 8px 12px;
+  background-color: #e95f03;
+  color: white;
+  border: 1px solid #e95f03;
+  border-radius: 0 8px 8px 0;
+  cursor: pointer;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.user-info button {
+  padding: 6px 12px;
+  background-color: #e74c3c;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.content {
+  flex: 1;
+  padding: 30px;
+  overflow-y: auto;
+}
+
+.content h1 {
+  font-size: 2rem;
+  margin-bottom: 15px;
+  color: #2c3e50;
+}
+
+.content p {
+  font-size: 1.1rem;
+  color: #555;
+}
+
+.content {
+  flex: 1;
+  padding: 30px;
+  position: relative;
+  overflow: hidden;
+  z-index: 1;
+  color: white;
+}
+
+/* Ajoute l’image de fond floutée
+.content::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: url('login.png'); /* Remplace par ton image */
+  /* background-size: cover;
+  background-position: center;
+  filter: blur(6px);
+  opacity: 0.6;
+  z-index: -2;
+} */
+
+/* Ajoute une couche sombre pour plus de contraste */
+/* .content::after {
+  content: "";
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%;
+  height: 100%;
+   /* couche sombre semi-transparente */
+  /* z-index: -1;
+}  */
+
+/* Arrière-plan flou */
+.content::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: url("login.png") no-repeat center center / cover;
+  filter: blur(8px);
+  opacity: 0.3;
+  z-index: 0;
+}
+
+/* Texte au-dessus de l'image floue */
+.content > * {
+  position: relative;
+  z-index: 1;
+}

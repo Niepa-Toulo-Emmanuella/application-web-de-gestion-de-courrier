@@ -1,0 +1,112 @@
+/* styleslogin.css 
+body { background: #f3f4f6; background-image: url('login.png'); /* ton image */
+/* font-family: Arial, sans-serif; margin: 0; padding: 0; background-size: cover; */
+  /* background-position: center;
+  background-repeat: no-repeat;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;}
+header { background: #2563eb; color: white; padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; }
+nav ul { list-style: none; margin: 0; padding: 0; display: flex; background: #1e40af; }
+nav li { margin: 0; }
+nav a { color: white; padding: 10px 15px; display: block; text-decoration: none; }
+nav a:hover { background: #1d4ed8; }
+main { padding: 20px; }
+/* .login-box { comme ci-dessus */
+ /* padding: 30px; max-width: 300px; margin: auto; background: white; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); } */
+/* input, select, button { display: block; width: 100%; margin-bottom: 15px; padding: 10px; border: 1px solid #ccc; border-radius: 5px; }
+button { background-color: #e28101; color: white; border: none; cursor: pointer; }
+button:hover { background-color: #1d4ed8; }  */
+/* styles.css */
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+body {
+  height: 100vh;
+  background-image: url('login.png');
+  background-size: cover;
+  background-position: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.login-container {
+  backdrop-filter: blur(8px);
+  width: 100%;
+  max-width: 400px;
+  padding: 30px;
+}
+
+.login-card {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 20px;
+  padding: 40px 30px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  color: #fff;
+}
+
+.avatar {
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 10px auto;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  background-image: url('https://cdn-icons-png.flaticon.com/512/847/847969.png');
+  background-size: 50%;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+.login-card input {
+  padding: 12px;
+  border: none;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  font-size: 16px;
+}
+
+.login-card input::placeholder {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.options {
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+}
+
+.options a {
+  color: #ccc;
+  text-decoration: none;
+}
+
+.options a:hover {
+  text-decoration: underline;
+}
+
+.login-card button {
+  padding: 12px;
+  background: linear-gradient(to right, #1E2B3C, #6c42a1);
+  border: none;
+  border-radius: 8px;
+  color: white;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.login-card button:hover {
+  background: linear-gradient(to right, #6c42a1, #4f4be4);
+}

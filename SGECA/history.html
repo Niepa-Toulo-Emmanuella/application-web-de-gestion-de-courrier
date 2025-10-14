@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Historique du courrier</title>
+  <link rel="stylesheet" href="history.css" />
+</head>
+<body>
+  <div class="background"></div>
+
+  <div class="container">
+    <h1>Historique du courrier</h1>
+    <table>
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Heure</th>
+          <th>Action</th>
+          <th>Effectué par</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>2025-05-25</td>
+          <td>16:13</td>
+          <td>Création</td>
+          <td>Agent Courrier</td>
+          <td></td>
+        </tr>
+        <tr>
+          <td>2025-05-25</td>
+          <td>16:15</td>
+          <td>Envoi</td>
+          <td>Agent Courrier</td>
+          <td>C'est un courrier de demande d'audience</td>
+        </tr>
+        <tr>
+          <td>2025-05-26</td>
+          <td>10:00</td>
+          <td>Imputation</td>
+          <td>Directeur de Cabinet</td>
+          <td></td>
+        </tr>
+        <!-- D'autres lignes peuvent être ajoutées dynamiquement -->
+      </tbody>
+    </table>
+    <button onclick="retour()">Retour</button>
+  </div>
+
+  <script>
+    function retour() {
+      window.history.back();
+    }
+  </script>
+</body>
+</html>

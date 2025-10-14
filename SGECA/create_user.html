@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Ajouter un utilisateur</title>
+    <style>
+        body {
+            font-family: Arial;
+            margin: 40px;
+        }
+
+        form {
+            max-width: 400px;
+            margin: auto;
+        }
+
+        label {
+            display: block;
+            margin-top: 15px;
+        }
+
+        input,
+        select {
+            width: 100%;
+            padding: 8px;
+            margin-top: 5px;
+        }
+
+        button {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h2>➕ Ajouter un utilisateur</h2>
+
+    <form id="createUserForm">
+        <label for="email">Email :</label>
+        <input type="email" id="email" required>
+
+        <label for="password">Mot de passe :</label>
+        <input type="password" id="password" required>
+
+        <label for="role">Rôle :</label>
+        <select id="role" required>
+            <option value="admin">Admin</option>
+            <option value="agent">Agent</option>
+            <option value="directeur de cabinet">Directeur de Cabinet</option>
+            <option value="directeur de cabinet adjoint">Directeur de Cabinet Adjoint</option>
+            <option value="IGSJP">IGSJP</option>
+            <option value="chef de cabinet">Chef de Cabinet</option>
+            <option value="conseiller technique">Conseiller Technique</option>
+            <option value="chef de secretariat particulier">Chef de Secrétariat Particulier</option>
+            <option value="chargé d'etude">Chargé d'Étude</option>
+            <option value="les directeurs">Les Directeurs</option>
+        </select>
+
+        <label for="first_name">Prénom :</label>
+        <input type="text" id="first_name">
+
+        <label for="last_name">Nom :</label>
+        <input type="text" id="last_name">
+
+        <button type="submit">Ajouter</button>
+    </form>
+
+    <script>
+        function normalizeRole(role) {
+            return role.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, '').trim();
+        }
+
+        document.getElementById('createUserForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const payload = {
+                email: document.getElementById('email').value,
+                password: document.getElementById('password').value,
+                role: document.getElementById('role').value,
+                first_name: document.getElementById('first_name').value,
+                last_name: document.getElementById('last_name').value
+            };
+
+            // Normalisation légère du rôle avant envoi
+            payload.role = normalizeRole(payload.role);
+
+            try {
+                const response = await fetch('http://localhost:3000/api/users', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    alert('✅ Utilisateur créé avec succès');
+                    // window.location.href = 'DashboardAdministrateur.html';
+                } else {
+                    if (result.message.includes("Rôle inconnu")) {
+                        alert('⚠️ Erreur : Le rôle sélectionné est inconnu. Vérifiez la liste des rôles.');
+                    } else if (result.message.includes("Email déjà utilisé")) {
+                        alert('⚠️ Erreur : Email déjà utilisé.');
+                    } else {
+                        alert('⚠️ Erreur : ' + result.message);
+                    }
+                }
+            } catch (err) {
+                console.error('Erreur serveur frontend :', err);
+                alert('⚠️ Erreur serveur');
+            }
+        });
+    </script>
+
+</body>
+
+</html>
