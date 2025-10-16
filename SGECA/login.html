@@ -23,6 +23,10 @@
   </div>
 
   <script>
+     // 🌐 URL de base de l'API backend
+    const API_BASE_URL = "https://application-web-de-gestion-de-courrier.onrender.com";
+
+
     // 🔹 Mapping des rôles vers les pages
     const rolePages = {
       admin: "DashboardAdministrateur.html",
@@ -40,7 +44,7 @@
     // 🔹 Vérifie si l'utilisateur est déjà connecté
     window.addEventListener('load', async () => {
       try {
-        const response = await fetch("http://localhost:3000/api/auth/verify", {
+        const response = await fetch(`${API_BASE_URL}/api/auth/verify`, {
           method: "GET",
           credentials: 'include'
         });
@@ -72,7 +76,7 @@
       loginBtn.textContent = "Connexion...";
 
       try {
-        const response = await fetch("http://localhost:3000/api/auth/login", {
+        const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -111,7 +115,7 @@
       e.preventDefault();
       const email = prompt("Entrez votre email pour réinitialiser le mot de passe :");
       if (email) {
-        fetch("http://localhost:3000/api/auth/forgot-password", {
+        fetch(`${API_BASE_URL}/api/auth/forgot-password`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ email }),
