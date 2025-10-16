@@ -111,23 +111,30 @@
     });
 
     // 🔹 Mot de passe oublié
-    document.getElementById("forgot-password").addEventListener("click", (e) => {
+    document.getElementById("forgot-password").addEventListener("click", async (e) => {
       e.preventDefault();
       const email = prompt("Entrez votre email pour réinitialiser le mot de passe :");
       if (email) {
-        fetch(`${API_BASE_URL}/api/auth/forgot-password`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email }),
-        })
-          .then(response => response.json())
-          .then(data => {
-            alert(data.message || "Email de réinitialisation envoyé.");
-          })
-          .catch(err => {
-            console.error("Erreur :", err);
-            alert("Erreur lors de l'envoi de l'email.");
+        try {
+          const response = await fetch(`${API_BASE_URL}/api/auth/forgot-password`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email }),
           });
+
+          // ✅ Vérifier si la réponse est OK
+          if (!response.ok) {
+            const errData = await response.json();
+            throw new Error(errData.message || "Erreur lors de l'envoi de l'email");
+          }
+
+          const data = await response.json();
+          alert(data.message || "Email de réinitialisation envoyé.");
+
+        } catch (err) {
+          console.error("Erreur :", err);
+          alert(err.message || "Erreur lors de l'envoi de l'email.");
+        }
       }
     });
 
