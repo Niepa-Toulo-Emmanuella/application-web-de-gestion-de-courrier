@@ -60,6 +60,8 @@ router.post('/logout', authenticate, ctrl.logout);
 router.get('/me', authenticate, ctrl.checkAuth);
 
 router.post('/forgot-password', ctrl.forgotPassword);
+router.get('/verify', authenticate, ctrl.checkAuth); // Pour correspondre au frontend
+
 
 
 module.exports = router;
