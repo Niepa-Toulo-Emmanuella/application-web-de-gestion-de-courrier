@@ -111,7 +111,7 @@
   </div>
 
   <script>
-    const API_BASE = "http://localhost:3000/api";
+    const API_BASE = "https://application-web-de-gestion-de-courrier.onrender.com/api";
     const token = localStorage.getItem("token");
 
     function showDetails(t) {
@@ -207,7 +207,7 @@
 
     async function telechargerImputation(fichier_imputation) {
         const token = localStorage.getItem("token");
-        const res = await fetch(`http://localhost:3000/api/imputations/download/${encodeURIComponent(fichier_imputation)}`, {
+        const res = await fetch(`https://application-web-de-gestion-de-courrier.onrender.com/api/imputations/download/${encodeURIComponent(fichier_imputation)}`, {
             headers: { "Authorization": "Bearer " + token }
         });
 

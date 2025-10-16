@@ -93,7 +93,7 @@
   <div id="liste"></div>
 
   <script>
-    const API = "http://localhost:3000/api/courriers";
+    const API = "https://application-web-de-gestion-de-courrier.onrender.com/api/courriers";
     const token = localStorage.getItem("token");
 
     // Fonction pour afficher la liste des courriers
@@ -217,7 +217,7 @@
 
     async function telecharger(id) {
       try {
-        const res = await fetch(`http://localhost:3000/api/courriers/${id}/download`, {
+        const res = await fetch(`https://application-web-de-gestion-de-courrier.onrender.com/api/courriers/${id}/download`, {
           headers: { Authorization: "Bearer " + localStorage.getItem("token") }
         });
 

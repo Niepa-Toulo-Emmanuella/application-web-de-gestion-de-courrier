@@ -69,7 +69,7 @@
       if (!token) return alert("Token manquant");
 
       try {
-        const res = await fetch("http://localhost:3000/api/notifications", {
+        const res = await fetch("https://application-web-de-gestion-de-courrier.onrender.com/api/notifications", {
           headers: { "Authorization": "Bearer " + token }
         });
         const data = await res.json();
@@ -83,7 +83,7 @@
 
             // 📎 Bordereau
             const bordereauLink = n.fichier_bordereau
-              ? `<a href="http://localhost:3000/api/bordereaux/download/${encodeURIComponent(n.fichier_bordereau)}" target="_blank">
+              ? `<a href="https://application-web-de-gestion-de-courrier.onrender.com/api/bordereaux/download/${encodeURIComponent(n.fichier_bordereau)}" target="_blank">
                   📎 ${n.fichier_bordereau.split('/').pop()}
                 </a>`
               : "—";
@@ -124,7 +124,7 @@
       if (!token) return alert("Token manquant");
 
       try {
-        const res = await fetch(`http://localhost:3000/api/courriers/${courrierId}/download`, {
+        const res = await fetch(`https://application-web-de-gestion-de-courrier.onrender.com/api/courriers/${courrierId}/download`, {
           headers: { "Authorization": "Bearer " + token }
         });
 

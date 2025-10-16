@@ -253,6 +253,7 @@
 const User = require('../models/User');
 const { generateJWT, generateRememberToken } = require('../utils/generateToken');
 const bcrypt = require('bcryptjs');
+const nodemailer = require('nodemailer'); // ✅ Ajouter Nodemailer
 
 // Liste des rôles autorisés (normalisés)
 const ROLES_AUTORISES = [
@@ -402,8 +403,47 @@ const checkAuth = async (req, _res, next) => {
 /* ------------------------------------------------------------------
    FORGOT PASSWORD (placeholder)
 -------------------------------------------------------------------*/
-const forgotPassword = async (_req, res) => {
-  res.status(501).json({ success: false, message: 'Fonction non encore implémentée' });
+const forgotPassword = async (req, res) => {
+  const { email } = req.body;
+
+  // Vérifie si l'utilisateur existe
+  const user = await User.findOne({ email });
+  if (!user) return res.status(404).json({ message: "Utilisateur non trouvé" });
+
+  // Génère un token temporaire
+  const resetToken = Math.random().toString(36).substring(2, 15);
+
+  // Sauvegarde le token et expiration
+  user.resetToken = resetToken;
+  user.resetTokenExpires = Date.now() + 3600000; // 1h
+  await user.save();
+
+  // Envoi de l'email
+  const transporter = nodemailer.createTransport({
+    host: "smtp.gmail.com", // ou autre service SMTP
+    port: 465,
+    secure: true,
+    auth: {
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASS,
+    },
+  });
+
+  const mailOptions = {
+    from: process.env.SMTP_USER,
+    to: email,
+    subject: "Réinitialisation de mot de passe",
+    text: `Cliquez sur ce lien pour réinitialiser votre mot de passe : https://tonfrontend.com/reset-password?token=${resetToken}`
+  };
+
+  transporter.sendMail(mailOptions, (err, info) => {
+    if (err) {
+      console.error(err);
+      return res.status(500).json({ message: "Erreur lors de l'envoi de l'email" });
+    }
+    res.json({ message: "Email de réinitialisation envoyé." });
+  });
 };
+
 
 module.exports = { register, login, logout, checkAuth, forgotPassword };

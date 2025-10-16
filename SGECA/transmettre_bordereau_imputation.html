@@ -63,12 +63,12 @@
 
   <script>
     const token = localStorage.getItem("token");
-    const API_BASE = "http://localhost:3000/api";
+    const API_BASE = "https://application-web-de-gestion-de-courrier.onrender.com/api";
 
     // Charger les bordereaux d’imputation
     async function loadImputations() {
         try {
-            const res = await fetch("http://localhost:3000/api/imputations", {
+            const res = await fetch("https://application-web-de-gestion-de-courrier.onrender.com/api/imputations", {
             headers: { "Authorization": "Bearer " + token }
             });
             const data = await res.json();
@@ -111,7 +111,7 @@
     tbody.innerHTML = "<tr><td colspan='7' style='text-align:center'>Chargement...</td></tr>";
 
     try {
-        const res = await fetch(`http://localhost:3000/api/imputations/${imputationId}/transmissions`, {
+        const res = await fetch(`https://application-web-de-gestion-de-courrier.onrender.com/api/imputations/${imputationId}/transmissions`, {
         headers: { "Authorization": "Bearer " + token }
         });
         const data = await res.json();
@@ -164,7 +164,7 @@
     }
 
     try {
-        const res = await fetch("http://localhost:3000/api/imputations/transmettre", {
+        const res = await fetch("https://application-web-de-gestion-de-courrier.onrender.com/api/imputations/transmettre", {
         method: "POST",
         headers: {
             "Content-Type": "application/json",

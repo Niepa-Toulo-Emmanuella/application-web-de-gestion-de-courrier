@@ -47,7 +47,7 @@
         const token = localStorage.getItem("jwt");
 
         async function chargerNotifications() {
-            const res = await fetch("http://localhost:3000/api/notifications", {
+            const res = await fetch("https://application-web-de-gestion-de-courrier.onrender.com/api/notifications", {
                 headers: { Authorization: "Bearer " + token }
             });
 
@@ -77,7 +77,7 @@
         }
 
         async function marquerCommeLue(id, btn) {
-            const res = await fetch(`http://localhost:3000/api/notifications/${id}/lue`, {
+            const res = await fetch(`https://application-web-de-gestion-de-courrier.onrender.com/api/notifications/${id}/lue`, {
                 method: "PUT",
                 headers: { Authorization: "Bearer " + token }
             });

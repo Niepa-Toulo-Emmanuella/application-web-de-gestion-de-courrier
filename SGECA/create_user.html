@@ -96,7 +96,7 @@
             payload.role = normalizeRole(payload.role);
 
             try {
-                const response = await fetch('http://localhost:3000/api/users', {
+                const response = await fetch('https://application-web-de-gestion-de-courrier.onrender.com/api/users', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'

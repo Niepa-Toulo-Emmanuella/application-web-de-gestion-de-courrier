@@ -59,4 +59,7 @@ router.post(
 router.post('/logout', authenticate, ctrl.logout);
 router.get('/me', authenticate, ctrl.checkAuth);
 
+router.post('/forgot-password', ctrl.forgotPassword);
+
+
 module.exports = router;

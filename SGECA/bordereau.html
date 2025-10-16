@@ -157,7 +157,7 @@
 
       try {
         // Charger les courriers
-        const res = await fetch("http://localhost:3000/api/courriers", {
+        const res = await fetch("https://application-web-de-gestion-de-courrier.onrender.com/api/courriers", {
           headers: { Authorization: "Bearer " + token }
         });
         const result = await res.json();
@@ -212,7 +212,7 @@
         return;
       }
       const fileName = fichierScan.split('/').pop();
-      const downloadUrl = `http://localhost:3000/api/bordereaux/download/${encodeURIComponent(fileName)}`;
+      const downloadUrl = `https://application-web-de-gestion-de-courrier.onrender.com/api/bordereaux/download/${encodeURIComponent(fileName)}`;
       fileInfo.innerHTML = `📎 <a href="${downloadUrl}" target="_blank">${fileName}</a>`;
     }
 
@@ -228,7 +228,7 @@
       }
 
       try {
-        const response = await fetch("http://localhost:3000/api/bordereaux", {
+        const response = await fetch("https://application-web-de-gestion-de-courrier.onrender.com/api/bordereaux", {
           method: "POST",
           headers: {
             "Authorization": "Bearer " + token,
@@ -272,7 +272,7 @@
     async function loadBordereauxEnAttente() {
       const token = localStorage.getItem("jwt") || localStorage.getItem("token");
       try {
-        const res = await fetch("http://localhost:3000/api/bordereaux", {
+        const res = await fetch("https://application-web-de-gestion-de-courrier.onrender.com/api/bordereaux", {
           headers: { Authorization: "Bearer " + token }
         });
         const result = await res.json();
