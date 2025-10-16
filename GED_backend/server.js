@@ -28,12 +28,9 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // 🌐 CORS
+// Autoriser uniquement ton frontend
 app.use(cors({
-  origin: [
-    'http://127.0.0.1:8080',
-    'http://192.168.1.68:8080',
-    process.env.FRONTEND_URL || 'http://localhost:3000'
-  ],
+  origin: "https://application-web-de-gestion-de-courrier-1.onrender.com",
   credentials: true
 }));
 
