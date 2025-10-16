@@ -122,24 +122,22 @@
             body: JSON.stringify({ email }),
           });
 
-          // ✅ Vérifier si la réponse est OK
+          const data = await response.json();
+
           if (response.ok) {
-            const data = await response.json();
-            redirigerSelonRole(data.user?.role);
+            alert(data.message || "Email de réinitialisation envoyé.");
           } else {
-            console.log("Utilisateur non connecté ou token invalide");
+            alert(data.message || "Erreur lors de l'envoi de l'email.");
+            console.error("Erreur forgot-password :", data);
           }
 
-
-          const data = await response.json();
-          alert(data.message || "Email de réinitialisation envoyé.");
-
         } catch (err) {
-          console.error("Erreur :", err);
-          alert(err.message || "Erreur lors de l'envoi de l'email.");
+          console.error("Erreur réseau forgot-password :", err);
+          alert("Erreur réseau lors de l'envoi de l'email.");
         }
       }
     });
+
 
     // 🔹 Fonction de redirection selon le rôle
     function redirigerSelonRole(role) {
