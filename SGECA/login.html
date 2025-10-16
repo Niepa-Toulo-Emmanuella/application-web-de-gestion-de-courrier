@@ -123,10 +123,13 @@
           });
 
           // ✅ Vérifier si la réponse est OK
-          if (!response.ok) {
-            const errData = await response.json();
-            throw new Error(errData.message || "Erreur lors de l'envoi de l'email");
+          if (response.ok) {
+            const data = await response.json();
+            redirigerSelonRole(data.user?.role);
+          } else {
+            console.log("Utilisateur non connecté ou token invalide");
           }
+
 
           const data = await response.json();
           alert(data.message || "Email de réinitialisation envoyé.");
