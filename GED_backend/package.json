@@ -25,6 +25,7 @@
     "jsonwebtoken": "^9.0.2",
     "mime-types": "^3.0.1",
     "multer": "^2.0.0",
+    "node-fetch": "^2.7.0",
     "nodemailer": "^7.0.3",
     "pdfkit": "^0.17.2",
     "pg": "^8.16.0",

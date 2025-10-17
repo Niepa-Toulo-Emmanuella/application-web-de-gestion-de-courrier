@@ -158,20 +158,26 @@ const forgotPassword = async (req, res) => {
 
   try {
     // Vérifie si l'utilisateur existe
-    const user = await User.findOne({ email });
-    if (!user) return res.status(404).json({ message: "Utilisateur non trouvé" });
+    const user = await User.findByEmail(email);
+    if (!user) {
+      return res.status(404).json({ message: "Utilisateur non trouvé" });
+    }
 
     // Génère un token temporaire
     const resetToken = Math.random().toString(36).substring(2, 15);
+    const resetTokenExpires = new Date(Date.now() + 3600000); // 1h
 
-    // Sauvegarde le token et expiration
-    user.resetToken = resetToken;
-    user.resetTokenExpires = Date.now() + 3600000; // 1h
-    await user.save();
+    // 🔹 Met à jour en base de données (tu dois avoir les colonnes correspondantes)
+    await pool.query(
+      `UPDATE users 
+       SET reset_token = $1, reset_token_expires = $2 
+       WHERE email = $3`,
+      [resetToken, resetTokenExpires, email]
+    );
 
-    // Envoi de l'email
+    // 🔹 Envoi de l'email
     const transporter = nodemailer.createTransport({
-      host: "smtp.gmail.com", // ou autre service SMTP
+      host: "smtp.gmail.com",
       port: 465,
       secure: true,
       auth: {
@@ -180,24 +186,23 @@ const forgotPassword = async (req, res) => {
       },
     });
 
+    const resetUrl = `https://application-web-de-gestion-de-courrier-1.onrender.com/reset-password.html?token=${resetToken}`;
+    console.log("🔗 resetUrl généré :", resetUrl);
+    
     const mailOptions = {
       from: process.env.SMTP_USER,
       to: email,
       subject: "Réinitialisation de mot de passe",
-      text: `Cliquez sur ce lien pour réinitialiser votre mot de passe : https://tonfrontend.com/reset-password?token=${resetToken}`
+      text: `Cliquez sur ce lien pour réinitialiser votre mot de passe : ${resetUrl}`
     };
 
-    // ✅ Version async/await avec try/catch pour sendMail
-    try {
-      await transporter.sendMail(mailOptions);
-      return res.json({ message: "Email de réinitialisation envoyé." });
-    } catch (err) {
-      console.error("Erreur en envoyant l'email :", err);
-      return res.status(500).json({ message: "Erreur lors de l'envoi de l'email" });
-    }
+    await transporter.sendMail(mailOptions);
+    console.log(`✅ Email de réinitialisation envoyé à ${email}`);
+
+    return res.json({ message: "Email de réinitialisation envoyé." });
 
   } catch (err) {
-    console.error("Erreur forgotPassword :", err);
+    console.error("❌ Erreur forgotPassword :", err.message);
     return res.status(500).json({ message: "Erreur serveur" });
   }
 };
