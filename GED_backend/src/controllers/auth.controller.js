@@ -3,6 +3,8 @@ const User = require('../models/User');
 const { generateJWT, generateRememberToken } = require('../utils/generateToken');
 const bcrypt = require('bcryptjs');
 const nodemailer = require('nodemailer'); // ✅ Ajouter Nodemailer
+const pool = require('../models/db');
+
 
 // Liste des rôles autorisés (normalisés)
 const ROLES_AUTORISES = [
