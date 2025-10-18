@@ -157,6 +157,9 @@ const checkAuth = async (req, _res, next) => {
    FORGOT PASSWORD (placeholder)
 -------------------------------------------------------------------*/
 // 🔹 Étape 1 : Envoi du lien de réinitialisation
+/* ------------------------------------------------------------------
+   FORGOT PASSWORD
+-------------------------------------------------------------------*/
 const forgotPassword = async (req, res) => {
   const { email } = req.body;
 
@@ -184,15 +187,18 @@ const forgotPassword = async (req, res) => {
 
     // Envoi du mail
     const mailOptions = {
-      from: process.env.SMTP_USER,
+      from: `"Support" <${process.env.SMTP_USER}>`,
       to: email,
       subject: "Réinitialisation de votre mot de passe",
       text: `Bonjour ${user.first_name || ""},\n\nCliquez sur ce lien pour réinitialiser votre mot de passe : ${resetUrl}\n\nCe lien expire dans 1 heure.`,
+      html: `<p>Bonjour ${user.first_name || ""},</p>
+             <p>Cliquez sur ce lien pour réinitialiser votre mot de passe : <a href="${resetUrl}">${resetUrl}</a></p>
+             <p>Ce lien expire dans 1 heure.</p>`
     };
 
-    await mail.transporter.sendMail(mailOptions);
-    console.log(`✅ Email envoyé à ${email}`);
+    await mail.transporter.sendMail(mailOptions); // ✅ Correct
 
+    console.log(`✅ Email envoyé à ${email}`);
     res.json({ message: "Email de réinitialisation envoyé." });
 
   } catch (error) {
