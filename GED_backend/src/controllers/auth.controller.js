@@ -2,8 +2,9 @@
 const User = require('../models/User');
 const { generateJWT, generateRememberToken } = require('../utils/generateToken');
 const bcrypt = require('bcryptjs');
-const nodemailer = require('nodemailer'); // ✅ Ajouter Nodemailer
 const pool = require('../models/db');
+const transporter = require('../config/mail');
+
 
 
 // Liste des rôles autorisés (normalisés)
@@ -178,18 +179,6 @@ const forgotPassword = async (req, res) => {
       [resetToken, resetTokenExpires, email]
     );
 
-    // Config SMTP
-    const transporter = nodemailer.createTransport({
-      host: "smtp.gmail.com",
-      port: 587,
-      secure: false,
-      auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS,
-      },
-      tls: { rejectUnauthorized: false },
-    });
-
     // Lien pour réinitialiser
     const resetUrl = `https://application-web-de-gestion-de-courrier-1.onrender.com/reset-password.html?token=${resetToken}`;
 
@@ -198,7 +187,7 @@ const forgotPassword = async (req, res) => {
       from: process.env.SMTP_USER,
       to: email,
       subject: "Réinitialisation de votre mot de passe",
-      text: `Bonjour,\n\nCliquez sur ce lien pour réinitialiser votre mot de passe : ${resetUrl}\n\nCe lien expire dans 1 heure.`,
+      text: `Bonjour ${user.first_name || ""},\n\nCliquez sur ce lien pour réinitialiser votre mot de passe : ${resetUrl}\n\nCe lien expire dans 1 heure.`,
     };
 
     await transporter.sendMail(mailOptions);

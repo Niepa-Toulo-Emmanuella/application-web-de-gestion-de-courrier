@@ -5,6 +5,36 @@ const helmet = require('helmet');
 const cookieParser = require('cookie-parser');
 
 const pool = require('./src/models/db');
+const transporter = require('./src/config/mail');
+
+const app = express();
+// 🌐 CORS
+// Autoriser uniquement ton frontend
+// ✅ CORS ici, dans server.js
+app.use(cors({
+  origin: [
+    "https://application-web-de-gestion-de-courrier-1.onrender.com",
+    "http://localhost:3000"
+  ],
+  credentials: true,
+}));
+
+app.get('/test-mail', async (req, res) => {
+  try {
+    await transporter.sendMail({
+      from: `"Test SGE" <${process.env.SMTP_USER}>`,
+      to: 'niepemmanuella29@gmail.com',
+      subject: 'Test de mail SMTP',
+      text: 'Ceci est un test.',
+    });
+    res.send('Email envoyé avec succès !');
+  } catch (err) {
+    console.error('Erreur mail:', err);
+    res.status(500).send('Erreur envoi mail');
+  }
+});
+app.use(express.json());
+app.use(cookieParser());
 
 // ✅ Test connexion PostgreSQL
 pool.query('SELECT NOW()', (err, res) => {
@@ -24,15 +54,8 @@ const userRoutes = require('./src/routes/user.routes');
 const envoyerRoutes = require('./src/routes/envoyer.routes');
 const imputationRoutes = require('./src/routes/imputation.routes');
 
-const app = express();
-const PORT = process.env.PORT || 3000;
 
-// 🌐 CORS
-// Autoriser uniquement ton frontend
-app.use(cors({
-  origin: "https://application-web-de-gestion-de-courrier-1.onrender.com",
-  credentials: true
-}));
+
 
 // 🔐 Sécurité
 app.use(helmet());
@@ -90,6 +113,7 @@ app.use((err, req, res, next) => {
   });
 });
 
+const PORT = process.env.PORT || 3000;
 // 🚀 Lancement
 app.listen(PORT, () => {
   console.log(`🚀 Serveur démarré sur le port ${PORT}`);
