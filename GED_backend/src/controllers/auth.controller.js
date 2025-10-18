@@ -3,7 +3,7 @@ const User = require('../models/User');
 const { generateJWT, generateRememberToken } = require('../utils/generateToken');
 const bcrypt = require('bcryptjs');
 const pool = require('../models/db');
-const transporter = require('../config/mail');
+const mail = require('../config/mail');
 
 
 
@@ -190,7 +190,7 @@ const forgotPassword = async (req, res) => {
       text: `Bonjour ${user.first_name || ""},\n\nCliquez sur ce lien pour réinitialiser votre mot de passe : ${resetUrl}\n\nCe lien expire dans 1 heure.`,
     };
 
-    await transporter.sendMail(mailOptions);
+    await mail.transporter.sendMail(mailOptions);
     console.log(`✅ Email envoyé à ${email}`);
 
     res.json({ message: "Email de réinitialisation envoyé." });
