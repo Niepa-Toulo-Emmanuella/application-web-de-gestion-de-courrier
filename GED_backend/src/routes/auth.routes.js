@@ -61,6 +61,7 @@ router.get('/me', authenticate, ctrl.checkAuth);
 
 router.post('/forgot-password', ctrl.forgotPassword);
 router.get('/verify', authenticate, ctrl.checkAuth); // Pour correspondre au frontend
+router.post("/reset-password", ctrl.resetPassword);
 
 
 

@@ -155,6 +155,7 @@ const checkAuth = async (req, _res, next) => {
 /* ------------------------------------------------------------------
    FORGOT PASSWORD (placeholder)
 -------------------------------------------------------------------*/
+// 🔹 Étape 1 : Envoi du lien de réinitialisation
 const forgotPassword = async (req, res) => {
   const { email } = req.body;
 
@@ -165,11 +166,11 @@ const forgotPassword = async (req, res) => {
       return res.status(404).json({ message: "Utilisateur non trouvé" });
     }
 
-    // Génère un token temporaire
+    // Génère un token unique
     const resetToken = Math.random().toString(36).substring(2, 15);
-    const resetTokenExpires = new Date(Date.now() + 3600000); // 1h
+    const resetTokenExpires = new Date(Date.now() + 3600000); // 1 heure
 
-    // 🔹 Met à jour en base de données (tu dois avoir les colonnes correspondantes)
+    // Enregistre le token et la date d’expiration
     await pool.query(
       `UPDATE users 
        SET reset_token = $1, reset_token_expires = $2 
@@ -177,42 +178,77 @@ const forgotPassword = async (req, res) => {
       [resetToken, resetTokenExpires, email]
     );
 
-    // 🔹 Envoi de l'email
+    // Config SMTP
     const transporter = nodemailer.createTransport({
       host: "smtp.gmail.com",
-      port: 587,            // ✅ Port STARTTLS (pas bloqué sur Render)
-      secure: false,        // ✅ false pour STARTTLS
+      port: 587,
+      secure: false,
       auth: {
         user: process.env.SMTP_USER,
         pass: process.env.SMTP_PASS,
       },
-      tls: {
-        rejectUnauthorized: false,
-      },
+      tls: { rejectUnauthorized: false },
     });
 
-
+    // Lien pour réinitialiser
     const resetUrl = `https://application-web-de-gestion-de-courrier-1.onrender.com/reset-password.html?token=${resetToken}`;
-    console.log("🔗 resetUrl généré :", resetUrl);
-    
+
+    // Envoi du mail
     const mailOptions = {
       from: process.env.SMTP_USER,
       to: email,
-      subject: "Réinitialisation de mot de passe",
-      text: `Cliquez sur ce lien pour réinitialiser votre mot de passe : ${resetUrl}`
+      subject: "Réinitialisation de votre mot de passe",
+      text: `Bonjour,\n\nCliquez sur ce lien pour réinitialiser votre mot de passe : ${resetUrl}\n\nCe lien expire dans 1 heure.`,
     };
 
     await transporter.sendMail(mailOptions);
-    console.log(`✅ Email de réinitialisation envoyé à ${email}`);
+    console.log(`✅ Email envoyé à ${email}`);
 
-    return res.json({ message: "Email de réinitialisation envoyé." });
+    res.json({ message: "Email de réinitialisation envoyé." });
 
-  } catch (err) {
-    console.error("❌ Erreur forgotPassword :", err.message);
-    return res.status(500).json({ message: "Erreur serveur" });
+  } catch (error) {
+    console.error("❌ Erreur forgotPassword :", error.message);
+    res.status(500).json({ message: "Erreur serveur" });
+  }
+};
+
+// 🔹 Étape 2 : Réinitialisation du mot de passe
+const resetPassword = async (req, res) => {
+  const { token, newPassword } = req.body;
+
+  try {
+    // Vérifie si le token est valide
+    const result = await pool.query(
+      `SELECT * FROM users WHERE reset_token = $1 AND reset_token_expires > NOW()`,
+      [token]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(400).json({ message: "Lien invalide ou expiré" });
+    }
+
+    const user = result.rows[0];
+
+    // Hash le nouveau mot de passe
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    // Met à jour le mot de passe et supprime le token
+    await pool.query(
+      `UPDATE users
+       SET mot_de_passe = $1, reset_token = NULL, reset_token_expires = NULL
+       WHERE id = $2`,
+      [hashedPassword, user.id]
+    );
+
+    res.json({ message: "Mot de passe réinitialisé avec succès." });
+
+  } catch (error) {
+    console.error("❌ Erreur resetPassword :", error.message);
+    res.status(500).json({ message: "Erreur serveur" });
   }
 };
 
 
 
-module.exports = { register, login, logout, checkAuth, forgotPassword };
+
+module.exports = { register, login, logout, checkAuth, forgotPassword , resetPassword};
