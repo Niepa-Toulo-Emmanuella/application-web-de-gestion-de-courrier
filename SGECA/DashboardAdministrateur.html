@@ -82,18 +82,16 @@
         // Exemple côté frontend
         async function logout() {
             try {
+                // Appel du backend pour supprimer le cookie HttpOnly
                 await fetch(`${API_BASE_URL}/api/auth/logout`, {
                     method: 'POST',
-                    credentials: 'include'
+                    credentials: 'include' // important pour envoyer le cookie
                 });
 
                 // Supprimer les infos du localStorage
                 localStorage.removeItem('token');
                 localStorage.removeItem('userId');
                 localStorage.removeItem('role');
-
-                // Supprimer le cookie côté frontend en le réinitialisant
-                document.cookie = "jwt=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; SameSite=Lax";
 
                 // Rediriger vers login.html
                 window.location.href = 'login.html';
@@ -102,6 +100,7 @@
                 alert('Impossible de se déconnecter. Réessayez.');
             }
         }
+
 
 
     </script>
