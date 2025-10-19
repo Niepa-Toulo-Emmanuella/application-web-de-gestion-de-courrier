@@ -81,19 +81,28 @@
 
         // Exemple côté frontend
         async function logout() {
-            await fetch(`${API_BASE_URL}/api/auth/logout`, {
-                method: 'POST',
-                credentials: 'include'
-        });
+            try {
+                await fetch(`${API_BASE_URL}/api/auth/logout`, {
+                    method: 'POST',
+                    credentials: 'include'
+                });
 
-            // Supprimer les infos du localStorage
-            localStorage.removeItem('token');
-            localStorage.removeItem('userId');
-            localStorage.removeItem('role');
+                // Supprimer les infos du localStorage
+                localStorage.removeItem('token');
+                localStorage.removeItem('userId');
+                localStorage.removeItem('role');
 
-            // Rediriger vers la page de connexion
-            window.location.href = 'login.html';
+                // Supprimer le cookie côté frontend en le réinitialisant
+                document.cookie = "jwt=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; SameSite=Lax";
+
+                // Rediriger vers login.html
+                window.location.href = 'login.html';
+            } catch (err) {
+                console.error('Erreur lors de la déconnexion :', err);
+                alert('Impossible de se déconnecter. Réessayez.');
+            }
         }
+
 
     </script>
 </body>
