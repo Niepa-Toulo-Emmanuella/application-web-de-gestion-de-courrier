@@ -3,7 +3,10 @@ const User = require('../models/User');
 const { generateJWT, generateRememberToken } = require('../utils/generateToken');
 const bcrypt = require('bcryptjs');
 const pool = require('../models/db');
-const mail = require('../config/mail');
+// const mail = require('../config/mail');
+const sendResetEmail = require('../config/mail'); // adapte le chemin si besoin
+const jwt = require('jsonwebtoken');
+
 
 
 
@@ -160,52 +163,32 @@ const checkAuth = async (req, _res, next) => {
 /* ------------------------------------------------------------------
    FORGOT PASSWORD
 -------------------------------------------------------------------*/
+
 const forgotPassword = async (req, res) => {
   const { email } = req.body;
 
   try {
-    // Vérifie si l'utilisateur existe
-    const user = await User.findByEmail(email);
-    if (!user) {
-      return res.status(404).json({ message: "Utilisateur non trouvé" });
+    const result = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: 'Aucun compte trouvé pour cet e-mail.' });
     }
 
-    // Génère un token unique
-    const resetToken = Math.random().toString(36).substring(2, 15);
-    const resetTokenExpires = new Date(Date.now() + 3600000); // 1 heure
+    const user = result.rows[0];
 
-    // Enregistre le token et la date d’expiration
-    await pool.query(
-      `UPDATE users 
-       SET reset_token = $1, reset_token_expires = $2 
-       WHERE email = $3`,
-      [resetToken, resetTokenExpires, email]
-    );
+    // Génère un token JWT de 10 minutes
+    const token = jwt.sign({ email }, process.env.JWT_SECRET, { expiresIn: '10m' });
 
-    // Lien pour réinitialiser
-    const resetUrl = `https://application-web-de-gestion-de-courrier-1.onrender.com/reset-password.html?token=${resetToken}`;
+    // Envoie le mail via SendGrid
+    await sendResetEmail(email, token);
 
-    // Envoi du mail
-    const mailOptions = {
-      from: `"Support" <${process.env.SMTP_USER}>`,
-      to: email,
-      subject: "Réinitialisation de votre mot de passe",
-      text: `Bonjour ${user.first_name || ""},\n\nCliquez sur ce lien pour réinitialiser votre mot de passe : ${resetUrl}\n\nCe lien expire dans 1 heure.`,
-      html: `<p>Bonjour ${user.first_name || ""},</p>
-             <p>Cliquez sur ce lien pour réinitialiser votre mot de passe : <a href="${resetUrl}">${resetUrl}</a></p>
-             <p>Ce lien expire dans 1 heure.</p>`
-    };
+    res.json({ message: 'Un lien de réinitialisation a été envoyé à votre adresse e-mail.' });
 
-    await mail.transporter.sendMail(mailOptions); // ✅ Correct
-
-    console.log(`✅ Email envoyé à ${email}`);
-    res.json({ message: "Email de réinitialisation envoyé." });
-
-  } catch (error) {
-    console.error("❌ Erreur forgotPassword :", error.message);
-    res.status(500).json({ message: "Erreur serveur" });
+  } catch (err) {
+    console.error('❌ Erreur forgotPassword :', err);
+    res.status(500).json({ message: 'Erreur interne du serveur.' });
   }
 };
+
 
 // 🔹 Étape 2 : Réinitialisation du mot de passe
 const resetPassword = async (req, res) => {

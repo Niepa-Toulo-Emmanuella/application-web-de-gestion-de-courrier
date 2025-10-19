@@ -1,28 +1,25 @@
-const nodemailer = require('nodemailer');
+const sgMail = require('@sendgrid/mail');
+require('dotenv').config();
 
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST,
-  port: process.env.SMTP_PORT,
-  secure: false,
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
-  },
-});
+sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
-transporter.verify((error, success) => {
-  if (error) {
-    console.error('Erreur de connexion SMTP:', error);
-  } else {
-    console.log('Connexion SMTP réussie');
-  }
-});
+async function sendResetEmail(to, token) {
+  const resetLink = `https://application-web-de-gestion-de-courrier-1.onrender.com/reset-password.html?token=${token}`;
 
-// src/config/mail.js
-module.exports = {
-  host: process.env.SMTP_HOST,
-  port: process.env.SMTP_PORT,
-  user: process.env.SMTP_USER,
-  pass: process.env.SMTP_PASS,
-  transporter
-};
+  const msg = {
+    to,
+    from: process.env.FROM_EMAIL, // email vérifié sur SendGrid
+    subject: 'Réinitialisation de votre mot de passe',
+    html: `
+      <h3>Réinitialisation de mot de passe</h3>
+      <p>Pour réinitialiser votre mot de passe, cliquez sur le lien ci-dessous :</p>
+      <a href="${resetLink}">${resetLink}</a>
+      <p>Ce lien expirera dans 10 minutes.</p>
+    `,
+  };
+
+  await sgMail.send(msg);
+  console.log('✅ E-mail de réinitialisation envoyé à', to);
+}
+
+module.exports = sendResetEmail;
