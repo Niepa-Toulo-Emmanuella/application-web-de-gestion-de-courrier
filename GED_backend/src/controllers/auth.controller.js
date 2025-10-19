@@ -164,6 +164,7 @@ const checkAuth = async (req, _res, next) => {
    FORGOT PASSWORD
 -------------------------------------------------------------------*/
 
+// Étape 1 : envoyer un lien de réinitialisation
 const forgotPassword = async (req, res) => {
   const { email } = req.body;
 
@@ -175,42 +176,53 @@ const forgotPassword = async (req, res) => {
 
     const user = result.rows[0];
 
-    // Génère un token JWT de 10 minutes
-    const token = jwt.sign({ email }, process.env.JWT_SECRET, { expiresIn: '10m' });
+    // Générer un token JWT (10 minutes)
+    const token = jwt.sign({ id: user.id, email }, process.env.JWT_SECRET, { expiresIn: '10m' });
 
-    // Envoie le mail via SendGrid
+    // Stocker le token et sa date d'expiration dans la DB
+    await pool.query(
+      `UPDATE users
+       SET reset_token = $1,
+           reset_token_expires = NOW() + INTERVAL '10 minutes'
+       WHERE id = $2`,
+      [token, user.id]
+    );
+
+    // Envoyer le mail
     await sendResetEmail(email, token);
 
     res.json({ message: 'Un lien de réinitialisation a été envoyé à votre adresse e-mail.' });
-
   } catch (err) {
     console.error('❌ Erreur forgotPassword :', err);
     res.status(500).json({ message: 'Erreur interne du serveur.' });
   }
 };
 
-
-// 🔹 Étape 2 : Réinitialisation du mot de passe
+// Étape 2 : réinitialiser le mot de passe
 const resetPassword = async (req, res) => {
   const { token, newPassword } = req.body;
 
+  if (!token || !newPassword) {
+    return res.status(400).json({ message: 'Token et nouveau mot de passe requis.' });
+  }
+
   try {
-    // Vérifie si le token est valide
+    // Vérifier que le token correspond et n’est pas expiré
     const result = await pool.query(
       `SELECT * FROM users WHERE reset_token = $1 AND reset_token_expires > NOW()`,
       [token]
     );
 
     if (result.rows.length === 0) {
-      return res.status(400).json({ message: "Lien invalide ou expiré" });
+      return res.status(400).json({ message: 'Lien invalide ou expiré.' });
     }
 
     const user = result.rows[0];
 
-    // Hash le nouveau mot de passe
+    // Hasher le nouveau mot de passe
     const hashedPassword = await bcrypt.hash(newPassword, 10);
 
-    // Met à jour le mot de passe et supprime le token
+    // Mettre à jour le mot de passe et supprimer le token
     await pool.query(
       `UPDATE users
        SET mot_de_passe = $1, reset_token = NULL, reset_token_expires = NULL
@@ -218,11 +230,10 @@ const resetPassword = async (req, res) => {
       [hashedPassword, user.id]
     );
 
-    res.json({ message: "Mot de passe réinitialisé avec succès." });
-
-  } catch (error) {
-    console.error("❌ Erreur resetPassword :", error.message);
-    res.status(500).json({ message: "Erreur serveur" });
+    res.json({ message: 'Mot de passe réinitialisé avec succès.' });
+  } catch (err) {
+    console.error('❌ Erreur resetPassword :', err);
+    res.status(500).json({ message: 'Erreur serveur.' });
   }
 };
 
