@@ -71,17 +71,29 @@
     <main>
         <iframe id="contentFrame" src=""></iframe>
     </main>
+    const API_BASE_URL = "https://application-web-de-gestion-de-courrier.onrender.com";
 
     <script>
         function loadPage(page) {
             document.getElementById("contentFrame").src = page;
         }
 
-        function logout() {
-            localStorage.removeItem("token");
-            alert("Déconnecté !");
-            window.location.href = "login.html";
+        // Exemple côté frontend
+        async function logout() {
+            await fetch(`${API_BASE_URL}/api/auth/logout`, {
+                method: 'POST',
+                credentials: 'include'
+        });
+
+            // Supprimer les infos du localStorage
+            localStorage.removeItem('token');
+            localStorage.removeItem('userId');
+            localStorage.removeItem('role');
+
+            // Rediriger vers la page de connexion
+            window.location.href = 'login.html';
         }
+
     </script>
 </body>
 
