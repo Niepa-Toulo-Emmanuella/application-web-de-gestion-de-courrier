@@ -225,7 +225,7 @@ const resetPassword = async (req, res) => {
     // Mettre à jour le mot de passe et supprimer le token
     await pool.query(
       `UPDATE users
-       SET mot_de_passe = $1, reset_token = NULL, reset_token_expires = NULL
+       SET password = $1, reset_token = NULL, reset_token_expires = NULL
        WHERE id = $2`,
       [hashedPassword, user.id]
     );
