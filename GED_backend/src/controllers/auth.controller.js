@@ -140,8 +140,14 @@ const login = async (req, res) => {
    LOGOUT
 -------------------------------------------------------------------*/
 const logout = async (_req, res) => {
-  res.clearCookie('jwt', { httpOnly: true, secure: true, sameSite: 'Lax' });
-  res.clearCookie('remember_token', { httpOnly: true, secure: true, sameSite: 'Lax' });
+  res.clearCookie('jwt', { httpOnly: true,
+  secure: true,
+  sameSite: "None",
+  path: "/" });
+  res.clearCookie('remember_token', { httpOnly: true,
+  secure: true,
+  sameSite: "None",
+  path: "/" });
   res.json({ success: true, message: 'Déconnexion réussie' });
 
 };
