@@ -3,16 +3,9 @@ const Bordereau = require('../models/Bordereau');
 const fs = require('fs');
 const path = require('path');
 const AWS = require('aws-sdk');
-const puppeteer = require('puppeteer');
+const chromium = require('@sparticuz/chromium');
+const puppeteer = require('puppeteer-core');
 
-// Vérifier que Chromium existe
-const chromiumPath = puppeteer.executablePath();
-
-if (!fs.existsSync(chromiumPath)) {
-  console.error('❌ Chromium non trouvé à ce chemin:', chromiumPath);
-} else {
-  console.log('✅ Chromium trouvé à ce chemin:', chromiumPath);
-}
 
 /* -------- Client S3 Backblaze B2 -------- */
 const s3 = new AWS.S3({
@@ -26,6 +19,8 @@ function generateNumero() {
   const date = new Date();
   return `BDR-${date.getFullYear()}${String(date.getMonth() + 1).padStart(2, '0')}${String(date.getDate()).padStart(2, '0')}-${Date.now()}`;
 }
+
+
 
 /* -------- Générer le PDF depuis template HTML (Render compatible) -------- */
 async function generateBordereauPDF(data) {
@@ -52,15 +47,12 @@ async function generateBordereauPDF(data) {
   // 4️⃣ Nom du fichier temporaire
   const filePath = `temp_bordereau_${Date.now()}.pdf`;
 
-  // 5️⃣ Lancer Puppeteer (sans chemin fixe)
+  // ✅ Lancer Puppeteer avec Chromium intégré (compatible Render)
   const browser = await puppeteer.launch({
-    headless: 'new', // mode headless moderne
-    args: [
-      '--no-sandbox',
-      '--disable-setuid-sandbox',
-      '--disable-gpu',
-      '--single-process'
-    ]
+    args: chromium.args,
+    defaultViewport: chromium.defaultViewport,
+    executablePath: await chromium.executablePath(),
+    headless: chromium.headless,
   });
 
   // 6️⃣ Générer le PDF
