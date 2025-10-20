@@ -20,12 +20,14 @@ function generateNumero() {
 
 /* -------- Générer le PDF depuis template HTML (Render compatible) -------- */
 async function generateBordereauPDF(data) {
+  // 1️⃣ Chemin vers le template
   const templatePath = path.join(__dirname, '../templates/bordereau_template.html');
   console.log('📄 Template utilisé :', templatePath);
 
+  // 2️⃣ Lire le contenu HTML
   let html = fs.readFileSync(templatePath, 'utf-8');
 
-  // Remplacer les placeholders dans le template HTML
+  // 3️⃣ Remplacer les placeholders
   html = html.replace(/{{NUMERO}}/g, data.numero || '')
              .replace(/{{COURRIER}}/g, data.courrier || '')
              .replace(/{{FICHIER_SCAN}}/g, data.fichier_scan || '')
@@ -38,29 +40,30 @@ async function generateBordereauPDF(data) {
              .replace(/{{OBJET}}/g, data.objet || '')
              .replace(/{{OBSERVATIONS}}/g, data.observations || '');
 
+  // 4️⃣ Nom du fichier temporaire
   const filePath = `temp_bordereau_${Date.now()}.pdf`;
 
-  // Puppeteer compatible Render
+  // 5️⃣ Lancer Puppeteer (sans chemin fixe)
   const browser = await puppeteer.launch({
-    headless: "new",
+    headless: 'new', // mode headless moderne
     args: [
-      "--no-sandbox",
-      "--disable-setuid-sandbox",
-      "--disable-gpu",
-      "--no-zygote",
-      "--single-process"
+      '--no-sandbox',
+      '--disable-setuid-sandbox',
+      '--disable-gpu',
+      '--single-process'
     ],
-    executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || puppeteer.executablePath()
+    executablePath: puppeteer.executablePath() // ✅ utilise le chemin Puppeteer
   });
 
+  // 6️⃣ Générer le PDF
   const page = await browser.newPage();
   await page.setContent(html, { waitUntil: 'load' });
   await page.pdf({ path: filePath, format: 'A4', printBackground: true });
+
   await browser.close();
 
-  return filePath;
+  return filePath; // chemin du PDF généré
 }
-
 /* ---------------- LISTE -------------------------------------- */
 exports.list = async (_req, res) => {
   try {
