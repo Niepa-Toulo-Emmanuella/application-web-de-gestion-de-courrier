@@ -8,6 +8,9 @@ const pool = require('./src/models/db');
 const transporter = require('./src/config/mail');
 
 const app = express();
+
+// ✅ Ajoute ceci :
+app.set('trust proxy', 1); // Rend Render ou Nginx digne de confiance pour l'IP client
 // 🌐 CORS
 // Autoriser uniquement ton frontend
 // ✅ CORS ici, dans server.js
