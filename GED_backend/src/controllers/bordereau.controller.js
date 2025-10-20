@@ -5,6 +5,15 @@ const path = require('path');
 const AWS = require('aws-sdk');
 const puppeteer = require('puppeteer');
 
+// Vérifier que Chromium existe
+const chromiumPath = puppeteer.executablePath();
+
+if (!fs.existsSync(chromiumPath)) {
+  console.error('❌ Chromium non trouvé à ce chemin:', chromiumPath);
+} else {
+  console.log('✅ Chromium trouvé à ce chemin:', chromiumPath);
+}
+
 /* -------- Client S3 Backblaze B2 -------- */
 const s3 = new AWS.S3({
   endpoint: process.env.B2_ENDPOINT,
