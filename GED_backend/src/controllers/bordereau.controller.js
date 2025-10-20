@@ -42,20 +42,19 @@ async function generateBordereauPDF(data) {
 
   /* ✅ Correction ici : Puppeteer compatible Render */
   const browser = await puppeteer.launch({
-    headless: 'new',
+    headless: "new",
     args: [
-      '--no-sandbox',
-      '--disable-setuid-sandbox',
-      '--disable-gpu',
-      '--no-zygote',
-      '--single-process'
+      "--no-sandbox",
+      "--disable-setuid-sandbox",
+      "--disable-gpu",
+      "--no-zygote",
+      "--single-process"
     ],
     executablePath:
       process.env.PUPPETEER_EXECUTABLE_PATH ||
-      (process.env.NODE_ENV === 'production'
-        ? '/usr/bin/chromium-browser'
-        : puppeteer.executablePath()),
+      puppeteer.executablePath(), // ✅ utilise le chemin du cache Puppeteer
   });
+
 
   const page = await browser.newPage();
   await page.setContent(html, { waitUntil: 'load' });
