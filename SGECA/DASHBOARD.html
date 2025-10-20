@@ -81,14 +81,36 @@
     </main>
 
     <script>
+        const API_BASE_URL = "https://application-web-de-gestion-de-courrier.onrender.com";
         function loadPage(page) {
             document.getElementById("contentFrame").src = page;
         }
 
-        function logout() {
-            localStorage.removeItem("token");
-            alert("Déconnecté !");
-            window.location.href = "login.html";
+        // function logout() {
+        //     localStorage.removeItem("token");
+        //     alert("Déconnecté !");
+        //     window.location.href = "login.html";
+        // }
+
+        async function logout() {
+            try {
+                // Appel du backend pour supprimer le cookie HttpOnly
+                await fetch(`${API_BASE_URL}/api/auth/logout`, {
+                    method: 'POST',
+                    credentials: 'include' // important pour envoyer le cookie
+                });
+
+                // Supprimer les infos du localStorage
+                // localStorage.removeItem('token');
+                // localStorage.removeItem('userId');
+                // localStorage.removeItem('role');
+
+                // Rediriger vers login.html
+                window.location.href = 'login.html';
+            } catch (err) {
+                console.error('Erreur lors de la déconnexion :', err);
+                alert('Impossible de se déconnecter. Réessayez.');
+            }
         }
     </script>
 
