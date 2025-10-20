@@ -60,8 +60,7 @@ async function generateBordereauPDF(data) {
       '--disable-setuid-sandbox',
       '--disable-gpu',
       '--single-process'
-    ],
-    executablePath: '/usr/bin/chromium', // ✅ utilise le chemin Puppeteer
+    ]
   });
 
   // 6️⃣ Générer le PDF
