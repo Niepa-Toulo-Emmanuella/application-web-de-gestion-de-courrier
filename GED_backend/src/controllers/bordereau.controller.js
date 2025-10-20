@@ -61,7 +61,7 @@ async function generateBordereauPDF(data) {
       '--disable-gpu',
       '--single-process'
     ],
-    executablePath: puppeteer.executablePath() // ✅ utilise le chemin Puppeteer
+    executablePath: '/usr/bin/chromium', // ✅ utilise le chemin Puppeteer
   });
 
   // 6️⃣ Générer le PDF
