@@ -1,8 +1,9 @@
 const db = require('../models/db');
 const path = require('path');
 const fs = require('fs');
-const puppeteer = require('puppeteer');
 const AWS = require('aws-sdk');
+const chromium = require('@sparticuz/chromium');
+const puppeteer = require('puppeteer-core');
 
 // S3 B2
 const s3 = new AWS.S3({
@@ -29,7 +30,15 @@ async function generateImputationPDF(data) {
 
   const filePath = `temp_imputation_${Date.now()}.pdf`;
 
-  const browser = await puppeteer.launch({ headless: true });
+  // ✅ Lancer Puppeteer avec Chromium intégré (compatible Render)
+  const browser = await puppeteer.launch({
+    args: chromium.args,
+    defaultViewport: chromium.defaultViewport,
+    executablePath: await chromium.executablePath(),
+    headless: chromium.headless,
+  });
+
+  
   const page = await browser.newPage();
   await page.setContent(html, { waitUntil: 'load' });
   await page.pdf({ path: filePath, format: 'A4', printBackground: true });
