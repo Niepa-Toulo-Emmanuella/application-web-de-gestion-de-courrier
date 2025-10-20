@@ -18,7 +18,7 @@ function generateNumero() {
   return `BDR-${date.getFullYear()}${String(date.getMonth() + 1).padStart(2, '0')}${String(date.getDate()).padStart(2, '0')}-${Date.now()}`;
 }
 
-/* -------- Générer le PDF depuis template HTML -------- */
+/* -------- Générer le PDF depuis template HTML (Render compatible) -------- */
 async function generateBordereauPDF(data) {
   const templatePath = path.join(__dirname, '../templates/bordereau_template.html');
   console.log('📄 Template utilisé :', templatePath);
@@ -40,7 +40,7 @@ async function generateBordereauPDF(data) {
 
   const filePath = `temp_bordereau_${Date.now()}.pdf`;
 
-  /* ✅ Correction ici : Puppeteer compatible Render */
+  // Puppeteer compatible Render
   const browser = await puppeteer.launch({
     headless: "new",
     args: [
@@ -50,11 +50,8 @@ async function generateBordereauPDF(data) {
       "--no-zygote",
       "--single-process"
     ],
-    executablePath:
-      process.env.PUPPETEER_EXECUTABLE_PATH ||
-      puppeteer.executablePath(), // ✅ utilise le chemin du cache Puppeteer
+    executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || puppeteer.executablePath()
   });
-
 
   const page = await browser.newPage();
   await page.setContent(html, { waitUntil: 'load' });
