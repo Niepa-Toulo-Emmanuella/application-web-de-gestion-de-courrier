@@ -21,12 +21,11 @@ function generateNumero() {
 /* -------- Générer le PDF depuis template HTML -------- */
 async function generateBordereauPDF(data) {
   const templatePath = path.join(__dirname, '../templates/bordereau_template.html');
+  console.log('📄 Template utilisé :', templatePath);
 
-
-  console.log(templatePath); // pour vérifier que le chemin est correct
   let html = fs.readFileSync(templatePath, 'utf-8');
 
-  // Remplacer les placeholders du template
+  // Remplacer les placeholders dans le template HTML
   html = html.replace(/{{NUMERO}}/g, data.numero || '')
              .replace(/{{COURRIER}}/g, data.courrier || '')
              .replace(/{{FICHIER_SCAN}}/g, data.fichier_scan || '')
@@ -41,7 +40,23 @@ async function generateBordereauPDF(data) {
 
   const filePath = `temp_bordereau_${Date.now()}.pdf`;
 
-  const browser = await puppeteer.launch({ headless: true });
+  /* ✅ Correction ici : Puppeteer compatible Render */
+  const browser = await puppeteer.launch({
+    headless: 'new',
+    args: [
+      '--no-sandbox',
+      '--disable-setuid-sandbox',
+      '--disable-gpu',
+      '--no-zygote',
+      '--single-process'
+    ],
+    executablePath:
+      process.env.PUPPETEER_EXECUTABLE_PATH ||
+      (process.env.NODE_ENV === 'production'
+        ? '/usr/bin/chromium-browser'
+        : puppeteer.executablePath()),
+  });
+
   const page = await browser.newPage();
   await page.setContent(html, { waitUntil: 'load' });
   await page.pdf({ path: filePath, format: 'A4', printBackground: true });
@@ -75,7 +90,7 @@ exports.detail = async (req, res) => {
   }
 };
 
-// ---------------- CREATE -------------------------------------
+/* ---------------- CREATE ------------------------------------- */
 exports.create = async (req, res) => {
   try {
     const {
@@ -99,7 +114,7 @@ exports.create = async (req, res) => {
 
     const numero = generateNumero();
 
-    // 1️⃣ Génération du PDF à partir du template
+    // 1️⃣ Génération du PDF
     const pdfPath = await generateBordereauPDF({
       numero,
       courrier: `Courrier #${courrier.id}`,
@@ -127,7 +142,7 @@ exports.create = async (req, res) => {
 
     const fichier_bordereau = s3Params.Key;
 
-    // 3️⃣ Insertion en DB
+    // 3️⃣ Insertion DB
     const result = await db.query(`
       INSERT INTO bordereaux (
         courrier_id, expediteur_id, destinataire_id, numero_reference, date_courrier,
@@ -164,7 +179,7 @@ exports.create = async (req, res) => {
   }
 };
 
-/* ---------------- ENREGISTRER UNE TRANSMISSION ---------------- */
+/* ---------------- ENVOI -------------------------------------- */
 exports.transmettreBordereau = async (req, res) => {
   try {
     const { courrier_id, bordereau_id, destinataire_id, expediteur_id } = req.body;
