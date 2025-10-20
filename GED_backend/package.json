@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "nodemon server.js",
     "start": "node server.js",
-    "postinstall": "echo 'Installing dependencies...' && npx puppeteer browsers install chrome"
+    "postinstall": "npx puppeteer install"
   },
   "keywords": [],
   "author": "",
