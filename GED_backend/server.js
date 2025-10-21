@@ -81,86 +81,80 @@ app.use('/api/imputations', imputationRoutes);
 // === ROUTES DE TÉLÉCHARGEMENT === //
 const router = express.Router();
 
-// 1️⃣ Fichier scanné
+// === ROUTES DE TÉLÉCHARGEMENT AVEC LOGS ===
+
+// 📁 1️⃣ Fichier scanné (hébergé sur S3 / B2)
 router.get("/api/courriers/download/:fileName", async (req, res) => {
   const { fileName } = req.params;
-  console.log("📥 [Téléchargement COURRIER] Nom du fichier reçu :", fileName);
-
   try {
     const fileUrl = decodeURIComponent(fileName);
-    console.log("🌍 URL décodée :", fileUrl);
+    console.log("📥 Téléchargement du fichier scanné :", fileUrl);
 
-    const response = await fetch(fileUrl);
+    // Si le fichier est déjà une URL complète (commence par http), on l'utilise directement
+    const finalUrl = fileUrl.startsWith("http")
+      ? fileUrl
+      : `https://s3.us-east-005.backblazeb2.com/CourrierBucket2/${fileUrl}`;
 
-    if (!response.ok) {
-      console.error("❌ Erreur lors du téléchargement du fichier scanné :", response.status, response.statusText);
-      return res.status(500).json({ success: false, message: "Fichier scanné inaccessible" });
-    }
+    const response = await fetch(finalUrl);
+    if (!response.ok) throw new Error(`Erreur HTTP ${response.status}`);
 
     const buffer = await response.arrayBuffer();
-    console.log("✅ Fichier scanné récupéré avec succès :", fileUrl.split('/').pop());
-
-    res.setHeader("Content-Disposition", `attachment; filename="${fileUrl.split('/').pop()}"`);
+    res.setHeader("Content-Disposition", `attachment; filename="${finalUrl.split('/').pop()}"`);
     res.send(Buffer.from(buffer));
   } catch (err) {
-    console.error("💥 Erreur dans la route /api/courriers/download :", err);
-    res.status(500).json({ success: false, message: "Erreur téléchargement courrier" });
+    console.error("❌ Erreur téléchargement fichier scanné :", err);
+    res.status(500).json({ success: false, message: "Erreur téléchargement fichier scanné" });
   }
 });
 
-// 2️⃣ Fichier d’imputation
+
+// 📄 2️⃣ Fichier d’imputation
 router.get("/api/imputations/download/:fileName", async (req, res) => {
   const { fileName } = req.params;
-  console.log("📥 [Téléchargement IMPUTATION] Nom du fichier reçu :", fileName);
-
   try {
     const fileUrl = decodeURIComponent(fileName);
-    console.log("🌍 URL décodée :", fileUrl);
+    console.log("📥 Téléchargement du fichier d’imputation :", fileUrl);
 
-    const response = await fetch(fileUrl);
+    const finalUrl = fileUrl.startsWith("http")
+      ? fileUrl
+      : `https://s3.us-east-005.backblazeb2.com/CourrierBucket2/${fileUrl}`;
 
-    if (!response.ok) {
-      console.error("❌ Erreur lors du téléchargement du fichier d’imputation :", response.status, response.statusText);
-      return res.status(500).json({ success: false, message: "Fichier d’imputation inaccessible" });
-    }
+    const response = await fetch(finalUrl);
+    if (!response.ok) throw new Error(`Erreur HTTP ${response.status}`);
 
     const buffer = await response.arrayBuffer();
-    console.log("✅ Fichier d’imputation récupéré avec succès :", fileUrl.split('/').pop());
-
-    res.setHeader("Content-Disposition", `attachment; filename="${fileUrl.split('/').pop()}"`);
+    res.setHeader("Content-Disposition", `attachment; filename="${finalUrl.split('/').pop()}"`);
     res.send(Buffer.from(buffer));
   } catch (err) {
-    console.error("💥 Erreur dans la route /api/imputations/download :", err);
+    console.error("❌ Erreur téléchargement imputation :", err);
     res.status(500).json({ success: false, message: "Erreur téléchargement imputation" });
   }
 });
 
-// 3️⃣ Fichier bordereau
+
+// 🧾 3️⃣ Fichier bordereau
 router.get("/api/bordereaux/download/:fileName", async (req, res) => {
   const { fileName } = req.params;
-  console.log("📥 [Téléchargement BORDEREAU] Nom du fichier reçu :", fileName);
-
   try {
     const fileUrl = decodeURIComponent(fileName);
-    console.log("🌍 URL décodée :", fileUrl);
+    console.log("📥 Téléchargement du fichier bordereau :", fileUrl);
 
-    const response = await fetch(fileUrl);
+    const finalUrl = fileUrl.startsWith("http")
+      ? fileUrl
+      : `https://s3.us-east-005.backblazeb2.com/CourrierBucket2/${fileUrl}`;
 
-    if (!response.ok) {
-      console.error("❌ Erreur lors du téléchargement du fichier bordereau :", response.status, response.statusText);
-      return res.status(500).json({ success: false, message: "Fichier bordereau inaccessible" });
-    }
+    const response = await fetch(finalUrl);
+    if (!response.ok) throw new Error(`Erreur HTTP ${response.status}`);
 
     const buffer = await response.arrayBuffer();
-    console.log("✅ Fichier bordereau récupéré avec succès :", fileUrl.split('/').pop());
-
-    res.setHeader("Content-Disposition", `attachment; filename="${fileUrl.split('/').pop()}"`);
+    res.setHeader("Content-Disposition", `attachment; filename="${finalUrl.split('/').pop()}"`);
     res.send(Buffer.from(buffer));
   } catch (err) {
-    console.error("💥 Erreur dans la route /api/bordereaux/download :", err);
+    console.error("❌ Erreur téléchargement bordereau :", err);
     res.status(500).json({ success: false, message: "Erreur téléchargement bordereau" });
   }
 });
+
 
 app.use(router);
 // === FIN DES ROUTES DE TÉLÉCHARGEMENT === //
