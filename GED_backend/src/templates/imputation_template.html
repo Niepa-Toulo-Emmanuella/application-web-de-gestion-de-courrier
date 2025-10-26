@@ -27,9 +27,7 @@
       grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
       gap: 5px;
     }
-    p {
-      margin: 6px 0;
-    }
+    p { margin: 6px 0; }
   </style>
 </head>
 <body>
@@ -43,68 +41,68 @@
 
   <!-- I. Première transmission -->
   <h3>I. PREMIÈRE TRANSMISSION</h3>
-  <label><input type="checkbox" {{MINISTRE}}> MINISTRE</label>
-  <label><input type="checkbox" {{POUR_INFORMATION}}> Pour information</label>
-  <label><input type="checkbox" {{POUR_AVIS}}> Pour avis</label>
-  <label><input type="checkbox" {{AUTRES_TRANSMISSION}}> Autres</label>
+  <label><input type="checkbox" {{CHECK_MINISTRE}}> MINISTRE</label>
+  <label><input type="checkbox" {{CHECK_POUR_INFORMATION}}> Pour information</label>
+  <label><input type="checkbox" {{CHECK_POUR_AVIS}}> Pour avis</label>
+  <label><input type="checkbox" {{CHECK_AUTRES}}> Autres</label>
 
   <!-- II. Imputation du courrier -->
   <h3>II. IMPUTATION DU COURRIER</h3>
   <div class="grid">
-    <label><input type="checkbox" {{DIRECTEUR_CABINET}}> Directeur de Cabinet</label>
-    <label><input type="checkbox" {{DJSRH}}> DJSRH</label>
-    <label><input type="checkbox" {{DIRECTEUR_CABINET_ADJOINT}}> Directeur de Cabinet Adjoint</label>
-    <label><input type="checkbox" {{IGSJP}}> IGSJP</label>
-    <label><input type="checkbox" {{CHEF_CABINET}}> Chef de Cabinet</label>
-    <label><input type="checkbox" {{CONSEILLER_TECH}}> Conseiller Tech</label>
-    <label><input type="checkbox" {{CHARGE_ETUDES}}> Chargé d’Études</label>
-    <label><input type="checkbox" {{SECRETARIAT_PARTICULIER}}> Secrétariat Particulier</label>
-    <label><input type="checkbox" {{JACP}}> JACP</label>
-    <label><input type="checkbox" {{DIRECTEUR}}> Directeur</label>
-    <label><input type="checkbox" {{PREMIER_PRESIDENT}}> 1er Président</label>
-    <label><input type="checkbox" {{PRESIDENT}}> Président</label>
-    <label><input type="checkbox" {{PROCUREUR}}> Procureur</label>
-    <label><input type="checkbox" {{SERVICE}}> Service</label>
-    <label><input type="checkbox" {{ASSISTANT_MINISTRE}}> Assistant du Ministre</label>
-    <label><input type="checkbox" {{CHEF_PROTOCOLE}}> Chef Protocole</label>
-    <label><input type="checkbox" {{CHARGE_MISSION}}> Chargé de Mission</label>
-    <label><input type="checkbox" {{AUTRES_IMPUTATION}}> Autres</label>
+    <label><input type="checkbox" {{CHECK_DIRECTEUR_DE_CABINET}}> Directeur de Cabinet</label>
+    <label><input type="checkbox" {{CHECK_DJSRH}}> DJSRH</label>
+    <label><input type="checkbox" {{CHECK_DIRECTEUR_DE_CABINET_ADJOINT}}> Directeur de Cabinet Adjoint</label>
+    <label><input type="checkbox" {{CHECK_IGSJP}}> IGSJP</label>
+    <label><input type="checkbox" {{CHECK_CHEF_DE_CABINET}}> Chef de Cabinet</label>
+    <label><input type="checkbox" {{CHECK_CONSEILLER_TECH}}> Conseiller Tech</label>
+    <label><input type="checkbox" {{CHECK_CHARGE_D_ETUDES}}> Chargé d’Études</label>
+    <label><input type="checkbox" {{CHECK_SECRETARIAT_PARTICULIER}}> Secrétariat Particulier</label>
+    <label><input type="checkbox" {{CHECK_JACP}}> JACP</label>
+    <label><input type="checkbox" {{CHECK_DIRECTEUR}}> Directeur</label>
+    <label><input type="checkbox" {{CHECK_1ER_PRESIDENT}}> 1er Président</label>
+    <label><input type="checkbox" {{CHECK_PRESIDENT}}> Président</label>
+    <label><input type="checkbox" {{CHECK_PROCUREUR}}> Procureur</label>
+    <label><input type="checkbox" {{CHECK_SERVICE}}> Service</label>
+    <label><input type="checkbox" {{CHECK_ASSISTANT_DU_MINISTRE}}> Assistant du Ministre</label>
+    <label><input type="checkbox" {{CHECK_CHEF_PROTOCOLE}}> Chef Protocole</label>
+    <label><input type="checkbox" {{CHECK_CHARGE_DE_MISSION}}> Chargé de Mission</label>
+    <label><input type="checkbox" {{CHECK_AUTRES}}> Autres</label>
   </div>
 
   <!-- III. Instructions -->
   <h3>III. INSTRUCTIONS</h3>
   <div class="grid">
-    <label><input type="checkbox" {{URGENCE}}> Urgence 24h</label>
-    <label><input type="checkbox" {{ATTRIBUTION}}> Attribution</label>
-    <label><input type="checkbox" {{AVIS}}> Avis</label>
-    <label><input type="checkbox" {{ETUDE}}> Étude</label>
-    <label><input type="checkbox" {{SYNTHESE}}> Synthèse</label>
-    <label><input type="checkbox" {{MEMO}}> Mémo</label>
-    <label><input type="checkbox" {{CLASSEMENT}}> Classement</label>
-    <label><input type="checkbox" {{CLASSEMENT_ATTENTE}}> Classement en attente</label>
-    <label><input type="checkbox" {{DIFFUSION}}> Diffusion</label>
-    <label><input type="checkbox" {{REPONSE}}> Réponse</label>
-    <label><input type="checkbox" {{REPRESENTATION}}> Représentation</label>
-    <label><input type="checkbox" {{INFORMATION}}> Information</label>
-    <label><input type="checkbox" {{SUIVI}}> Suivi</label>
-    <label><input type="checkbox" {{CLASSEMENT_DEFINITIF}}> Classement définitif</label>
-    <label><input type="checkbox" {{PROPOSITION}}> Proposition</label>
-    <label><input type="checkbox" {{ME_VOIR}}> Me voir</label>
-    <label><input type="checkbox" {{RAPPORT}}> Rapport</label>
-    <label><input type="checkbox" {{NOTES_MINISTRE}}> Notes au Ministre</label>
-    <label><input type="checkbox" {{EXECUTION}}> Exécution</label>
-    <label><input type="checkbox" {{COURRIER_TRANSMISSION}}> Courrier de transmission</label>
-    <label><input type="checkbox" {{SOIT_TRANSMIS}}> Soit Transmis</label>
+    <label><input type="checkbox" {{CHECK_URGENCE_24H}}> Urgence 24h</label>
+    <label><input type="checkbox" {{CHECK_ATTRIBUTION}}> Attribution</label>
+    <label><input type="checkbox" {{CHECK_AVIS}}> Avis</label>
+    <label><input type="checkbox" {{CHECK_ETUDE}}> Étude</label>
+    <label><input type="checkbox" {{CHECK_SYNTHESE}}> Synthèse</label>
+    <label><input type="checkbox" {{CHECK_MEMO}}> Mémo</label>
+    <label><input type="checkbox" {{CHECK_CLASSEMENT}}> Classement</label>
+    <label><input type="checkbox" {{CHECK_CLASSEMENT_EN_ATTENTE}}> Classement en attente</label>
+    <label><input type="checkbox" {{CHECK_DIFFUSION}}> Diffusion</label>
+    <label><input type="checkbox" {{CHECK_REPONSE}}> Réponse</label>
+    <label><input type="checkbox" {{CHECK_REPRESENTATION}}> Représentation</label>
+    <label><input type="checkbox" {{CHECK_INFORMATION}}> Information</label>
+    <label><input type="checkbox" {{CHECK_SUIVI}}> Suivi</label>
+    <label><input type="checkbox" {{CHECK_CLASSEMENT_DEFINITIF}}> Classement définitif</label>
+    <label><input type="checkbox" {{CHECK_PROPOSITION}}> Proposition</label>
+    <label><input type="checkbox" {{CHECK_ME_VOIR}}> Me voir</label>
+    <label><input type="checkbox" {{CHECK_RAPPORT}}> Rapport</label>
+    <label><input type="checkbox" {{CHECK_NOTES_AU_MINISTRE}}> Notes au Ministre</label>
+    <label><input type="checkbox" {{CHECK_EXECUTION}}> Exécution</label>
+    <label><input type="checkbox" {{CHECK_COURRIER_DE_TRANSMISSION}}> Courrier de transmission</label>
+    <label><input type="checkbox" {{CHECK_SOIT_TRANSMIS}}> Soit Transmis</label>
   </div>
 
   <!-- IV. Deuxième traitement -->
   <h3>IV. DEUXIÈME TRAITEMENT DU MINISTRE</h3>
-  <label><input type="checkbox" {{TRT_CLASSEMENT_DEFINITIF}}> Classement définitif</label>
-  <label><input type="checkbox" {{TRT_CLASSEMENT_ATTENTE}}> Classement en attente</label>
-  <label><input type="checkbox" {{TRT_EXECUTION}}> Exécution</label>
-  <label><input type="checkbox" {{TRT_RDV}}> RDV</label>
-  <label><input type="checkbox" {{TRT_AUDIENCE}}> Audience</label>
-  <label><input type="checkbox" {{TRT_AUTRES}}> Autres</label>
+  <label><input type="checkbox" {{CHECK_CLASSEMENT_DEFINITIF}}> Classement définitif</label>
+  <label><input type="checkbox" {{CHECK_CLASSEMENT_EN_ATTENTE}}> Classement en attente</label>
+  <label><input type="checkbox" {{CHECK_EXECUTION}}> Exécution</label>
+  <label><input type="checkbox" {{CHECK_RDV}}> RDV</label>
+  <label><input type="checkbox" {{CHECK_AUDIENCE}}> Audience</label>
+  <label><input type="checkbox" {{CHECK_AUTRES}}> Autres</label>
 
   <!-- Observations -->
   <h3>Observations</h3>
