@@ -1,162 +1,113 @@
 <!DOCTYPE html>
 <html lang="fr">
-
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
   <title>Bordereau d'Imputation</title>
-  <link rel="stylesheet" href="bordereau.css" />
   <style>
     body {
       font-family: Arial, sans-serif;
-      background-color: #f8f8f8;
+      background-color: #fff;
       padding: 30px;
       color: #333;
     }
-
-    form {
-      background: #fff;
-      padding: 25px;
-      border-radius: 6px;
-      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-      max-width: 1000px;
-      margin: auto;
-    }
-
+    h1 { text-align: center; color: #1a237e; }
     h3 {
       margin-top: 30px;
       color: #1a237e;
       border-bottom: 1px solid #ccc;
       padding-bottom: 5px;
     }
-
-    label {
-      display: block;
-      margin: 10px 0;
-      font-size: 15px;
-    }
-
+    label { display: block; margin: 8px 0; }
     input[type="checkbox"] {
       margin-right: 10px;
+      transform: scale(1.2);
     }
-
-    input[type="text"],
-    input[type="date"],
-    input[type="time"],
-    textarea {
-      width: 100%;
-      padding: 8px;
-      margin-top: 5px;
-      margin-bottom: 15px;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-    }
-
-    textarea {
-      resize: vertical;
-    }
-
     .grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-      gap: 10px;
+      gap: 5px;
     }
-
-    button[type="submit"] {
-      background-color: #1a237e;
-      color: #fff;
-      padding: 10px 25px;
-      font-size: 16px;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-
-    button[type="submit"]:hover {
-      background-color: #3949ab;
+    p {
+      margin: 6px 0;
     }
   </style>
 </head>
-
 <body>
-  <form id="form-imputation">
-    <!-- I. Première transmission -->
-    <h3>I. PREMIÈRE TRANSMISSION</h3>
-    <label><input type="checkbox" name="premiere_transmission" value="MINISTRE"> MINISTRE</label>
-    <label><input type="checkbox" name="premiere_transmission" value="Pour information"> Pour information</label>
-    <label><input type="checkbox" name="premiere_transmission" value="Pour avis"> Pour avis</label>
-    <label><input type="checkbox" name="premiere_transmission" value="Autres"> Autres</label>
+  <h1>Bordereau d'Imputation</h1>
 
-    <!-- II. Imputation du courrier -->
-    <h3>II. IMPUTATION DU COURRIER</h3>
-    <div class="grid">
-      <label><input type="checkbox" name="imputations" value="Directeur de Cabinet"> Directeur de Cabinet</label>
-      <label><input type="checkbox" name="imputations" value="DJSRH"> DJSRH</label>
-      <label><input type="checkbox" name="imputations" value="Directeur de Cabinet Adjoint"> Directeur de Cabinet
-        Adjoint</label>
-      <label><input type="checkbox" name="imputations" value="IGSJP"> IGSJP</label>
-      <label><input type="checkbox" name="imputations" value="Chef de Cabinet"> Chef de Cabinet</label>
-      <label><input type="checkbox" name="imputations" value="Conseiller Tech"> Conseiller Tech</label>
-      <label><input type="checkbox" name="imputations" value="Chargé d’Études"> Chargé d’Études</label>
-      <label><input type="checkbox" name="imputations" value="Secrétariat Particulier"> Secrétariat Particulier</label>
-      <label><input type="checkbox" name="imputations" value="JACP"> JACP</label>
-      <label><input type="checkbox" name="imputations" value="Directeur"> Directeur</label>
-      <label><input type="checkbox" name="imputations" value="1er Président"> 1er Président</label>
-      <label><input type="checkbox" name="imputations" value="Président"> Président</label>
-      <label><input type="checkbox" name="imputations" value="Procureur"> Procureur</label>
-      <label><input type="checkbox" name="imputations" value="Service"> Service</label>
-      <label><input type="checkbox" name="imputations" value="Assistant du Ministre"> Assistant du Ministre</label>
-      <label><input type="checkbox" name="imputations" value="Chef Protocole"> Chef Protocole</label>
-      <label><input type="checkbox" name="imputations" value="Chargé de Mission"> Chargé de Mission</label>
-      <label><input type="checkbox" name="imputations" value="Autres"> Autres</label>
-    </div>
+  <p><strong>Imputation ID:</strong> {{IMPUTATION_ID}}</p>
+  <p><strong>Bordereau ID:</strong> {{BORDEREAU_ID}}</p>
+  <p><strong>Date départ:</strong> {{DATE_DEPART}}</p>
+  <p><strong>Durée traitement:</strong> {{DUREE_TRAITEMENT}}</p>
+  <p><strong>Date retour:</strong> {{DATE_RETOUR}}</p>
 
-    <!-- III. Instructions -->
-    <h3>III. INSTRUCTIONS</h3>
-    <label><input type="checkbox" name="instructions" value="Urgence 24h"> Urgence 24h</label>
-    <label><input type="checkbox" name="instructions" value="Attribution"> Attribution</label>
-    <label><input type="checkbox" name="instructions" value="Avis"> Avis</label>
-    <label><input type="checkbox" name="instructions" value="Étude"> Étude</label>
-    <label><input type="checkbox" name="instructions" value="Synthèse"> Synthèse</label>
-    <label><input type="checkbox" name="instructions" value="Mémo"> Mémo</label>
-    <label><input type="checkbox" name="instructions" value="Classement"> Classement</label>
-    <label><input type="checkbox" name="instructions" value="Classement en attente"> Classement en attente</label>
-    <label><input type="checkbox" name="instructions" value="Diffusion"> Diffusion</label>
-    <label><input type="checkbox" name="instructions" value="Réponse"> Réponse</label>
-    <label><input type="checkbox" name="instructions" value="Représentation"> Représentation</label>
-    <label><input type="checkbox" name="instructions" value="Information"> Information</label>
-    <label><input type="checkbox" name="instructions" value="Suivi"> Suivi</label>
-    <label><input type="checkbox" name="instructions" value="Classement définitif"> Classement définitif</label>
-    <label><input type="checkbox" name="instructions" value="Proposition"> Proposition</label>
-    <label><input type="checkbox" name="instructions" value="Me voir"> Me voir</label>
-    <label><input type="checkbox" name="instructions" value="Rapport"> Rapport</label>
-    <label><input type="checkbox" name="instructions" value="Notes au Ministre"> Notes au Ministre</label>
-    <label><input type="checkbox" name="instructions" value="Exécution"> Exécution</label>
-    <label><input type="checkbox" name="instructions" value="Courrier de transmission"> Courrier de transmission</label>
-    <label><input type="checkbox" name="instructions" value="Soit Transmis"> Soit Transmis</label>
+  <!-- I. Première transmission -->
+  <h3>I. PREMIÈRE TRANSMISSION</h3>
+  <label><input type="checkbox" {{MINISTRE}}> MINISTRE</label>
+  <label><input type="checkbox" {{POUR_INFORMATION}}> Pour information</label>
+  <label><input type="checkbox" {{POUR_AVIS}}> Pour avis</label>
+  <label><input type="checkbox" {{AUTRES_TRANSMISSION}}> Autres</label>
 
-    <!-- IV. Deuxième traitement du ministre -->
-    <h3>IV. DEUXIÈME TRAITEMENT DU MINISTRE</h3>
-    <label>Date de départ : <input type="date" name="date_depart" /></label>
-    <label>Durée de traitement : <input type="text" name="duree_traitement" /></label>
-    <label>Date de retour : <input type="date" name="date_retour" /></label>
-    <label><input type="checkbox" name="traitement_actions" value="Classement définitif"> Classement définitif</label>
-    <label><input type="checkbox" name="traitement_actions" value="Classement en attente"> Classement en attente</label>
-    <label><input type="checkbox" name="traitement_actions" value="Exécution"> Exécution</label>
-    <label><input type="checkbox" name="traitement_actions" value="RDV"> RDV</label>
-    <label><input type="checkbox" name="traitement_actions" value="Audience"> Audience</label>
-    <label><input type="checkbox" name="traitement_actions" value="Autres"> Autres</label>
+  <!-- II. Imputation du courrier -->
+  <h3>II. IMPUTATION DU COURRIER</h3>
+  <div class="grid">
+    <label><input type="checkbox" {{DIRECTEUR_CABINET}}> Directeur de Cabinet</label>
+    <label><input type="checkbox" {{DJSRH}}> DJSRH</label>
+    <label><input type="checkbox" {{DIRECTEUR_CABINET_ADJOINT}}> Directeur de Cabinet Adjoint</label>
+    <label><input type="checkbox" {{IGSJP}}> IGSJP</label>
+    <label><input type="checkbox" {{CHEF_CABINET}}> Chef de Cabinet</label>
+    <label><input type="checkbox" {{CONSEILLER_TECH}}> Conseiller Tech</label>
+    <label><input type="checkbox" {{CHARGE_ETUDES}}> Chargé d’Études</label>
+    <label><input type="checkbox" {{SECRETARIAT_PARTICULIER}}> Secrétariat Particulier</label>
+    <label><input type="checkbox" {{JACP}}> JACP</label>
+    <label><input type="checkbox" {{DIRECTEUR}}> Directeur</label>
+    <label><input type="checkbox" {{PREMIER_PRESIDENT}}> 1er Président</label>
+    <label><input type="checkbox" {{PRESIDENT}}> Président</label>
+    <label><input type="checkbox" {{PROCUREUR}}> Procureur</label>
+    <label><input type="checkbox" {{SERVICE}}> Service</label>
+    <label><input type="checkbox" {{ASSISTANT_MINISTRE}}> Assistant du Ministre</label>
+    <label><input type="checkbox" {{CHEF_PROTOCOLE}}> Chef Protocole</label>
+    <label><input type="checkbox" {{CHARGE_MISSION}}> Chargé de Mission</label>
+    <label><input type="checkbox" {{AUTRES_IMPUTATION}}> Autres</label>
+  </div>
 
-    <!-- Observations -->
-    <h3>Observations</h3>
-    <textarea name="observations" rows="4"></textarea>
+  <!-- III. Instructions -->
+  <h3>III. INSTRUCTIONS</h3>
+  <div class="grid">
+    <label><input type="checkbox" {{URGENCE}}> Urgence 24h</label>
+    <label><input type="checkbox" {{ATTRIBUTION}}> Attribution</label>
+    <label><input type="checkbox" {{AVIS}}> Avis</label>
+    <label><input type="checkbox" {{ETUDE}}> Étude</label>
+    <label><input type="checkbox" {{SYNTHESE}}> Synthèse</label>
+    <label><input type="checkbox" {{MEMO}}> Mémo</label>
+    <label><input type="checkbox" {{CLASSEMENT}}> Classement</label>
+    <label><input type="checkbox" {{CLASSEMENT_ATTENTE}}> Classement en attente</label>
+    <label><input type="checkbox" {{DIFFUSION}}> Diffusion</label>
+    <label><input type="checkbox" {{REPONSE}}> Réponse</label>
+    <label><input type="checkbox" {{REPRESENTATION}}> Représentation</label>
+    <label><input type="checkbox" {{INFORMATION}}> Information</label>
+    <label><input type="checkbox" {{SUIVI}}> Suivi</label>
+    <label><input type="checkbox" {{CLASSEMENT_DEFINITIF}}> Classement définitif</label>
+    <label><input type="checkbox" {{PROPOSITION}}> Proposition</label>
+    <label><input type="checkbox" {{ME_VOIR}}> Me voir</label>
+    <label><input type="checkbox" {{RAPPORT}}> Rapport</label>
+    <label><input type="checkbox" {{NOTES_MINISTRE}}> Notes au Ministre</label>
+    <label><input type="checkbox" {{EXECUTION}}> Exécution</label>
+    <label><input type="checkbox" {{COURRIER_TRANSMISSION}}> Courrier de transmission</label>
+    <label><input type="checkbox" {{SOIT_TRANSMIS}}> Soit Transmis</label>
+  </div>
 
-    <!-- Bordereau concerné -->
-    <input type="hidden" id="bordereau_id" name="bordereau_id" />
+  <!-- IV. Deuxième traitement -->
+  <h3>IV. DEUXIÈME TRAITEMENT DU MINISTRE</h3>
+  <label><input type="checkbox" {{TRT_CLASSEMENT_DEFINITIF}}> Classement définitif</label>
+  <label><input type="checkbox" {{TRT_CLASSEMENT_ATTENTE}}> Classement en attente</label>
+  <label><input type="checkbox" {{TRT_EXECUTION}}> Exécution</label>
+  <label><input type="checkbox" {{TRT_RDV}}> RDV</label>
+  <label><input type="checkbox" {{TRT_AUDIENCE}}> Audience</label>
+  <label><input type="checkbox" {{TRT_AUTRES}}> Autres</label>
 
-    <button type="submit">Enregistrer l’imputation</button>
-  </form>
-
+  <!-- Observations -->
+  <h3>Observations</h3>
+  <p>{{OBSERVATIONS}}</p>
 </body>
-
 </html>

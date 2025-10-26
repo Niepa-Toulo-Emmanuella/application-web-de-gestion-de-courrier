@@ -19,14 +19,47 @@ async function generateImputationPDF(data) {
   console.log(templatePath); // pour vérifier que le chemin est correct
   let html = fs.readFileSync(templatePath, 'utf-8');
 
+ // Remplacer les champs simples
   html = html.replace(/{{IMPUTATION_ID}}/g, data.imputation_id || '')
              .replace(/{{BORDEREAU_ID}}/g, data.bordereau_id || '')
-             .replace(/{{INSTRUCTIONS}}/g, data.instructions || '')
+             .replace(/{{INSTRUCTIONS_TEXT}}/g, (data.instructions || []).join(', '))
              .replace(/{{DATE_DEPART}}/g, data.date_depart || '')
              .replace(/{{DUREE_TRAITEMENT}}/g, data.duree_traitement || '')
              .replace(/{{DATE_RETOUR}}/g, data.date_retour || '')
-             .replace(/{{TRAITEMENT_ACTIONS}}/g, data.traitement_actions || '')
+             .replace(/{{TRAITEMENT_ACTIONS_TEXT}}/g, (data.traitement_actions || []).join(', '))
              .replace(/{{OBSERVATIONS}}/g, data.observations || '');
+
+  // 🔹 Toutes les cases à cocher du formulaire original
+  const allCheckboxes = [
+    // I. Première transmission
+    "MINISTRE", "Pour information", "Pour avis", "Autres",
+    // II. Imputation du courrier
+    "Directeur de Cabinet", "DJSRH", "Directeur de Cabinet Adjoint", "IGSJP",
+    "Chef de Cabinet", "Conseiller Tech", "Chargé d’Études", "Secrétariat Particulier",
+    "JACP", "Directeur", "1er Président", "Président", "Procureur", "Service",
+    "Assistant du Ministre", "Chef Protocole", "Chargé de Mission", "Autres",
+    // III. Instructions
+    "Urgence 24h", "Attribution", "Avis", "Étude", "Synthèse", "Mémo", "Classement",
+    "Classement en attente", "Diffusion", "Réponse", "Représentation", "Information",
+    "Suivi", "Classement définitif", "Proposition", "Me voir", "Rapport",
+    "Notes au Ministre", "Exécution", "Courrier de transmission", "Soit Transmis",
+    // IV. Traitement du ministre
+    "RDV", "Audience"
+  ];
+
+  // 🔹 Cocher dynamiquement les cases sélectionnées
+  allCheckboxes.forEach(label => {
+    const isChecked =
+      (data.premiere_transmission?.includes(label)) ||
+      (data.imputations?.includes(label)) ||
+      (data.instructions?.includes(label)) ||
+      (data.traitement_actions?.includes(label));
+
+    html = html.replace(
+      new RegExp(`{{CHECK_${label.replace(/[^a-zA-Z0-9]/g, '_').toUpperCase()}}}`, 'g'),
+      isChecked ? 'checked' : ''
+    );
+  });
 
   const filePath = `temp_imputation_${Date.now()}.pdf`;
 
