@@ -122,7 +122,10 @@
   <script>
     async function chargerUtilisateurs() {
       const role = document.getElementById("filtreRole").value;
-      const url = role ? `https://application-web-de-gestion-de-courrier.onrender.com/api/users?role=${role}` : 'http://localhost:3000/api/users';
+      const url = role
+        ? `https://application-web-de-gestion-de-courrier.onrender.com/api/users?role=${role}`
+        : 'https://application-web-de-gestion-de-courrier.onrender.com/api/users';
+
 
       try {
         const response = await fetch(url);
