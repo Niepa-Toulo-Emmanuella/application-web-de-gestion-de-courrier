@@ -143,15 +143,15 @@
 
       // Construire le lien complet pour le téléchargement
       const imputationLink = t.fichier_imputation
-        ? `/api/imputations/download/${encodeURIComponent(t.fichier_imputation)}`
+        ? `https://application-web-de-gestion-de-courrier.onrender.com/api/imputations/download/${encodeURIComponent(t.fichier_imputation)}`
         : null;
 
       const bordereauLink = t.fichier_bordereau
-        ? `/api/bordereaux/download/${encodeURIComponent(t.fichier_bordereau)}`
+        ? `https://application-web-de-gestion-de-courrier.onrender.com/api/bordereaux/download/${encodeURIComponent(t.fichier_bordereau)}`
         : null;
 
       const scanLink = t.fichier_scan
-        ? `/api/courriers/download/${encodeURIComponent(t.fichier_scan)}`
+        ? `https://application-web-de-gestion-de-courrier.onrender.com/api/courriers/download/${encodeURIComponent(t.fichier_scan)}`
         : null;
 
       console.log("Données reçues pour ce courrier :", t);
