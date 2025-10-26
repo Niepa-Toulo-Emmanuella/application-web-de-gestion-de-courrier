@@ -17,7 +17,7 @@ app.set('trust proxy', 1); // Rend Render ou Nginx digne de confiance pour l'IP 
 app.use(cors({
   origin: [
     "https://application-web-de-gestion-de-courrier-1.onrender.com",
-    "http://localhost:3000"
+    "https://application-web-de-gestion-de-courrier.onrender.com"
   ],
   credentials: true,
 }));
