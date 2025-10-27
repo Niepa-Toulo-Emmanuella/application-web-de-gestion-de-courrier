@@ -55,8 +55,15 @@ async function generateImputationPDF(data) {
       (data.instructions?.includes(label)) ||
       (data.traitement_actions?.includes(label));
 
+    const placeholder = label
+      .normalize("NFD") // retire les accents
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-zA-Z0-9]/g, "_")
+      .toUpperCase();
+
+
     html = html.replace(
-      new RegExp(`{{CHECK_${label.replace(/[^a-zA-Z0-9]/g, '_').toUpperCase()}}}`, 'g'),
+      new RegExp(`{{CHECK_${placeholder}}}`, 'g'),
       isChecked ? 'checked' : ''
     );
   });
@@ -106,6 +113,8 @@ exports.create = async (req, res) => {
     // 1️⃣ Génération du PDF
     const pdfPath = await generateImputationPDF({
       bordereau_id,
+      premiere_transmission,
+      imputations,
       instructions,
       date_depart,
       duree_traitement,
