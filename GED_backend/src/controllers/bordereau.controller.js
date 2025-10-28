@@ -256,7 +256,7 @@ exports.registreTransmission = async (req, res) => {
         b.numero_enregistrement,
         b.numero_reference,
         b.objet,
-        i.destinataire,
+        i.imputations,
         ti.observations,
         c.fichier_scan AS piece_jointe,
         i.fichier_imputation,
