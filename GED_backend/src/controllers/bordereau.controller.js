@@ -256,7 +256,7 @@ exports.registreTransmission = async (req, res) => {
         b.numero_enregistrement,
         b.numero_reference,
         b.objet,
-        i.imputations,
+        i.imputations AS destinataire,  -- 👈 le champ imputations devient le destinataire
         ti.observations,
         c.fichier_scan AS piece_jointe,
         i.fichier_imputation,
@@ -269,10 +269,24 @@ exports.registreTransmission = async (req, res) => {
     `;
 
     const result = await pool.query(query);
-    res.json({ success: true, data: result.rows });
+
+    // 🔗 Construction des URLs complètes pour les fichiers
+    const data = result.rows.map(r => ({
+      ...r,
+      piece_jointe: r.piece_jointe
+        ? `https://s3.us-east-005.backblazeb2.com/${process.env.B2_BUCKET_NAME}/${r.piece_jointe}`
+        : null,
+      fichier_imputation: r.fichier_imputation
+        ? `https://s3.us-east-005.backblazeb2.com/${process.env.B2_BUCKET_NAME}/${r.fichier_imputation}`
+        : null,
+      fichier_bordereau: r.fichier_bordereau
+        ? `https://s3.us-east-005.backblazeb2.com/${process.env.B2_BUCKET_NAME}/${r.fichier_bordereau}`
+        : null
+    }));
+
+    res.json({ success: true, data });
   } catch (err) {
     console.error("Erreur registreTransmission :", err);
     res.status(500).json({ success: false, message: err.message });
   }
 };
-
