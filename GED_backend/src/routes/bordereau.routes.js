@@ -62,6 +62,9 @@ router.post('/create', upload.single('fichier_bordereau'), bordereauController.c
 // ---------------- ROUTES ENVOIS ----------------
 router.get("/mes-envois", envoyerController.getEnvoisPourDestinataire);
 
+router.get('/registre-transmission', bordereauController.registreTransmission);
+
+
 // ---------------- ADMIN ----------------
 router.delete('/:id', isAdmin, bordereauController.remove);
 

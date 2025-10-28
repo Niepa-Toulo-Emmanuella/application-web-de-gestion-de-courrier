@@ -246,3 +246,31 @@ exports.remove = async (req, res) => {
     res.status(500).json({ success: false, message: 'Erreur lors de la suppression' });
   }
 };
+exports.registreTransmission = async (req, res) => {
+  try {
+    const query = `
+      SELECT 
+        ti.date_depart,
+        ti.observations,
+        b.numero_enregistrement,
+        b.numero_reference,
+        b.objet,
+        b.fichier_bordereau,
+        i.imputations AS destinataire,
+        i.fichier_imputation,
+        c.fichier_scan
+      FROM transmissions_imputation ti
+      LEFT JOIN bordereaux b ON ti.bordereau_id = b.id
+      LEFT JOIN imputations i ON ti.imputation_id = i.id
+      LEFT JOIN courriers c ON b.courrier_id = c.id
+      ORDER BY ti.date_depart DESC;
+    `;
+
+    const { rows } = await db.query(query);
+
+    res.json({ success: true, data: rows });
+  } catch (err) {
+    console.error("Erreur chargement registre de transmission :", err);
+    res.status(500).json({ success: false, message: "Erreur serveur" });
+  }
+};
