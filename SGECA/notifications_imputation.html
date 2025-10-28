@@ -148,30 +148,17 @@
           headers: { Authorization: "Bearer " + token }
         });
 
-        // Vérifier si la réponse est OK
-        if (!res.ok) {
-          throw new Error(`Erreur HTTP ${res.status}`);
-        }
+        if (!res.ok) throw new Error(`Erreur HTTP ${res.status}`);
 
-        // Vérifier le type de contenu
-        const contentType = res.headers.get("Content-Type");
-        if (!contentType || !contentType.includes("pdf")) {
-          const text = await res.text();
-          console.error("Réponse non PDF :", text);
-          alert("Le fichier n'a pas pu être téléchargé. Vérifiez qu'il existe sur le serveur.");
-          return;
-        }
+        // Récupérer le nom du fichier depuis le header
+        const dispo = res.headers.get("Content-Disposition");
+        const match = dispo && dispo.match(/filename="(.+)"/);
+        const filename = match ? match[1] : `courrier_${courrierId}`;
 
-        // Convertir en blob pour le téléchargement
+        // Convertir en blob et télécharger
         const blob = await res.blob();
         const url = URL.createObjectURL(blob);
 
-        // Récupérer le nom du fichier depuis le header ou fallback
-        const dispo = res.headers.get("Content-Disposition");
-        const match = dispo && dispo.match(/filename="(.+)"/);
-        const filename = match ? match[1] : `courrier_${courrierId}.pdf`;
-
-        // Créer un lien temporaire pour télécharger
         const a = document.createElement("a");
         a.href = url;
         a.download = filename;
@@ -186,6 +173,7 @@
         alert("Erreur lors du téléchargement du fichier. Vérifiez votre connexion et vos droits d'accès.");
       }
     }
+
 
 
     function showDetails(t) {
