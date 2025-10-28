@@ -255,6 +255,11 @@ exports.createTransmission = async (req, res) => {
        VALUES ($1,$2,$3,$4,$5,$6) RETURNING *`,
       [imputation_id, destinataire_id, expediteur_id, instructions, duree_traitement, observations]
     );
+    await db.query(
+      `UPDATE imputations SET statut = 'envoye' WHERE id = $1`,
+      [imputation_id]
+    );
+
 
     res.json({ success: true, data: result.rows[0] });
   } catch (err) {
@@ -267,7 +272,10 @@ exports.createTransmission = async (req, res) => {
 // Lister toutes les imputations (pour le select)
 exports.getAll = async (req, res) => {
   try {
-    const result = await db.query('SELECT * FROM imputations ORDER BY id DESC');
+    const result = await db.query(
+      'SELECT * FROM imputations WHERE statut = $1 ORDER BY id DESC',
+      ['en_attente']
+    );
     res.json(result.rows);
   } catch (err) {
     console.error(err);
