@@ -5,6 +5,8 @@ const path = require('path');
 const AWS = require('aws-sdk');
 const chromium = require('@sparticuz/chromium');
 const puppeteer = require('puppeteer-core');
+const pool = require("../models/db");
+
 
 
 /* -------- Client S3 Backblaze B2 -------- */
