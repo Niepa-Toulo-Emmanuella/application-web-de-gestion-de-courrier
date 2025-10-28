@@ -258,7 +258,7 @@ exports.registreTransmission = async (req, res) => {
         b.objet,
         i.imputations AS destinataire,  -- 👈 le champ imputations devient le destinataire
         ti.observations,
-        c.fichier_scan AS piece_jointe,
+        c.fichier_scan,
         i.fichier_imputation,
         b.fichier_bordereau
       FROM transmissions_imputation ti
@@ -273,8 +273,8 @@ exports.registreTransmission = async (req, res) => {
     // 🔗 Construction des URLs complètes pour les fichiers
     const data = result.rows.map(r => ({
       ...r,
-      piece_jointe: r.piece_jointe
-        ? `https://s3.us-east-005.backblazeb2.com/${process.env.B2_BUCKET_NAME}/${r.piece_jointe}`
+      fichier_scan: r.fichier_scan
+        ? `https://s3.us-east-005.backblazeb2.com/${process.env.B2_BUCKET_NAME}/${r.fichier_scan}`
         : null,
       fichier_imputation: r.fichier_imputation
         ? `https://s3.us-east-005.backblazeb2.com/${process.env.B2_BUCKET_NAME}/${r.fichier_imputation}`
