@@ -150,9 +150,10 @@
         ? `https://application-web-de-gestion-de-courrier.onrender.com/api/bordereaux/download/${encodeURIComponent(t.fichier_bordereau)}`
         : null;
 
-      const scanLink = t.fichier_scan
-        ? `https://application-web-de-gestion-de-courrier.onrender.com/api/courriers/download/${encodeURIComponent(t.fichier_scan)}`
+      const scanLink = t.courrier_id
+        ? `https://application-web-de-gestion-de-courrier.onrender.com/api/courriers/secure-download/${t.courrier_id}`
         : null;
+
 
       console.log("Données reçues pour ce courrier :", t);
 
