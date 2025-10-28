@@ -52,6 +52,8 @@ router.get('/courriers/download/:fileName', async (req, res) => {
 // ---------------- AUTHENTIFICATION ----------------
 router.use(authenticate);
 
+router.get('/registre-transmission', bordereauController.registreTransmission);
+
 // ---------------- ROUTES BORDEREAUX ----------------
 router.get('/', bordereauController.list);
 router.get('/:id', bordereauController.detail);
@@ -62,7 +64,7 @@ router.post('/create', upload.single('fichier_bordereau'), bordereauController.c
 // ---------------- ROUTES ENVOIS ----------------
 router.get("/mes-envois", envoyerController.getEnvoisPourDestinataire);
 
-router.get('/registre-transmission', bordereauController.registreTransmission);
+
 
 
 // ---------------- ADMIN ----------------
