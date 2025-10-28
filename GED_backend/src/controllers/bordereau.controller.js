@@ -251,26 +251,26 @@ exports.registreTransmission = async (req, res) => {
     const query = `
       SELECT 
         ti.date_depart,
-        ti.observations,
         b.numero_enregistrement,
         b.numero_reference,
         b.objet,
-        b.fichier_bordereau,
-        i.imputations AS destinataire,
+        i.destinataire,
+        ti.observations,
+        c.fichier_scan AS piece_jointe,
         i.fichier_imputation,
-        c.fichier_scan
+        b.fichier_bordereau
       FROM transmissions_imputation ti
-      LEFT JOIN bordereaux b ON ti.bordereau_id = b.id
-      LEFT JOIN imputations i ON ti.imputation_id = i.id
-      LEFT JOIN courriers c ON b.courrier_id = c.id
+      JOIN imputations i ON ti.imputation_id = i.id
+      JOIN bordereaux b ON i.bordereau_id = b.id
+      JOIN courriers c ON i.courrier_id = c.id
       ORDER BY ti.date_depart DESC;
     `;
 
-    const { rows } = await db.query(query);
-
-    res.json({ success: true, data: rows });
+    const result = await pool.query(query);
+    res.json({ success: true, data: result.rows });
   } catch (err) {
-    console.error("Erreur chargement registre de transmission :", err);
-    res.status(500).json({ success: false, message: "Erreur serveur" });
+    console.error("Erreur registreTransmission :", err);
+    res.status(500).json({ success: false, message: err.message });
   }
 };
+
