@@ -9,30 +9,70 @@
 
     <style>
         /* ---------- Styles spécifiques registre ---------- */
+        body {
+            background-color: #f8f9fa;
+        }
+
         #searchInput {
-            max-width: 300px;
+            max-width: 400px;
+            border-radius: 50px;
+            border: 1px solid #ced4da;
         }
 
-        /* Surligner la ligne au survol */
+        #table-bordereaux {
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        #table-bordereaux thead {
+            background: linear-gradient(90deg, #4b6cb7, #182848);
+            color: #fff;
+        }
+
         #table-bordereaux tbody tr:hover {
-            background-color: #f3f6ff;
+            background-color: #e9f0ff;
         }
 
-        /* Réduire la taille du texte dans les cellules date/numéro */
         .small-text {
             font-size: 0.875rem;
+        }
+
+        .badge-bg-envoye {
+            background-color: #198754;
+            color: #fff;
+        }
+
+        .badge-bg-attente {
+            background-color: #6c757d;
+            color: #fff;
+        }
+
+        .btn-outline-primary {
+            font-size: 0.85rem;
+        }
+
+        h2 {
+            color: #182848;
+            font-weight: 600;
+        }
+
+        .table-responsive {
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
         }
     </style>
 </head>
 
 <body class="bg-light">
 
-    <div class="container py-4">
+    <div class="container py-5">
         <h2 class="text-center mb-4">Registre de transcription</h2>
 
         <!-- Barre de recherche -->
         <div class="d-flex justify-content-between align-items-center mb-3">
-            <input id="searchInput" type="search" class="form-control" placeholder="Rechercher…" />
+            <input id="searchInput" type="search" class="form-control me-3" placeholder="Rechercher…" />
             <div id="loading" class="ms-3 d-none">
                 <div class="spinner-border text-primary" role="status"></div>
             </div>
@@ -42,22 +82,24 @@
         <div id="alert" class="alert alert-danger d-none" role="alert"></div>
 
         <!-- Tableau -->
-        <table class="table table-striped table-hover align-middle" id="table-bordereaux">
-            <thead class="table-primary text-center">
-                <tr>
-                    <th>Référence</th>
-                    <th>Objet</th>
-                    <th>Expéditeur</th>
-                    <th>Date du courrier</th>
-                    <th>Date d'arrivée</th>
-                    <th>Numéro d'enregistrement</th>
-                    <th>Heure</th>
-                    <th>pièce jointe</th>
-                    <th>Statut</th>
-                </tr>
-            </thead>
-            <tbody></tbody>
-        </table>
+        <div class="table-responsive shadow-sm rounded">
+            <table class="table table-striped table-hover align-middle mb-0" id="table-bordereaux">
+                <thead class="text-center">
+                    <tr>
+                        <th>Référence</th>
+                        <th>Objet</th>
+                        <th>Expéditeur</th>
+                        <th>Date du courrier</th>
+                        <th>Date d'arrivée</th>
+                        <th>Numéro d'enregistrement</th>
+                        <th>Heure</th>
+                        <th>Pièce jointe</th>
+                        <th>Statut</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
     </div>
 
     <script>
@@ -76,32 +118,30 @@
             const dateCourrier = b.date_courrier ? new Date(b.date_courrier).toLocaleDateString('fr-FR') : '—';
             const dateArrivee = b.date_arrivee ? new Date(b.date_arrivee).toLocaleDateString('fr-FR') : '—';
             const heure = b.heure ?? '—';
-            const statutClass = b.statut === 'envoye' ? 'bg-success' : 'bg-secondary';
+            const statutClass = b.statut === 'envoye' ? 'badge-bg-envoye' : 'badge-bg-attente';
 
             return `
             <tr>
-            <td>${b.numero_reference ?? '—'}</td>
-            <td>${b.objet ?? '—'}</td>
-            <td>${b.expediteur ?? '—'}</td>
-            <td class="small-text">${dateCourrier}</td>
-            <td class="small-text">${dateArrivee}</td>
-            <td>${b.numero_enregistrement ?? '—'}</td>
-            <td>${heure}</td>
-            <td>
-                ${b.fichier_scan
+                <td>${b.numero_reference ?? '—'}</td>
+                <td>${b.objet ?? '—'}</td>
+                <td>${b.expediteur ?? '—'}</td>
+                <td class="small-text">${dateCourrier}</td>
+                <td class="small-text">${dateArrivee}</td>
+                <td>${b.numero_enregistrement ?? '—'}</td>
+                <td>${heure}</td>
+                <td>
+                    ${b.fichier_scan
                     ? `<a href="${b.fichier_scan}" target="_blank" class="btn btn-sm btn-outline-primary">📎 Voir</a>`
                     : '—'}
-            </td>
-            <td><span class="badge ${statutClass}">${b.statut ?? '—'}</span></td>
+                </td>
+                <td><span class="badge ${statutClass}">${b.statut ?? '—'}</span></td>
             </tr>`;
         }
 
-
-
         /** Affiche le tableau */
         function afficherTableau(bordereaux) {
-            if (bordereaux.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" class="text-center fst-italic">Aucun bordereau trouvé.</td></tr>';
+            if (!bordereaux.length) {
+                tbody.innerHTML = '<tr><td colspan="9" class="text-center fst-italic">Aucun bordereau trouvé.</td></tr>';
             } else {
                 tbody.innerHTML = bordereaux.map(renderRow).join('');
             }
