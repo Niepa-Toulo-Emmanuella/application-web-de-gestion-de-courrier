@@ -138,8 +138,9 @@
         const select = document.getElementById("imputationSelect");
         imputations.forEach(i => {
           const option = document.createElement("option");
+          const dateText = i.date_depart ? new Date(i.date_depart).toLocaleDateString() : 'Date non définie';
           option.value = i.id;
-          option.textContent = `#${i.id} - ${i.numero || 'N/A'} | ${i.objet || 'Sans objet'}`;
+          option.textContent = `${i.observations || 'Pas d’observations'} | ${dateText}`;
           select.appendChild(option);
         });
       } catch (err) {
