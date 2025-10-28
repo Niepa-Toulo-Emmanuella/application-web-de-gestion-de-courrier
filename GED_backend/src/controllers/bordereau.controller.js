@@ -86,12 +86,10 @@ exports.list = async (_req, res) => {
 
     const { rows } = await db.query(query);
 
-    // 🔹 Préparer l'URL complète des fichiers scannés
+    // 🔹 Ne rien reconstruire, utiliser directement l'URL existante
     const bordereaux = rows.map(b => ({
       ...b,
-      fichier_scan: b.fichier_scan
-        ? `https://f000.backblazeb2.com/file/${process.env.B2_BUCKET_NAME}/${b.fichier_scan}`
-        : null
+      fichier_scan: b.fichier_scan ?? null
     }));
 
     res.json({ success: true, data: bordereaux });
