@@ -85,12 +85,22 @@ exports.list = async (_req, res) => {
     `;
 
     const { rows } = await db.query(query);
-    res.json({ success: true, data: rows });
+
+    // 🔹 Préparer l'URL complète des fichiers scannés
+    const bordereaux = rows.map(b => ({
+      ...b,
+      fichier_scan: b.fichier_scan
+        ? `https://f000.backblazeb2.com/file/${process.env.B2_BUCKET_NAME}/${b.fichier_scan}`
+        : null
+    }));
+
+    res.json({ success: true, data: bordereaux });
   } catch (err) {
     console.error("Erreur chargement bordereaux :", err);
     res.status(500).json({ success: false, message: "Erreur serveur" });
   }
 };
+
 
 
 /* ---------------- DETAIL ------------------------------------- */
