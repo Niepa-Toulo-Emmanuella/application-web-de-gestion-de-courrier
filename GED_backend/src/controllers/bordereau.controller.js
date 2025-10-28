@@ -67,13 +67,31 @@ async function generateBordereauPDF(data) {
 /* ---------------- LISTE -------------------------------------- */
 exports.list = async (_req, res) => {
   try {
-    const data = await Bordereau.findAll();
-    res.json({ success: true, data });
+    const query = `
+      SELECT 
+        b.id,
+        b.numero_reference,
+        b.objet,
+        b.date_courrier,
+        b.date_arrivee,
+        b.heure,
+        b.numero_enregistrement,
+        b.statut,
+        c.expediteur,
+        c.fichier_scan
+      FROM bordereaux b
+      LEFT JOIN courriers c ON b.courrier_id = c.id
+      ORDER BY b.id DESC;
+    `;
+
+    const { rows } = await db.query(query);
+    res.json({ success: true, data: rows });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ success: false, message: 'Erreur serveur' });
+    console.error("Erreur chargement bordereaux :", err);
+    res.status(500).json({ success: false, message: "Erreur serveur" });
   }
 };
+
 
 /* ---------------- DETAIL ------------------------------------- */
 exports.detail = async (req, res) => {

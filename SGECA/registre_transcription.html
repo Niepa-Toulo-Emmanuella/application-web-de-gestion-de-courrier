@@ -75,26 +75,31 @@
         function renderRow(b) {
             const dateCourrier = b.date_courrier ? new Date(b.date_courrier).toLocaleDateString('fr-FR') : '—';
             const dateArrivee = b.date_arrivee ? new Date(b.date_arrivee).toLocaleDateString('fr-FR') : '—';
-            const heure = b.heure_arrivee ?? '—';
+            const heure = b.heure ?? '—';  // correction ici
             const statutClass = b.statut === 'envoye' ? 'bg-success' : 'bg-secondary';
 
+            const fichierUrl = b.fichier_scan
+                ? `https://f000.backblazeb2.com/file/${process.env.B2_BUCKET_NAME}/${b.fichier_scan}`
+                : null;
+
             return `
-        <tr>
-          <td>${b.numero_reference ?? '—'}</td>
-          <td>${b.objet ?? '—'}</td>
-          <td>${b.expediteur ?? '—'}</td>
-          <td class="small-text">${dateCourrier}</td>
-          <td class="small-text">${dateArrivee}</td>
-          <td>${b.numero_enregistrement ?? '—'}</td>
-          <td>${heure}</td>
-          <td>
-            ${b.fichier_scan
-                    ? `<a href="${b.fichier_scan}" target="_blank" class="btn btn-sm btn-outline-primary">📎 Voir</a>`
+            <tr>
+            <td>${b.numero_reference ?? '—'}</td>
+            <td>${b.objet ?? '—'}</td>
+            <td>${b.expediteur ?? '—'}</td>
+            <td class="small-text">${dateCourrier}</td>
+            <td class="small-text">${dateArrivee}</td>
+            <td>${b.numero_enregistrement ?? '—'}</td>
+            <td>${heure}</td>
+            <td>
+                ${fichierUrl
+                    ? `<a href="${fichierUrl}" target="_blank" class="btn btn-sm btn-outline-primary">📎 Voir</a>`
                     : '—'}
-          </td>
-          <td><span class="badge ${statutClass}">${b.statut ?? '—'}</span></td>
-        </tr>`;
+            </td>
+            <td><span class="badge ${statutClass}">${b.statut ?? '—'}</span></td>
+            </tr>`;
         }
+
 
         /** Affiche le tableau */
         function afficherTableau(bordereaux) {
