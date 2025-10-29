@@ -277,8 +277,9 @@ exports.registreTransmission = async (req, res) => {
       fichier_scan: r.fichier_scan || null,
       // fichier_bordereau : on construit l’URL complète
       fichier_bordereau: r.fichier_bordereau
-        ? `https://s3.us-east-005.backblazeb2.com/${process.env.B2_BUCKET_NAME}/${r.fichier_bordereau}`
+        ? `https://s3.us-east-005.backblazeb2.com/${process.env.B2_BUCKET_NAME}/${r.fichier_bordereau.replace(/^CourrierBucket2\//, '')}`
         : null,
+
       fichier_imputation: r.fichier_imputation
         ? `https://s3.us-east-005.backblazeb2.com/${process.env.B2_BUCKET_NAME}/${r.fichier_imputation}`
         : null
