@@ -19,6 +19,31 @@ const s3 = new AWS.S3({
   s3ForcePathStyle: true, // important pour Backblaze
 });
 
+// -------------------- Fonction pour générer le numéro d'enregistrement -------------------- //
+async function genererNumeroEnregistrement() {
+  const prefix = "MJ"; // ✏️ Ton code service
+  const maintenant = new Date();
+
+  const annee = maintenant.getFullYear();
+  const mois = String(maintenant.getMonth() + 1).padStart(2, "0"); // 01 à 12
+  const jour = String(maintenant.getDate()).padStart(2, "0"); // 01 à 31
+
+  // 🕵️ Chercher le dernier courrier créé aujourd’hui
+  const result = await Courrier.findLastByDate(annee, mois, jour);
+
+  // Si aucun courrier aujourd'hui, on commence à 1
+  let numero = 1;
+  if (result) {
+    const parts = result.numero_enregistrement.split("-");
+    numero = parseInt(parts[4]) + 1; // La 5e partie contient le numéro du jour
+  }
+
+  const numeroFormatte = numero.toString().padStart(3, "0");
+
+  return `${prefix}-${annee}-${mois}-${jour}-${numeroFormatte}`;
+}
+
+
 /* ------------------------------ POST ------------------------------ */
 const create = async (req, res) => {
   try {
@@ -40,9 +65,11 @@ const create = async (req, res) => {
       destinataire,
       date_reception,
       date_arrivee,
-      numero_enregistrement,
       heure
     } = req.body;
+
+    // 3️⃣ Générer automatiquement le numéro d’enregistrement
+    const numero_enregistrement = await genererNumeroEnregistrement();
 
     const courrier = await Courrier.create({
       reference,

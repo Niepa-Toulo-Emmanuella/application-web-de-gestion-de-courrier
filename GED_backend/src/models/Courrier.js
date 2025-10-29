@@ -95,6 +95,20 @@ class Courrier {
   static async remove(id) {
     await pool.query('DELETE FROM courriers WHERE id = $1', [id]);
   }
+
+  static async findLastByDate(annee, mois, jour) {
+    // On filtre les courriers créés le même jour (en se basant sur la date d'arrivée)
+    const query = `
+      SELECT * FROM courriers
+      WHERE EXTRACT(YEAR FROM date_arrivee) = $1
+        AND EXTRACT(MONTH FROM date_arrivee) = $2
+        AND EXTRACT(DAY FROM date_arrivee) = $3
+      ORDER BY id DESC
+      LIMIT 1
+    `;
+    const result = await pool.query(query, [annee, mois, jour]);
+    return result.rows[0] || null;
+  }
 }
 
 module.exports = Courrier;
