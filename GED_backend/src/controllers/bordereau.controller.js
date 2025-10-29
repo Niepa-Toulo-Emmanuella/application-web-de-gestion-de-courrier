@@ -91,7 +91,8 @@ exports.list = async (_req, res) => {
     // 🔹 Ne rien reconstruire, utiliser directement l'URL existante
     const bordereaux = rows.map(b => ({
       ...b,
-      fichier_scan: b.fichier_scan ?? null
+      fichier_scan: b.fichier_scan ?? null,
+      courrier_id: b.courrier_id // <-- essentiel !
     }));
 
     res.json({ success: true, data: bordereaux });
