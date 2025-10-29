@@ -207,14 +207,29 @@
 
     function displayFileInfo(fichierScan) {
       const fileInfo = document.getElementById('file-info');
-      if (!fichierScan || fichierScan.trim() === '') {
+
+      // Si aucun fichier
+      if (!fichierScan || (Array.isArray(fichierScan) && fichierScan.length === 0)) {
         fileInfo.innerHTML = `📄 Aucun fichier attaché`;
         return;
       }
-      const fileName = fichierScan.split('/').pop();
-      const downloadUrl = `https://application-web-de-gestion-de-courrier.onrender.com/api/bordereaux/download/${encodeURIComponent(fileName)}`;
-      fileInfo.innerHTML = `📎 <a href="${downloadUrl}" target="_blank">${fileName}</a>`;
+
+      // Si c’est un tableau (plusieurs fichiers, ou un seul)
+      if (Array.isArray(fichierScan)) {
+        const links = fichierScan.map(fichier => {
+          const fileName = fichier.split('/').pop();
+          const downloadUrl = `https://application-web-de-gestion-de-courrier.onrender.com/api/bordereaux/download/${encodeURIComponent(fileName)}`;
+          return `<li><a href="${downloadUrl}" target="_blank">${fileName}</a></li>`;
+        }).join('');
+        fileInfo.innerHTML = `<ul>${links}</ul>`;
+        return;
+      }
+
+      // Cas par défaut (si le format n’est pas reconnu)
+      fileInfo.innerHTML = `📄 Aucun fichier attaché`;
     }
+
+
 
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
