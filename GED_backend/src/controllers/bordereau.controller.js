@@ -72,6 +72,7 @@ exports.list = async (_req, res) => {
     const query = `
       SELECT 
         b.id,
+        b.courrier_id,
         b.numero_reference,
         b.objet,
         b.date_courrier,
@@ -88,12 +89,14 @@ exports.list = async (_req, res) => {
 
     const { rows } = await db.query(query);
 
-    // 🔹 Ne rien reconstruire, utiliser directement l'URL existante
-    const bordereaux = rows.map(b => ({
-      ...b,
-      fichier_scan: b.fichier_scan ?? null,
-      courrier_id: b.courrier_id // <-- essentiel !
-    }));
+     // 🔹 Filtrer les bordereaux sans courrier_id
+    const bordereaux = rows
+      .filter(b => b.courrier_id) // ✅ ignore ceux sans courrier_id
+      .map(b => ({
+        ...b,
+        fichier_scan: b.fichier_scan ?? null,
+        courrier_id: b.courrier_id
+      }));
 
     res.json({ success: true, data: bordereaux });
   } catch (err) {

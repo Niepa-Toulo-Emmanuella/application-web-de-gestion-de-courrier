@@ -167,22 +167,23 @@
                 bordereauSelect.innerHTML = '<option value="">-- Choisir --</option>';
 
                 if (result.success) {
-                    const enAttente = result.data.filter(b => b.statut === "en_attente");
+                    const enAttente = result.data.filter(b => b.statut === "en_attente" && b.courrier_id); // ✅ filtre ici aussi
                     enAttente.forEach(b => {
                         // tableau
                         const tr = document.createElement("tr");
                         const date = b.date_arrivee ? b.date_arrivee.split("T")[0] : "";
                         tr.innerHTML = `<td>${b.numero}</td><td>${b.objet}</td><td>${date}</td>`;
-
                         tbody.appendChild(tr);
+
                         // select
                         const option = document.createElement("option");
                         option.value = b.id;
-                        option.dataset.courrierId = b.courrier_id; // id du courrier
+                        option.dataset.courrierId = b.courrier_id;
                         option.textContent = `${b.numero} - ${b.objet}`;
                         bordereauSelect.appendChild(option);
                     });
                 }
+
             } catch (err) {
                 console.error("Erreur chargement bordereaux:", err);
                 showNotif("❌ Impossible de charger les bordereaux", "error");
@@ -225,33 +226,21 @@
             const destinataireId = destinataireSelect.value;
 
             const token = localStorage.getItem("jwt") || localStorage.getItem("token");
-            console.log("JWT:", token);
             const currentUser = parseJwt(token);
-            console.log("Decoded JWT:", currentUser);
             const currentUserId = currentUser.userId || currentUser.id || currentUser.user_id || currentUser.users_id || currentUser.sub;
-            console.log("👉 Expéditeur ID:", currentUserId);
 
-
-            // ⚠️ Vérifier que l'expéditeur existe
-            if (!currentUserId) {
-                showNotif("⚠️ Impossible d'identifier l'expéditeur", "error");
+            // ⚠️ Vérification obligatoire du courrier
+            if (!courrierId) {
+                showNotif("⚠️ Ce bordereau n'a pas de courrier associé", "error");
                 return;
             }
 
-            if (!bordereauId || !destinataireId) {
+            if (!bordereauId || !destinataireId || !currentUserId) {
                 showNotif("⚠️ Tous les champs sont obligatoires", "error");
                 return;
             }
 
             try {
-                // ✅ Afficher après déclaration des variables
-                console.log("📤 Données envoyées :", {
-                    bordereau_id: bordereauId,
-                    destinataire_id: destinataireId,
-                    expediteur_id: currentUserId,
-                    courrier_id: courrierId
-                });
-
                 const res = await fetch(`${API_BASE}/bordereaux/transmettreBordereau`, {
                     method: "POST",
                     headers: {
