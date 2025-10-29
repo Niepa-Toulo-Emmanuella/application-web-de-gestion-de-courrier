@@ -1,3 +1,4 @@
+// courrier.controller.js
 require('dotenv').config(); // <--- AJOUTE CECI TOUT EN HAUT
 const fs = require('fs');
 const Courrier = require('../models/Courrier');
@@ -47,16 +48,8 @@ async function genererNumeroEnregistrement() {
 /* ------------------------------ POST ------------------------------ */
 const create = async (req, res) => {
   try {
-    console.log("✅ Données reçues dans req.body :", req.body);
-    let fileUrl = null;
-    if (req.file) {
-      fileUrl = await uploadToB2(
-        req.file.path,
-        req.file.originalname,
-        req.file.mimetype
-      );
-      fs.unlink(req.file.path, () => {});
-    }
+    console.log("✅ Données reçues :", req.body);
+    console.log("📂 Fichiers reçus :", req.files?.length || 0);
 
     const {
       reference,
@@ -68,9 +61,24 @@ const create = async (req, res) => {
       heure
     } = req.body;
 
-    // 3️⃣ Générer automatiquement le numéro d’enregistrement
+    // 🧩 Générer le numéro d’enregistrement
     const numero_enregistrement = await genererNumeroEnregistrement();
 
+    // 🗂️ Upload de tous les fichiers vers Backblaze B2
+    const fichiersUploads = [];
+    if (req.files && req.files.length > 0) {
+      for (const file of req.files) {
+        const fileUrl = await uploadToB2(
+          file.path,
+          file.originalname,
+          file.mimetype
+        );
+        fichiersUploads.push(fileUrl);
+        fs.unlink(file.path, () => {}); // suppression du fichier temporaire local
+      }
+    }
+
+    // 🧾 Création du courrier en DB
     const courrier = await Courrier.create({
       reference,
       objet,
@@ -80,15 +88,24 @@ const create = async (req, res) => {
       date_arrivee,
       numero_enregistrement,
       heure,
-      fichier_scan: fileUrl
+      fichier_scan: JSON.stringify(fichiersUploads), // ✅ tableau de liens
     });
 
-    res.status(201).json({ success: true, data: courrier });
+    res.status(201).json({
+      success: true,
+      message: "Courrier créé avec plusieurs fichiers",
+      data: courrier
+    });
+
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ success: false, message: 'Erreur création courrier' });
+    console.error("❌ Erreur création courrier :", err);
+    res.status(500).json({
+      success: false,
+      message: "Erreur interne lors de la création du courrier"
+    });
   }
 };
+
 
 /* ------------------------------ LIST ------------------------------ */
 const list = async (_req, res) => {

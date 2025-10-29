@@ -60,7 +60,8 @@ router.use(authenticate); // tout ce qui suit nécessite connexion
 router.get('/', ctrl.list);
 router.get("/:id/download", authenticate, ctrl.download);
 router.get('/:id', ctrl.detail);
-router.post('/', upload.single('scan'), ctrl.create);
+// router.post('/', upload.single('scan'), ctrl.create);
+router.post('/', upload.array('fichiers', 10), ctrl.create);
 router.put('/:id', upload.single('scan'), ctrl.update);
 
 

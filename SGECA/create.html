@@ -54,10 +54,16 @@
         <input type="time" id="heure" name="heure" required />
       </div>
 
-      <div class="form-group">
+      <!-- <div class="form-group">
         <label for="scan">Ajouter une pièce jointe</label>
         <input type="file" id="scan" name="scan" />
+      </div> -->
+
+      <div class="form-group">
+        <label for="scan">Ajouter des pièces jointes</label>
+        <input type="file" id="scan" name="fichiers" multiple /> <!-- ✅ plusieurs fichiers -->
       </div>
+
 
       <div class="form-actions-inline">
         <button type="submit">Enregistrer</button>
