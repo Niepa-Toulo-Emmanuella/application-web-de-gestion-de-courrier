@@ -92,9 +92,11 @@
         ? `<a href="${b.fichier_imputation}" target="_blank" class="text-decoration-none">📄 Ouvrir</a>`
         : "—";
 
+      // Frontend
       const fichierBordereau = b.fichier_bordereau
-        ? `<a href="${API_BASE}/api/bordereaux/download/${b.fichier_bordereau}" target="_blank">🧾 Télécharger</a>`
+        ? `<a href="${API_BASE}/api/bordereaux/download/${encodeURIComponent(b.fichier_bordereau)}" target="_blank">🧾 Télécharger</a>`
         : "—";
+
 
 
       return `
