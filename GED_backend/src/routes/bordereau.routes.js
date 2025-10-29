@@ -1,23 +1,24 @@
 const express = require('express');
 const router = express.Router();
 const AWS = require('aws-sdk');
+const multer = require('multer');
 
 const bordereauController = require('../controllers/bordereau.controller');
 const envoyerController = require('../controllers/envoyer.controller');
 const { authenticate, isAdmin } = require('../middlewares/auth.middleware');
-const multer = require('multer');
+
 const upload = multer({ storage: multer.memoryStorage() });
 
-// ⚙️ Configuration du client S3 pour Backblaze B2
+// ---------------- CONFIGURATION S3 BACKBLAZE B2 ----------------
 const s3 = new AWS.S3({
   endpoint: new AWS.Endpoint(process.env.B2_ENDPOINT),
   accessKeyId: process.env.B2_KEY_ID,
   secretAccessKey: process.env.B2_APP_KEY,
 });
 
-// ---------------- ROUTES DE TÉLÉCHARGEMENT ----------------
+// ---------------- ROUTES PUBLIQUES (téléchargement des fichiers) ----------------
 
-// 📄 Télécharger un PDF de bordereau
+// Télécharger un PDF de bordereau
 router.get('/download/:fileName', async (req, res) => {
   try {
     const fileName = req.params.fileName;
@@ -33,7 +34,7 @@ router.get('/download/:fileName', async (req, res) => {
   }
 });
 
-// ⚠️ Si tu veux aussi gérer les fichiers de courriers, tu peux créer une route similaire
+// Télécharger un courrier
 router.get('/courriers/download/:fileName', async (req, res) => {
   try {
     const fileName = req.params.fileName;
@@ -49,23 +50,24 @@ router.get('/courriers/download/:fileName', async (req, res) => {
   }
 });
 
-// ---------------- AUTHENTIFICATION ----------------
-router.use(authenticate);
-
-router.get('/registre-transmission', bordereauController.registreTransmission);
+// ---------------- MIDDLEWARE AUTH ----------------
+router.use(authenticate); // toutes les routes suivantes nécessitent authentification
 
 // ---------------- ROUTES BORDEREAUX ----------------
+router.get('/registre-transmission', bordereauController.registreTransmission);
+
 router.get('/', bordereauController.list);
 router.get('/:id', bordereauController.detail);
-router.post('/transmettreBordereau', bordereauController.transmettreBordereau);
+
+// Création bordereau (avec ou sans fichier)
 router.post('/', bordereauController.create);
 router.post('/create', upload.single('fichier_bordereau'), bordereauController.create);
 
+// Transmission bordereau
+router.post('/transmettreBordereau', bordereauController.transmettreBordereau);
+
 // ---------------- ROUTES ENVOIS ----------------
 router.get("/mes-envois", envoyerController.getEnvoisPourDestinataire);
-
-
-
 
 // ---------------- ADMIN ----------------
 router.delete('/:id', isAdmin, bordereauController.remove);
