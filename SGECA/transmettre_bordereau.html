@@ -172,14 +172,14 @@
                         // tableau
                         const tr = document.createElement("tr");
                         const date = b.date_arrivee ? b.date_arrivee.split("T")[0] : "";
-                        tr.innerHTML = `<td>${b.numero}</td><td>${b.objet}</td><td>${date}</td>`;
+                        tr.innerHTML = `<td>${b.numero_reference}</td><td>${b.objet}</td><td>${date}</td>`;
 
                         tbody.appendChild(tr);
                         // select
                         const option = document.createElement("option");
                         option.value = b.id;
                         option.dataset.courrierId = b.courrier_id; // id du courrier
-                        option.textContent = `${b.numero} - ${b.objet}`;
+                        option.textContent = `${b.numero_reference} - ${b.objet}`;
                         bordereauSelect.appendChild(option);
                     });
                 }
@@ -189,7 +189,7 @@
             }
         }
 
-                // Charger les destinataires une seule fois
+        // Charger les destinataires une seule fois
         async function loadDestinataires() {
             try {
                 const res = await fetch(`${API_BASE}/users`);
@@ -217,68 +217,68 @@
 
         // ✅ Gestion du formulaire
         form.addEventListener("submit", async (e) => {
-        e.preventDefault();
+            e.preventDefault();
 
-        const selectedOption = bordereauSelect.selectedOptions[0];
-        const bordereauId = selectedOption.value;
-        const courrierId = selectedOption.dataset.courrierId; // ✅ id du courrier
-        const destinataireId = destinataireSelect.value;
+            const selectedOption = bordereauSelect.selectedOptions[0];
+            const bordereauId = selectedOption.value;
+            const courrierId = selectedOption.dataset.courrierId; // ✅ id du courrier
+            const destinataireId = destinataireSelect.value;
 
-        const token = localStorage.getItem("jwt") || localStorage.getItem("token");
-        console.log("JWT:", token);
-        const currentUser = parseJwt(token);
-        console.log("Decoded JWT:", currentUser);
-        const currentUserId = currentUser.userId || currentUser.id || currentUser.user_id || currentUser.users_id || currentUser.sub;
-        console.log("👉 Expéditeur ID:", currentUserId);
+            const token = localStorage.getItem("jwt") || localStorage.getItem("token");
+            console.log("JWT:", token);
+            const currentUser = parseJwt(token);
+            console.log("Decoded JWT:", currentUser);
+            const currentUserId = currentUser.userId || currentUser.id || currentUser.user_id || currentUser.users_id || currentUser.sub;
+            console.log("👉 Expéditeur ID:", currentUserId);
 
 
-        // ⚠️ Vérifier que l'expéditeur existe
-        if (!currentUserId) {
-            showNotif("⚠️ Impossible d'identifier l'expéditeur", "error");
-            return;
-        }
+            // ⚠️ Vérifier que l'expéditeur existe
+            if (!currentUserId) {
+                showNotif("⚠️ Impossible d'identifier l'expéditeur", "error");
+                return;
+            }
 
-        if (!bordereauId || !destinataireId) {
-            showNotif("⚠️ Tous les champs sont obligatoires", "error");
-            return;
-        }
+            if (!bordereauId || !destinataireId) {
+                showNotif("⚠️ Tous les champs sont obligatoires", "error");
+                return;
+            }
 
-        try {
-            // ✅ Afficher après déclaration des variables
-            console.log("📤 Données envoyées :", {
-                bordereau_id: bordereauId,
-                destinataire_id: destinataireId,
-                expediteur_id: currentUserId,
-                courrier_id: courrierId
+            try {
+                // ✅ Afficher après déclaration des variables
+                console.log("📤 Données envoyées :", {
+                    bordereau_id: bordereauId,
+                    destinataire_id: destinataireId,
+                    expediteur_id: currentUserId,
+                    courrier_id: courrierId
+                });
+
+                const res = await fetch(`${API_BASE}/bordereaux/transmettreBordereau`, {
+                    method: "POST",
+                    headers: {
+                        "Authorization": "Bearer " + token,
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        bordereau_id: bordereauId,
+                        destinataire_id: destinataireId,
+                        expediteur_id: currentUserId,
+                        courrier_id: courrierId
+                    })
+                });
+
+                const result = await res.json();
+
+                if (res.ok && (result.success || result.message)) {
+                    showNotif(result.message || "✅ Transmission réussie", "success");
+                    loadBordereaux();
+                } else {
+                    showNotif(result.message || "❌ Erreur lors de la transmission", "error");
+                }
+            } catch (err) {
+                console.error("Erreur transmission:", err);
+                showNotif("❌ Erreur serveur", "error");
+            }
         });
-
-        const res = await fetch(`${API_BASE}/bordereaux/transmettreBordereau`, {
-            method: "POST",
-            headers: {
-                "Authorization": "Bearer " + token,
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                bordereau_id: bordereauId,
-                destinataire_id: destinataireId,
-                expediteur_id: currentUserId,
-                courrier_id: courrierId
-            })
-        });
-
-        const result = await res.json();
-
-        if (res.ok && (result.success || result.message)) {
-            showNotif(result.message || "✅ Transmission réussie", "success");
-            loadBordereaux();
-        } else {
-            showNotif(result.message || "❌ Erreur lors de la transmission", "error");
-        }
-        } catch (err) {
-            console.error("Erreur transmission:", err);
-            showNotif("❌ Erreur serveur", "error");
-        }
-    });
 
 
         // ✅ Charger au démarrage
