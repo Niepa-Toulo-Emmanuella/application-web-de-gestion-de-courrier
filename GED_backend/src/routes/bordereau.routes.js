@@ -54,7 +54,14 @@ router.get('/courriers/download/:fileName', async (req, res) => {
 router.use(authenticate); // toutes les routes suivantes nécessitent authentification
 
 // ---------------- ROUTES BORDEREAUX ----------------
-router.get('/registre-transmission', bordereauController.registreTransmission);
+// router.get('/registre-transmission', bordereauController.registreTransmission);
+
+router.get('/registre-transmission', (req, res, next) => {
+  console.log('✅ Route registre-transmission atteinte');
+  console.log('Token reçu :', req.headers.authorization);
+  next(); // passe au controller
+}, bordereauController.registreTransmission);
+
 
 router.get('/', bordereauController.list);
 router.get('/:id', bordereauController.detail);

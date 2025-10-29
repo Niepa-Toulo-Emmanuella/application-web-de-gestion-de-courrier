@@ -249,6 +249,8 @@ exports.remove = async (req, res) => {
   }
 };
 exports.registreTransmission = async (req, res) => {
+  console.log('📌 registreTransmission appelé');
+  console.log('Utilisateur:', req.user); // si authenticate met req.user
   try {
     const query = `
       SELECT 
