@@ -63,25 +63,59 @@ const create = async (req, res) => {
     // 🧩 Générer le numéro d’enregistrement
     const numero_enregistrement = await genererNumeroEnregistrement();
 
-    // 🕒 Générer automatiquement l’heure actuelle (serveur)
+    // 🕒 Heure actuelle (serveur)
     const maintenant = new Date();
     const heure = `${String(maintenant.getHours()).padStart(2, "0")}:${String(maintenant.getMinutes()).padStart(2, "0")}`;
 
     // 🗂️ Upload de tous les fichiers vers Backblaze B2
     const fichiersUploads = [];
+
     if (req.files && req.files.length > 0) {
+      console.log("🔍 Détails des fichiers avant upload :");
+      req.files.forEach((file, i) => {
+        console.log(`   → Fichier [${i}]: originalname="${file.originalname}", path="${file.path}", mimetype="${file.mimetype}"`);
+      });
+
       for (const file of req.files) {
+        // ✅ Vérifier si le nom contient des caractères bizarres avant upload
+        if (/Ã|Â|�/.test(file.originalname)) {
+          console.warn("⚠️ Nom de fichier mal encodé avant upload :", file.originalname);
+        } else {
+          console.log("✅ Nom UTF-8 correct :", file.originalname);
+        }
+
+        // 🆙 Upload vers Backblaze
         const fileUrl = await uploadToB2(
           file.path,
           file.originalname,
           file.mimetype
         );
+
+        console.log("🌐 URL renvoyée par B2 :", fileUrl);
+
+        // ✅ Vérifier si le nom dans l’URL est déjà corrompu
+        if (/Ã|Â|�/.test(fileUrl)) {
+          console.warn("⚠️ URL retournée mal encodée :", fileUrl);
+        } else {
+          console.log("✅ URL propre :", fileUrl);
+        }
+
         fichiersUploads.push(fileUrl);
-        fs.unlink(file.path, () => {}); // suppression du fichier temporaire local
+        fs.unlink(file.path, () => {}); // suppression fichier temporaire
       }
+    } else {
+      console.warn("⚠️ Aucun fichier à uploader !");
     }
 
-    // 🧾 Création du courrier en DB
+    // 🧾 Création du courrier dans la DB
+    console.log("🗃️ Données finales avant insertion DB :", {
+      reference,
+      objet,
+      expediteur,
+      destinataire,
+      fichiersUploads
+    });
+
     const courrier = await Courrier.create({
       reference,
       objet,
@@ -94,6 +128,8 @@ const create = async (req, res) => {
       fichier_scan: JSON.stringify(fichiersUploads), // ✅ tableau de liens
     });
 
+    console.log("📦 Courrier inséré avec fichier_scan :", courrier.fichier_scan);
+
     res.status(201).json({
       success: true,
       message: "Courrier créé avec plusieurs fichiers",
@@ -104,7 +140,8 @@ const create = async (req, res) => {
     console.error("❌ Erreur création courrier :", err);
     res.status(500).json({
       success: false,
-      message: "Erreur interne lors de la création du courrier"
+      message: "Erreur interne lors de la création du courrier",
+      error: err.message
     });
   }
 };
