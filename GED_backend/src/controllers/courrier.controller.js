@@ -76,24 +76,24 @@ const create = async (req, res) => {
         console.log(`   → Fichier [${i}]: originalname="${file.originalname}", path="${file.path}", mimetype="${file.mimetype}"`);
       });
 
+      // ✅ Boucle principale avec correction d'encodage
       for (const file of req.files) {
-        // ✅ Vérifier si le nom contient des caractères bizarres avant upload
-        if (/Ã|Â|�/.test(file.originalname)) {
-          console.warn("⚠️ Nom de fichier mal encodé avant upload :", file.originalname);
-        } else {
-          console.log("✅ Nom UTF-8 correct :", file.originalname);
-        }
+        console.log("🧩 Nom original reçu :", file.originalname);
+
+        // 🧠 Corriger le nom (reconvertir depuis Latin1 → UTF8)
+        let safeName = Buffer.from(file.originalname, "latin1").toString("utf8");
+        console.log("✅ Nom corrigé UTF-8 :", safeName);
 
         // 🆙 Upload vers Backblaze
         const fileUrl = await uploadToB2(
           file.path,
-          file.originalname,
+          safeName,
           file.mimetype
         );
 
         console.log("🌐 URL renvoyée par B2 :", fileUrl);
 
-        // ✅ Vérifier si le nom dans l’URL est déjà corrompu
+        // ✅ Vérifier si le nom dans l’URL est propre
         if (/Ã|Â|�/.test(fileUrl)) {
           console.warn("⚠️ URL retournée mal encodée :", fileUrl);
         } else {
@@ -101,7 +101,7 @@ const create = async (req, res) => {
         }
 
         fichiersUploads.push(fileUrl);
-        fs.unlink(file.path, () => {}); // suppression fichier temporaire
+        fs.unlink(file.path, () => {}); // suppression du fichier temporaire
       }
     } else {
       console.warn("⚠️ Aucun fichier à uploader !");
