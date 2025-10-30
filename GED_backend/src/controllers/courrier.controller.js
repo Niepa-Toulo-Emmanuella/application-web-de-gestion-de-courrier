@@ -260,59 +260,41 @@ const detailForDownload = async (id) => {
 // ----------------------------- TÉLÉCHARGEMENT SÉCURISÉ -----------------------------
 const secureDownload = async (req, res) => {
   try {
-    console.log("📌 secureDownload appelé avec params :", req.params, "query :", req.query);
     const courrierId = req.params.courrierId;
     const index = parseInt(req.query.index) || 0;
-
     const courrier = await Courrier.findById(courrierId);
-    console.log("📄 Courrier récupéré :", courrier);
 
     if (!courrier || !courrier.fichier_scan) {
-      console.error("❌ Courrier introuvable ou sans fichier pour ID :", courrierId);
       return res.status(404).json({ success: false, message: "Fichier introuvable" });
     }
 
     let fichiers = [];
-    try {
-      fichiers = JSON.parse(courrier.fichier_scan);
-    } catch (err) {
-      console.warn("⚠️ fichier_scan n'est pas un JSON :", err.message);
-      fichiers = [courrier.fichier_scan];
-    }
-
+    try { fichiers = JSON.parse(courrier.fichier_scan); } catch { fichiers = [courrier.fichier_scan]; }
     if (!fichiers.length || index >= fichiers.length) {
-      console.error("❌ Index invalide ou aucun fichier trouvé pour ID :", courrierId);
       return res.status(404).json({ success: false, message: "Fichier introuvable" });
     }
 
     const fileUrl = fichiers[index];
-    const fileName = decodeURIComponent(path.basename(fileUrl));
+    const fileName = decodeURIComponent(fileUrl.split('/').pop());
 
-    console.log("📦 Téléchargement sécurisé depuis :", fileUrl);
+    console.log("🔗 URL à télécharger :", fileUrl);
+    console.log("📄 Nom fichier :", fileName);
 
     const response = await axios.get(fileUrl, { responseType: "stream" });
-    console.log("✅ Axios response reçu, type :", response.headers["content-type"]);
 
     res.setHeader("Content-Disposition", `attachment; filename="${fileName}"`);
     res.setHeader("Content-Type", response.headers["content-type"] || "application/octet-stream");
 
     response.data.pipe(res);
-    response.data.on("error", (err) => {
-      console.error("❌ Erreur stream response :", err.message);
-      res.status(500).json({ success: false, message: "Erreur lors de l'envoi du fichier" });
-    });
 
   } catch (err) {
-    console.error("❌ Erreur secureDownload :", err.message, err.stack);
+    console.error("❌ Erreur téléchargement sécurisé :", err);
     if (!res.headersSent) {
-      res.status(500).json({
-        success: false,
-        message: "Erreur téléchargement",
-        error: err.message,
-      });
+      res.status(500).json({ success: false, message: "Erreur téléchargement", error: err.message });
     }
   }
 };
+
 
 
 
