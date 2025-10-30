@@ -296,83 +296,68 @@ const detailForDownload = async (id) => {
 // Télécharger un courrier depuis Backblaze B2 via fetch() sécurisé
 // ----------------------------- TÉLÉCHARGEMENT SÉCURISÉ -----------------------------
 // ✅ Fonction sécurisée de téléchargement Backblaze B2
+/* ------------------------------ DOWNLOAD SÉCURISÉ ------------------------------ */
 const secureDownload = async (req, res) => {
   try {
-    const { id } = req.params;
-    const { index } = req.query;
+    const courrierId = req.params.id;
+    const index = parseInt(req.query.index || 0);
 
-    console.log("------------------------------------------------------");
-    console.log(`🔑 Requête de téléchargement sécurisé pour le courrier ID=${id}, index=${index}`);
+    console.log("🔐 Téléchargement sécurisé du courrier ID :", courrierId, "index :", index);
 
-    // 🔹 Récupération du courrier depuis la base
-    const courrier = await Courrier.findByPk(id);
+    // ✅ Récupération du courrier depuis la DB (avec findById)
+    const courrier = await Courrier.findById(courrierId);
+
     if (!courrier) {
-      console.error("❌ Courrier introuvable dans la BDD");
+      console.warn("⚠️ Courrier introuvable pour l’ID :", courrierId);
       return res.status(404).json({ success: false, message: "Courrier introuvable" });
     }
 
-    console.log("📦 Données courrier récupérées :", courrier.dataValues);
-
-    let fichierScan = courrier.fichier_scan;
-    console.log("🧩 Valeur brute fichier_scan depuis la BDD :", fichierScan);
-
-    // 🔹 Conversion en tableau
-    if (typeof fichierScan === "string") {
-      try {
-        const parsed = JSON.parse(fichierScan);
-        if (Array.isArray(parsed)) {
-          fichierScan = parsed;
-          console.log("✅ fichier_scan parsé comme tableau :", fichierScan);
-        } else {
-          fichierScan = [parsed];
-          console.log("✅ fichier_scan parsé comme élément unique :", fichierScan);
-        }
-      } catch (e) {
-        console.warn("⚠️ fichier_scan n'était pas JSON parsable, encapsulé dans un tableau");
-        fichierScan = [fichierScan];
-      }
+    if (!courrier.fichier_scan) {
+      console.warn("⚠️ Aucun fichier enregistré pour ce courrier");
+      return res.status(404).json({ success: false, message: "Aucun fichier à télécharger" });
     }
 
-    // 🔹 Si ce n’est pas un tableau, on force
-    if (!Array.isArray(fichierScan)) {
-      fichierScan = [fichierScan];
+    // ✅ Convertir la colonne en tableau si elle est en JSON
+    let fichiers = [];
+    try {
+      fichiers = JSON.parse(courrier.fichier_scan);
+    } catch (err) {
+      console.error("❌ Erreur parsing fichier_scan :", err);
+      return res.status(500).json({ success: false, message: "Format fichier invalide" });
     }
 
-    // 🔹 Vérifie l’index demandé
-    const fileUrl = fichierScan[index];
-    console.log("📎 URL du fichier demandé :", fileUrl);
-
-    if (!fileUrl) {
-      console.error("❌ Aucun fichier trouvé à cet index");
+    // ✅ Vérifier si l’index demandé existe
+    if (index < 0 || index >= fichiers.length) {
+      console.warn("⚠️ Index de fichier invalide :", index);
       return res.status(404).json({ success: false, message: "Fichier introuvable" });
     }
 
-    // 🔹 Extraction du nom du fichier
-    const fileName = fileUrl.split("/").pop();
-    console.log("📁 Nom du fichier extrait :", fileName);
+    const fileUrl = fichiers[index];
+    console.log("🌐 URL du fichier à télécharger :", fileUrl);
 
-    // 🔹 Téléchargement du fichier depuis Backblaze
+    // ✅ Télécharger depuis Backblaze B2
     const response = await fetch(fileUrl);
     if (!response.ok) {
-      throw new Error(`Échec du téléchargement depuis B2 : ${response.statusText}`);
+      console.error("❌ Erreur lors du téléchargement depuis B2 :", response.statusText);
+      return res.status(404).json({ success: false, message: "Fichier introuvable sur B2" });
     }
 
-    const buffer = await response.arrayBuffer();
-    console.log("✅ Téléchargement réussi depuis Backblaze B2");
+    // ✅ Extraire le nom du fichier
+    const parts = fileUrl.split("/");
+    const fileName = decodeURIComponent(parts[parts.length - 1]);
 
-    // 🔹 Envoi du fichier au client
+    // ✅ Définir les bons headers HTTP
     res.setHeader("Content-Disposition", `attachment; filename="${fileName}"`);
-    res.setHeader("Content-Type", "application/octet-stream");
-    res.send(Buffer.from(buffer));
+    res.setHeader("Content-Type", response.headers.get("content-type") || "application/octet-stream");
 
-    console.log("✅ Fichier envoyé avec succès :", fileName);
-    console.log("------------------------------------------------------");
-  } catch (error) {
-    console.error("❌ Erreur téléchargement sécurisé :", error);
+    // ✅ Stream du fichier vers le client
+    response.body.pipe(res);
+  } catch (err) {
+    console.error("❌ Erreur téléchargement sécurisé :", err);
     res.status(500).json({
       success: false,
       message: "Erreur téléchargement",
-      error: error.message,
+      error: err.message
     });
   }
 };
