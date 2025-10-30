@@ -233,16 +233,22 @@
         fichiers = [fichierScan];
       }
 
-      // 🔹 Liste des fichiers avec téléchargement sécurisé
+      // ✅ ici on met le BON backend
+      const backendUrl = "https://application-web-de-gestion-de-courrier.onrender.com";
+
       const links = fichiers.map((url, index) => {
         const fileName = url.split('/').pop();
-        return `<li>
-      <a href="/api/courriers/secure-download/${courrierId}?index=${index}" target="_blank">📄 ${fileName}</a>
-    </li>`;
+        return `
+      <li>
+        <a href="${backendUrl}/api/courriers/secure-download/${courrierId}?index=${index}" target="_blank">
+          📄 ${fileName}
+        </a>
+      </li>`;
       }).join('');
 
       fileInfo.innerHTML = `<ul>${links}</ul>`;
     }
+
 
 
 
