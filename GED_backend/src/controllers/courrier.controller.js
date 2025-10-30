@@ -251,50 +251,52 @@ const detailForDownload = async (id) => {
 
 // ----------------------------- TÉLÉCHARGEMENT SÉCURISÉ ----------------------------- //
 // Télécharger un courrier depuis Backblaze B2 via fetch() sécurisé
+// ----------------------------- TÉLÉCHARGEMENT SÉCURISÉ -----------------------------
 const secureDownload = async (req, res) => {
   try {
-    // ✅ Le middleware authenticate a déjà validé le token et ajouté req.user
     const courrierId = req.params.courrierId;
+    const index = parseInt(req.query.index) || 0; // 🔹 index du fichier à télécharger
     const courrier = await Courrier.findById(courrierId);
 
     if (!courrier || !courrier.fichier_scan) {
       return res.status(404).json({ success: false, message: "Fichier introuvable" });
     }
 
-    // 🔹 Gestion du champ JSON.stringify
     let fichiers = [];
-    if (courrier.fichier_scan) {
-      try {
-        fichiers = JSON.parse(courrier.fichier_scan);
-      } catch {
-        fichiers = [courrier.fichier_scan];
-      }
+    try {
+      fichiers = JSON.parse(courrier.fichier_scan);
+    } catch {
+      fichiers = [courrier.fichier_scan];
     }
 
-    if (!fichiers.length) {
-      return res.status(404).json({ success: false, message: "Aucun fichier trouvé" });
+    if (!fichiers.length || index >= fichiers.length) {
+      return res.status(404).json({ success: false, message: "Fichier introuvable" });
     }
 
-    const fileUrl = fichiers[0];
-    const fileName = decodeURIComponent(path.basename(fileUrl));
+    const fileUrl = fichiers[index];
+    const fileName = decodeURIComponent(require("path").basename(fileUrl));
 
     console.log("📦 Téléchargement sécurisé depuis :", fileUrl);
 
-    const response = await axios.get(fileUrl, { responseType: "stream" });
+    const response = await require('axios').get(fileUrl, { responseType: "stream" });
 
     res.setHeader("Content-Disposition", `attachment; filename="${fileName}"`);
     res.setHeader("Content-Type", response.headers["content-type"] || "application/octet-stream");
 
     response.data.pipe(res);
+
   } catch (err) {
     console.error("❌ Erreur téléchargement sécurisé :", err.message);
-    res.status(500).json({
-      success: false,
-      message: "Erreur téléchargement",
-      error: err.message,
-    });
+    if (!res.headersSent) {
+      res.status(500).json({
+        success: false,
+        message: "Erreur téléchargement",
+        error: err.message,
+      });
+    }
   }
 };
+
 
 
 

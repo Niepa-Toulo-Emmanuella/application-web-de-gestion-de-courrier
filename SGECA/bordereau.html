@@ -205,7 +205,8 @@
         document.getElementById('objet').value = courrier.objet || "";
 
         // Afficher les fichiers attachés
-        displayFileInfo(courrier);
+        displayFileInfo(courrier.fichier_scan, courrier.id);
+
 
       }
     });
@@ -218,24 +219,30 @@
         return;
       }
 
-      let fichiers = fichierScan;
+      let fichiers = [];
       if (typeof fichierScan === "string") {
         try {
-          fichiers = JSON.parse(fichierScan);
+          const parsed = JSON.parse(fichierScan);
+          fichiers = Array.isArray(parsed) ? parsed : [parsed];
         } catch {
           fichiers = [fichierScan];
         }
+      } else if (Array.isArray(fichierScan)) {
+        fichiers = fichierScan;
+      } else {
+        fichiers = [fichierScan];
       }
 
-      const links = fichiers.map(url => {
+      // 🔹 Liste des fichiers avec téléchargement sécurisé
+      const links = fichiers.map((url, index) => {
         const fileName = url.split('/').pop();
-        return `<li><a href="/api/courriers/download/${courrierId}" target="_blank">📄 ${fileName}</a></li>`;
+        return `<li>
+      <a href="/api/courriers/secure-download/${courrierId}?index=${index}" target="_blank">📄 ${fileName}</a>
+    </li>`;
       }).join('');
 
       fileInfo.innerHTML = `<ul>${links}</ul>`;
     }
-
-
 
 
 
