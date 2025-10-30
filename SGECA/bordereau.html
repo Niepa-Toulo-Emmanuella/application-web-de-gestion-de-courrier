@@ -205,36 +205,36 @@
         document.getElementById('objet').value = courrier.objet || "";
 
         // Afficher les fichiers attachés
-        displayFileInfo(courrier.fichier_scan);
+        displayFileInfo(courrier);
+
       }
     });
 
-    function displayFileInfo(fichierScan) {
+    function displayFileInfo(courrier) {
       const fileInfo = document.getElementById('file-info');
 
-      if (!fichierScan || fichierScan.length === 0) {
+      if (!courrier.fichier_scan || courrier.fichier_scan.length === 0) {
         fileInfo.innerHTML = `📄 Aucun fichier attaché`;
         return;
       }
 
-      // Si c’est une chaîne JSON, on la parse
-      let fichiers = fichierScan;
-      if (typeof fichierScan === "string") {
+      let fichiers = courrier.fichier_scan;
+      if (typeof fichiers === "string") {
         try {
-          fichiers = JSON.parse(fichierScan);
+          fichiers = JSON.parse(fichiers);
         } catch {
-          fichiers = [fichierScan]; // si ce n’est pas un JSON
+          fichiers = [fichiers];
         }
       }
 
       const links = fichiers.map(url => {
         const fileName = url.split('/').pop();
-        const encodedUrl = encodeURIComponent(url); // encodage correct par URL unique
-        return `<li><a href="/api/courriers/download?url=${encodedUrl}" target="_blank">📄 ${fileName}</a></li>`;
+        return `<li><a href="/api/courriers/download/${courrier.id}" target="_blank">📄 ${fileName}</a></li>`;
       }).join('');
 
       fileInfo.innerHTML = `<ul>${links}</ul>`;
     }
+
 
 
 
