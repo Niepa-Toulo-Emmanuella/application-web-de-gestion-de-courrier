@@ -212,36 +212,24 @@
     function displayFileInfo(fichierScan) {
       const fileInfo = document.getElementById('file-info');
 
-      if (!fichierScan || (Array.isArray(fichierScan) && fichierScan.length === 0)) {
+      if (!fichierScan || fichierScan.length === 0) {
         fileInfo.innerHTML = `📄 Aucun fichier attaché`;
         return;
       }
 
-      // Toujours un tableau
-      const fichiers = Array.isArray(fichierScan) ? fichierScan : [fichierScan];
-
-      // Construire la liste de liens
-      const links = fichiers.map(url => {
-        const fileName = url.split('/').pop();
-        return `<li><a href="${url}" target="_blank" download>${fileName}</a></li>`;
-      }).join('');
-
-      fileInfo.innerHTML = `<ul>${links}</ul>`;
-    } function displayFileInfo(fichierScan) {
-      const fileInfo = document.getElementById('file-info');
-
-      if (!fichierScan || (Array.isArray(fichierScan) && fichierScan.length === 0)) {
-        fileInfo.innerHTML = `📄 Aucun fichier attaché`;
-        return;
+      // Si c’est une chaîne JSON, on la parse
+      let fichiers = fichierScan;
+      if (typeof fichierScan === "string") {
+        try {
+          fichiers = JSON.parse(fichierScan);
+        } catch {
+          fichiers = [fichierScan]; // si ce n’est pas un JSON
+        }
       }
 
-      // Toujours un tableau
-      const fichiers = Array.isArray(fichierScan) ? fichierScan : [fichierScan];
-
-      // Construire la liste de liens via la route serveur
       const links = fichiers.map(url => {
         const fileName = url.split('/').pop();
-        const encodedUrl = encodeURIComponent(url);
+        const encodedUrl = encodeURIComponent(url); // encodage correct par URL unique
         return `<li><a href="/api/courriers/download?url=${encodedUrl}" target="_blank">📄 ${fileName}</a></li>`;
       }).join('');
 
