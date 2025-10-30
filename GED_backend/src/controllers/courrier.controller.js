@@ -181,29 +181,37 @@ const update = async (req, res) => {
 // place ceci dans ton fichier de contrôleur (assure-toi des require en haut : path, AWS, Courrier, etc.)
 const download = async (req, res) => {
   try {
+    console.log("📌 download appelé avec params :", req.params);
     const courrier = await Courrier.findById(req.params.id);
-    if (!courrier || !courrier.fichier_scan) {
+    console.log("📄 Courrier récupéré :", courrier);
+
+    if (!courrier) {
+      console.error("❌ Courrier introuvable pour l'ID :", req.params.id);
       return res.status(404).json({ success: false, message: "Fichier introuvable" });
+    }
+
+    if (!courrier.fichier_scan) {
+      console.error("❌ Aucun fichier attaché pour le courrier ID :", req.params.id);
+      return res.status(404).json({ success: false, message: "Aucun fichier à télécharger" });
     }
 
     // 🔹 Gestion du champ JSON.stringify(fichiersUploads)
     let fichiers = [];
-    if (courrier.fichier_scan) {
-      try {
-        fichiers = JSON.parse(courrier.fichier_scan);
-      } catch {
-        fichiers = [courrier.fichier_scan];
-      }
+    try {
+      fichiers = JSON.parse(courrier.fichier_scan);
+    } catch (err) {
+      console.warn("⚠️ fichier_scan n'est pas un JSON, on le met dans un tableau :", err.message);
+      fichiers = [courrier.fichier_scan];
     }
 
     if (!fichiers.length) {
+      console.error("❌ Aucun fichier trouvé après parsing pour le courrier ID :", req.params.id);
       return res.status(404).json({ success: false, message: "Aucun fichier à télécharger" });
     }
 
-    // 🔹 On prend le premier fichier (tu peux boucler si tu veux tous les compresser ensuite)
+    // 🔹 On prend le premier fichier
     let key = fichiers[0];
 
-    // Si c’est une URL complète, extraire la clé S3
     if (/^https?:\/\//i.test(key)) {
       const urlObj = new URL(key);
       key = urlObj.pathname.split(`${process.env.B2_BUCKET_NAME}/`).pop();
@@ -215,7 +223,6 @@ const download = async (req, res) => {
     const params = { Bucket: process.env.B2_BUCKET_NAME, Key: key };
     const data = await s3.getObject(params).promise();
 
-    // Nom du fichier et type MIME correct
     const fileName = path.basename(key);
     const contentType = data.ContentType || mime.lookup(fileName) || "application/octet-stream";
 
@@ -223,13 +230,12 @@ const download = async (req, res) => {
     console.log("Content-Type :", contentType);
     console.log("Taille du fichier :", data.ContentLength);
 
-    // Headers HTTP
     res.setHeader("Content-Type", contentType);
     res.setHeader("Content-Disposition", `attachment; filename="${fileName}"`);
     res.setHeader("Content-Length", data.ContentLength || data.Body.length);
 
-    // Envoi du fichier
     return res.send(data.Body);
+
   } catch (err) {
     console.error("❌ Erreur téléchargement :", err);
     if (!res.headersSent) {
@@ -254,39 +260,50 @@ const detailForDownload = async (id) => {
 // ----------------------------- TÉLÉCHARGEMENT SÉCURISÉ -----------------------------
 const secureDownload = async (req, res) => {
   try {
+    console.log("📌 secureDownload appelé avec params :", req.params, "query :", req.query);
     const courrierId = req.params.courrierId;
-    const index = parseInt(req.query.index) || 0; // 🔹 index du fichier à télécharger
+    const index = parseInt(req.query.index) || 0;
+
     const courrier = await Courrier.findById(courrierId);
+    console.log("📄 Courrier récupéré :", courrier);
 
     if (!courrier || !courrier.fichier_scan) {
+      console.error("❌ Courrier introuvable ou sans fichier pour ID :", courrierId);
       return res.status(404).json({ success: false, message: "Fichier introuvable" });
     }
 
     let fichiers = [];
     try {
       fichiers = JSON.parse(courrier.fichier_scan);
-    } catch {
+    } catch (err) {
+      console.warn("⚠️ fichier_scan n'est pas un JSON :", err.message);
       fichiers = [courrier.fichier_scan];
     }
 
     if (!fichiers.length || index >= fichiers.length) {
+      console.error("❌ Index invalide ou aucun fichier trouvé pour ID :", courrierId);
       return res.status(404).json({ success: false, message: "Fichier introuvable" });
     }
 
     const fileUrl = fichiers[index];
-    const fileName = decodeURIComponent(require("path").basename(fileUrl));
+    const fileName = decodeURIComponent(path.basename(fileUrl));
 
     console.log("📦 Téléchargement sécurisé depuis :", fileUrl);
 
-    const response = await require('axios').get(fileUrl, { responseType: "stream" });
+    const response = await axios.get(fileUrl, { responseType: "stream" });
+    console.log("✅ Axios response reçu, type :", response.headers["content-type"]);
 
     res.setHeader("Content-Disposition", `attachment; filename="${fileName}"`);
     res.setHeader("Content-Type", response.headers["content-type"] || "application/octet-stream");
 
     response.data.pipe(res);
+    response.data.on("error", (err) => {
+      console.error("❌ Erreur stream response :", err.message);
+      res.status(500).json({ success: false, message: "Erreur lors de l'envoi du fichier" });
+    });
 
   } catch (err) {
-    console.error("❌ Erreur téléchargement sécurisé :", err.message);
+    console.error("❌ Erreur secureDownload :", err.message, err.stack);
     if (!res.headersSent) {
       res.status(500).json({
         success: false,
