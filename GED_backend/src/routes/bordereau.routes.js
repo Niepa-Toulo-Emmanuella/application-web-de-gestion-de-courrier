@@ -61,7 +61,7 @@ router.get('/registre-transmission', (req, res, next) => {
   console.log('✅ Route registre-transmission atteinte');
   console.log('Token reçu :', req.headers.authorization);
   next(); // passe au controller
-}, bordereauController.registreTransmission);A
+}, bordereauController.registreTransmission);
 
 
 router.get('/', bordereauController.list);
