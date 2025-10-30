@@ -212,7 +212,6 @@
     function displayFileInfo(fichierScan) {
       const fileInfo = document.getElementById('file-info');
 
-      // Aucun fichier
       if (!fichierScan || (Array.isArray(fichierScan) && fichierScan.length === 0)) {
         fileInfo.innerHTML = `📄 Aucun fichier attaché`;
         return;
@@ -222,11 +221,28 @@
       const fichiers = Array.isArray(fichierScan) ? fichierScan : [fichierScan];
 
       // Construire la liste de liens
-      const links = fichiers.map(fichier => {
-        // Nom de fichier UTF-8
-        const fileName = decodeURIComponent(fichier.split('/').pop());
-        const downloadUrl = `https://application-web-de-gestion-de-courrier.onrender.com/api/courriers/download/${encodeURIComponent(fileName)}`;
-        return `<li><a href="${downloadUrl}" target="_blank">${fileName}</a></li>`;
+      const links = fichiers.map(url => {
+        const fileName = url.split('/').pop();
+        return `<li><a href="${url}" target="_blank" download>${fileName}</a></li>`;
+      }).join('');
+
+      fileInfo.innerHTML = `<ul>${links}</ul>`;
+    } function displayFileInfo(fichierScan) {
+      const fileInfo = document.getElementById('file-info');
+
+      if (!fichierScan || (Array.isArray(fichierScan) && fichierScan.length === 0)) {
+        fileInfo.innerHTML = `📄 Aucun fichier attaché`;
+        return;
+      }
+
+      // Toujours un tableau
+      const fichiers = Array.isArray(fichierScan) ? fichierScan : [fichierScan];
+
+      // Construire la liste de liens via la route serveur
+      const links = fichiers.map(url => {
+        const fileName = url.split('/').pop();
+        const encodedUrl = encodeURIComponent(url);
+        return `<li><a href="/api/courriers/download?url=${encodedUrl}" target="_blank">📄 ${fileName}</a></li>`;
       }).join('');
 
       fileInfo.innerHTML = `<ul>${links}</ul>`;

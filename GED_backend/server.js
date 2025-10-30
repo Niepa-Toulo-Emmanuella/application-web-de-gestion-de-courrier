@@ -84,28 +84,24 @@ const router = express.Router();
 // === ROUTES DE TÉLÉCHARGEMENT AVEC LOGS ===
 
 // 📁 1️⃣ Fichier scanné (hébergé sur S3 / B2)
-router.get("/api/courriers/download/:fileName", async (req, res) => {
-  const { fileName } = req.params;
+router.get("/api/courriers/download", async (req, res) => {
+  const fileUrl = req.query.url; // Ex: ?url=https://...
+  if (!fileUrl) return res.status(400).json({ success: false, message: "URL manquante" });
+
   try {
-    const fileUrl = decodeURIComponent(fileName);
-    console.log("📥 Téléchargement du fichier scanné :", fileUrl);
-
-    // Si le fichier est déjà une URL complète (commence par http), on l'utilise directement
-    const finalUrl = fileUrl.startsWith("http")
-      ? fileUrl
-      : `https://s3.us-east-005.backblazeb2.com/CourrierBucket2/${fileUrl}`;
-
-    const response = await fetch(finalUrl);
+    const response = await fetch(fileUrl);
     if (!response.ok) throw new Error(`Erreur HTTP ${response.status}`);
-
     const buffer = await response.arrayBuffer();
-    res.setHeader("Content-Disposition", `attachment; filename="${finalUrl.split('/').pop()}"`);
+    const fileName = fileUrl.split('/').pop();
+    res.setHeader("Content-Disposition", `attachment; filename="${encodeURIComponent(fileName)}"`);
     res.send(Buffer.from(buffer));
   } catch (err) {
-    console.error("❌ Erreur téléchargement fichier scanné :", err);
-    res.status(500).json({ success: false, message: "Erreur téléchargement fichier scanné" });
+    console.error("❌ Erreur téléchargement fichier :", err);
+    res.status(500).json({ success: false, message: "Erreur téléchargement fichier" });
   }
 });
+;
+
 
 
 // 📄 2️⃣ Fichier d’imputation
