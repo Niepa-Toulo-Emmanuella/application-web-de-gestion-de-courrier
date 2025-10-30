@@ -210,32 +210,31 @@
       }
     });
 
-    function displayFileInfo(courrier) {
+    function displayFileInfo(fichierScan, courrierId) {
       const fileInfo = document.getElementById('file-info');
 
-      if (!courrier.fichier_scan || courrier.fichier_scan.length === 0) {
+      if (!fichierScan || fichierScan.length === 0) {
         fileInfo.innerHTML = `📄 Aucun fichier attaché`;
         return;
       }
 
-      let fichiers = courrier.fichier_scan;
-      if (typeof fichiers === "string") {
+      let fichiers = fichierScan;
+      if (typeof fichierScan === "string") {
         try {
-          fichiers = JSON.parse(fichiers);
+          fichiers = JSON.parse(fichierScan);
         } catch {
-          fichiers = [fichiers];
+          fichiers = [fichierScan];
         }
       }
 
       const links = fichiers.map(url => {
         const fileName = url.split('/').pop();
-        // return `<li><a href="/api/courriers/download/${courrier.id}" target="_blank">📄 ${fileName}</a></li>`;
         return `<li><a href="/api/courriers/download/${courrierId}" target="_blank">📄 ${fileName}</a></li>`;
-
       }).join('');
 
       fileInfo.innerHTML = `<ul>${links}</ul>`;
     }
+
 
 
 
