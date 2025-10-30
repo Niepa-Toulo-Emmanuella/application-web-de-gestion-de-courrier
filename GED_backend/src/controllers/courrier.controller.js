@@ -305,7 +305,12 @@ const secureDownload = async (req, res) => {
     console.log("🔐 Téléchargement sécurisé du courrier ID :", courrierId, "index :", index);
 
     // ✅ Récupération du courrier depuis la DB (avec findById)
+    
+
+    console.log("📬 Recherche du courrier ID :", courrierId);
     const courrier = await Courrier.findById(courrierId);
+    console.log("Résultat trouvé :", courrier);
+
 
     if (!courrier) {
       console.warn("⚠️ Courrier introuvable pour l’ID :", courrierId);
