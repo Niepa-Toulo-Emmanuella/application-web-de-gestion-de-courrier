@@ -1,3 +1,4 @@
+// bordereau.routes
 const express = require('express');
 const router = express.Router();
 const AWS = require('aws-sdk');
@@ -60,7 +61,7 @@ router.get('/registre-transmission', (req, res, next) => {
   console.log('✅ Route registre-transmission atteinte');
   console.log('Token reçu :', req.headers.authorization);
   next(); // passe au controller
-}, bordereauController.registreTransmission);
+}, bordereauController.registreTransmission);A
 
 
 router.get('/', bordereauController.list);

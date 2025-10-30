@@ -182,6 +182,7 @@
       const courrierId = courrierSelect.value;
       const fileInfo = document.getElementById('file-info');
 
+      // Si aucun courrier sélectionné
       if (!courrierId) {
         fileInfo.innerHTML = "Aucun courrier sélectionné";
         ['expediteur', 'reference', 'date_reception', 'date_arrivee',
@@ -194,6 +195,7 @@
 
       const courrier = courriersMap[courrierId];
       if (courrier) {
+        // Remplir les champs du formulaire
         document.getElementById('expediteur').value = courrier.expediteur || "";
         document.getElementById('reference').value = courrier.reference || "";
         document.getElementById('date_reception').value = (courrier.date_reception || "").split("T")[0];
@@ -201,6 +203,8 @@
         document.getElementById('numero_enregistrement').value = courrier.numero_enregistrement || "";
         document.getElementById('heure').value = courrier.heure || "";
         document.getElementById('objet').value = courrier.objet || "";
+
+        // Afficher les fichiers attachés
         displayFileInfo(courrier.fichier_scan);
       }
     });
@@ -208,26 +212,26 @@
     function displayFileInfo(fichierScan) {
       const fileInfo = document.getElementById('file-info');
 
-      // Si aucun fichier
+      // Aucun fichier
       if (!fichierScan || (Array.isArray(fichierScan) && fichierScan.length === 0)) {
         fileInfo.innerHTML = `📄 Aucun fichier attaché`;
         return;
       }
 
-      // Si c’est un tableau (plusieurs fichiers, ou un seul)
-      if (Array.isArray(fichierScan)) {
-        const links = fichierScan.map(fichier => {
-          const fileName = fichier.split('/').pop();
-          const downloadUrl = `https://application-web-de-gestion-de-courrier.onrender.com/api/bordereaux/download/${encodeURIComponent(fileName)}`;
-          return `<li><a href="${downloadUrl}" target="_blank">${fileName}</a></li>`;
-        }).join('');
-        fileInfo.innerHTML = `<ul>${links}</ul>`;
-        return;
-      }
+      // Toujours un tableau
+      const fichiers = Array.isArray(fichierScan) ? fichierScan : [fichierScan];
 
-      // Cas par défaut (si le format n’est pas reconnu)
-      fileInfo.innerHTML = `📄 Aucun fichier attaché`;
+      // Construire la liste de liens
+      const links = fichiers.map(fichier => {
+        // Nom de fichier UTF-8
+        const fileName = decodeURIComponent(fichier.split('/').pop());
+        const downloadUrl = `https://application-web-de-gestion-de-courrier.onrender.com/api/courriers/download/${encodeURIComponent(fileName)}`;
+        return `<li><a href="${downloadUrl}" target="_blank">${fileName}</a></li>`;
+      }).join('');
+
+      fileInfo.innerHTML = `<ul>${links}</ul>`;
     }
+
 
 
 
