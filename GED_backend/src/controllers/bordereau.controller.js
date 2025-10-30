@@ -1,4 +1,3 @@
-// bordereau.controller.js
 const db = require('../models/db');
 const Bordereau = require('../models/Bordereau');
 const fs = require('fs');
@@ -8,33 +7,24 @@ const chromium = require('@sparticuz/chromium');
 const puppeteer = require('puppeteer-core');
 const pool = require("../models/db");
 
-
-
-/* -------- Client S3 Backblaze B2 -------- */
+// -------- Client S3 Backblaze B2 --------
 const s3 = new AWS.S3({
   endpoint: process.env.B2_ENDPOINT,
   accessKeyId: process.env.B2_KEY_ID,
   secretAccessKey: process.env.B2_APP_KEY,
 });
 
-/* -------- Générateur automatique de numéro -------- */
+// -------- Générateur automatique de numéro --------
 function generateNumero() {
   const date = new Date();
   return `BDR-${date.getFullYear()}${String(date.getMonth() + 1).padStart(2, '0')}${String(date.getDate()).padStart(2, '0')}-${Date.now()}`;
 }
 
-
-
-/* -------- Générer le PDF depuis template HTML (Render compatible) -------- */
+// -------- Générer le PDF depuis template HTML (Render compatible) --------
 async function generateBordereauPDF(data) {
-  // 1️⃣ Chemin vers le template
   const templatePath = path.join(__dirname, '../templates/bordereau_template.html');
-  console.log('📄 Template utilisé :', templatePath);
-
-  // 2️⃣ Lire le contenu HTML
   let html = fs.readFileSync(templatePath, 'utf-8');
 
-  // 3️⃣ Remplacer les placeholders
   html = html.replace(/{{NUMERO}}/g, data.numero || '')
              .replace(/{{COURRIER}}/g, data.courrier || '')
              .replace(/{{FICHIER_SCAN}}/g, data.fichier_scan || '')
@@ -47,10 +37,8 @@ async function generateBordereauPDF(data) {
              .replace(/{{OBJET}}/g, data.objet || '')
              .replace(/{{OBSERVATIONS}}/g, data.observations || '');
 
-  // 4️⃣ Nom du fichier temporaire
   const filePath = `temp_bordereau_${Date.now()}.pdf`;
 
-  // ✅ Lancer Puppeteer avec Chromium intégré (compatible Render)
   const browser = await puppeteer.launch({
     args: chromium.args,
     defaultViewport: chromium.defaultViewport,
@@ -58,16 +46,16 @@ async function generateBordereauPDF(data) {
     headless: chromium.headless,
   });
 
-  // 6️⃣ Générer le PDF
   const page = await browser.newPage();
   await page.setContent(html, { waitUntil: 'load' });
   await page.pdf({ path: filePath, format: 'A4', printBackground: true });
 
   await browser.close();
 
-  return filePath; // chemin du PDF généré
+  return filePath;
 }
-/* ---------------- LISTE -------------------------------------- */
+
+// ---------------- LISTE --------------------------------------
 exports.list = async (_req, res) => {
   try {
     const query = `
@@ -87,17 +75,26 @@ exports.list = async (_req, res) => {
       LEFT JOIN courriers c ON b.courrier_id = c.id
       ORDER BY b.id DESC;
     `;
-
     const { rows } = await db.query(query);
 
-     // 🔹 Filtrer les bordereaux sans courrier_id
     const bordereaux = rows
-      .filter(b => b.courrier_id) // ✅ ignore ceux sans courrier_id
-      .map(b => ({
-        ...b,
-        fichier_scan: b.fichier_scan ?? null,
-        courrier_id: b.courrier_id
-      }));
+      .filter(b => b.courrier_id)
+      .map(b => {
+        const fichiers = (() => {
+          try {
+            return b.fichier_scan ? JSON.parse(b.fichier_scan) : [];
+          } catch {
+            return b.fichier_scan ? [b.fichier_scan] : [];
+          }
+        })();
+        const premierFichier = fichiers[0] || null;
+
+        return {
+          ...b,
+          fichier_scan: premierFichier,
+          courrier_id: b.courrier_id
+        };
+      });
 
     res.json({ success: true, data: bordereaux });
   } catch (err) {
@@ -106,14 +103,22 @@ exports.list = async (_req, res) => {
   }
 };
 
-
-
-/* ---------------- DETAIL ------------------------------------- */
+// ---------------- DETAIL -------------------------------------
 exports.detail = async (req, res) => {
   try {
     const row = await Bordereau.findById(req.params.id);
     if (!row)
       return res.status(404).json({ success: false, message: 'Introuvable' });
+
+    const fichiers = (() => {
+      try {
+        return row.fichier_scan ? JSON.parse(row.fichier_scan) : [];
+      } catch {
+        return row.fichier_scan ? [row.fichier_scan] : [];
+      }
+    })();
+
+    row.fichier_scan = fichiers[0] || null;
 
     res.json({ success: true, data: row });
   } catch (err) {
@@ -122,7 +127,7 @@ exports.detail = async (req, res) => {
   }
 };
 
-/* ---------------- CREATE ------------------------------------- */
+// ---------------- CREATE -------------------------------------
 exports.create = async (req, res) => {
   try {
     const {
@@ -134,7 +139,6 @@ exports.create = async (req, res) => {
       return res.status(400).json({ success: false, message: "courrier_id est requis" });
     }
 
-    // Vérifier que le courrier existe
     const courrierRes = await db.query(
       `SELECT id, fichier_scan, objet FROM courriers WHERE id = $1`,
       [courrier_id]
@@ -146,11 +150,17 @@ exports.create = async (req, res) => {
 
     const numero = generateNumero();
 
-    // 1️⃣ Génération du PDF
     const pdfPath = await generateBordereauPDF({
       numero,
       courrier: `Courrier #${courrier.id}`,
-      fichier_scan: courrier.fichier_scan,
+      fichier_scan: (() => {
+        try {
+          const fichiers = courrier.fichier_scan ? JSON.parse(courrier.fichier_scan) : [];
+          return fichiers[0] || null;
+        } catch {
+          return courrier.fichier_scan ? [courrier.fichier_scan][0] : null;
+        }
+      })(),
       expediteur: expediteur_id,
       numero_reference,
       date_courrier,
@@ -161,7 +171,6 @@ exports.create = async (req, res) => {
       observations
     });
 
-    // 2️⃣ Upload sur B2
     const fileContent = fs.readFileSync(pdfPath);
     const s3Params = {
       Bucket: process.env.B2_BUCKET_NAME,
@@ -170,11 +179,10 @@ exports.create = async (req, res) => {
       ContentType: 'application/pdf',
     };
     const uploaded = await s3.upload(s3Params).promise();
-    fs.unlinkSync(pdfPath); // supprimer le fichier temporaire
+    fs.unlinkSync(pdfPath);
 
     const fichier_bordereau = s3Params.Key;
 
-    // 3️⃣ Insertion DB
     const result = await db.query(`
       INSERT INTO bordereaux (
         courrier_id, expediteur_id, destinataire_id, numero_reference, date_courrier,
@@ -211,7 +219,7 @@ exports.create = async (req, res) => {
   }
 };
 
-/* ---------------- ENVOI -------------------------------------- */
+// ---------------- ENVOI --------------------------------------
 exports.transmettreBordereau = async (req, res) => {
   try {
     const { courrier_id, bordereau_id, destinataire_id, expediteur_id } = req.body;
@@ -243,7 +251,7 @@ exports.transmettreBordereau = async (req, res) => {
   }
 };
 
-/* ---------------- DELETE ------------------------------------- */
+// ---------------- DELETE -------------------------------------
 exports.remove = async (req, res) => {
   try {
     await Bordereau.remove(req.params.id);
@@ -253,9 +261,11 @@ exports.remove = async (req, res) => {
     res.status(500).json({ success: false, message: 'Erreur lors de la suppression' });
   }
 };
+
+// ---------------- REGISTRE TRANSMISSION ---------------------
 exports.registreTransmission = async (req, res) => {
   console.log('📌 registreTransmission appelé');
-  console.log('Utilisateur:', req.user); // si authenticate met req.user
+  console.log('Utilisateur:', req.user);
   try {
     const query = `
       SELECT 
@@ -263,7 +273,7 @@ exports.registreTransmission = async (req, res) => {
         b.numero_enregistrement,
         b.numero_reference,
         b.objet,
-        i.imputations AS destinataire,  -- 👈 le champ imputations devient le destinataire
+        i.imputations AS destinataire,
         ti.observations,
         c.fichier_scan,
         i.fichier_imputation,
@@ -277,20 +287,27 @@ exports.registreTransmission = async (req, res) => {
 
     const result = await pool.query(query);
 
-    // 🔗 Construction des URLs complètes pour les fichiers
-    const data = result.rows.map(r => ({
-      ...r,
-      // fichier_scan est déjà une URL complète → on l’utilise telle quelle
-      fichier_scan: r.fichier_scan || null,
-      // fichier_bordereau : on construit l’URL complète
-      fichier_bordereau: r.fichier_bordereau || null,
+    const data = result.rows.map(r => {
+      const fichiers = (() => {
+        try {
+          return r.fichier_scan ? JSON.parse(r.fichier_scan) : [];
+        } catch {
+          return r.fichier_scan ? [r.fichier_scan] : [];
+        }
+      })();
+      const premierFichier = fichiers[0] || null;
 
-
-
-      fichier_imputation: r.fichier_imputation
-        ? `https://s3.us-east-005.backblazeb2.com/${process.env.B2_BUCKET_NAME}/${r.fichier_imputation}`
-        : null
-    }));
+      return {
+        ...r,
+        fichier_scan: premierFichier,
+        fichier_bordereau: r.fichier_bordereau
+          ? `https://s3.us-east-005.backblazeb2.com/${process.env.B2_BUCKET_NAME}/${r.fichier_bordereau}`
+          : null,
+        fichier_imputation: r.fichier_imputation
+          ? `https://s3.us-east-005.backblazeb2.com/${process.env.B2_BUCKET_NAME}/${r.fichier_imputation}`
+          : null
+      };
+    });
 
     res.json({ success: true, data });
   } catch (err) {

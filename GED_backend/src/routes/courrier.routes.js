@@ -24,36 +24,36 @@ const s3 = new AWS.S3({
 
 
 // ================= ROUTE DE TÉLÉCHARGEMENT =================
-router.get("/:id/download", authenticate, async (req, res) => {
-  try {
-    const courrierId = req.params.id;
+// router.get("/:id/download", authenticate, async (req, res) => {
+//   try {
+//     const courrierId = req.params.id;
 
-    // Récupérer les infos du courrier depuis la DB
-    const courrier = await ctrl.detailForDownload(courrierId);
-    if (!courrier || !courrier.fichier_scan) {
-      return res.status(404).json({ success: false, message: "Fichier introuvable" });
-    }
+//     // Récupérer les infos du courrier depuis la DB
+//     const courrier = await ctrl.detailForDownload(courrierId);
+//     if (!courrier || !courrier.fichier_scan) {
+//       return res.status(404).json({ success: false, message: "Fichier introuvable" });
+//     }
 
-    // Extraction du nom de fichier
-    const fileKey = courrier.fichier_scan.split('/').pop();
+//     // Extraction du nom de fichier
+//     const fileKey = courrier.fichier_scan.split('/').pop();
 
-    const params = {
-      Bucket: process.env.B2_BUCKET_NAME,
-      Key: fileKey
-    };
+//     const params = {
+//       Bucket: process.env.B2_BUCKET_NAME,
+//       Key: fileKey
+//     };
 
-    // Lecture complète avant envoi (évite les erreurs headers)
-    const data = await s3.getObject(params).promise();
+//     // Lecture complète avant envoi (évite les erreurs headers)
+//     const data = await s3.getObject(params).promise();
 
-    res.setHeader("Content-Disposition", `attachment; filename="${fileKey}"`);
-    res.setHeader("Content-Type", data.ContentType || "application/octet-stream");
-    res.send(data.Body);
+//     res.setHeader("Content-Disposition", `attachment; filename="${fileKey}"`);
+//     res.setHeader("Content-Type", data.ContentType || "application/octet-stream");
+//     res.send(data.Body);
 
-  } catch (err) {
-    console.error("❌ Erreur téléchargement courrier :", err);
-    res.status(500).send("Erreur lors du téléchargement du courrier");
-  }
-});
+//   } catch (err) {
+//     console.error("❌ Erreur téléchargement courrier :", err);
+//     res.status(500).send("Erreur lors du téléchargement du courrier");
+//   }
+// });
 /* -------------------- Routes protégées par JWT -------------------- */
 router.use(authenticate); // tout ce qui suit nécessite connexion
 

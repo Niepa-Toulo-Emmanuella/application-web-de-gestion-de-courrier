@@ -180,50 +180,68 @@ const update = async (req, res) => {
 // ----------------------------- TÉLÉCHARGEMENT ----------------------------- //
 // place ceci dans ton fichier de contrôleur (assure-toi des require en haut : path, AWS, Courrier, etc.)
 const download = async (req, res) => {
-  
   try {
     const courrier = await Courrier.findById(req.params.id);
     if (!courrier || !courrier.fichier_scan) {
       return res.status(404).json({ success: false, message: "Fichier introuvable" });
     }
 
-    // Extraction de la clé depuis l'URL ou chemin stocké
-    let key = courrier.fichier_scan;
+    // 🔹 Gestion du champ JSON.stringify(fichiersUploads)
+    let fichiers = [];
+    if (courrier.fichier_scan) {
+      try {
+        fichiers = JSON.parse(courrier.fichier_scan);
+      } catch {
+        fichiers = [courrier.fichier_scan];
+      }
+    }
+
+    if (!fichiers.length) {
+      return res.status(404).json({ success: false, message: "Aucun fichier à télécharger" });
+    }
+
+    // 🔹 On prend le premier fichier (tu peux boucler si tu veux tous les compresser ensuite)
+    let key = fichiers[0];
+
+    // Si c’est une URL complète, extraire la clé S3
     if (/^https?:\/\//i.test(key)) {
       const urlObj = new URL(key);
-      // tout ce qui vient après le nom du bucket
       key = urlObj.pathname.split(`${process.env.B2_BUCKET_NAME}/`).pop();
-      key = decodeURIComponent(key); // decode les + ou %20 en espaces
+      key = decodeURIComponent(key);
     }
+
     console.log("✅ Clé pour getObject :", key);
 
     const params = { Bucket: process.env.B2_BUCKET_NAME, Key: key };
     const data = await s3.getObject(params).promise();
 
-    // Nom de fichier et type MIME correct
+    // Nom du fichier et type MIME correct
     const fileName = path.basename(key);
     const contentType = data.ContentType || mime.lookup(fileName) || "application/octet-stream";
 
-     // 🔹 AJOUTE LES CONSOLES ICI
     console.log("Nom du fichier :", fileName);
     console.log("Content-Type :", contentType);
     console.log("Taille du fichier :", data.ContentLength);
 
-    // Headers pour forcer le téléchargement
+    // Headers HTTP
     res.setHeader("Content-Type", contentType);
     res.setHeader("Content-Disposition", `attachment; filename="${fileName}"`);
     res.setHeader("Content-Length", data.ContentLength || data.Body.length);
 
     // Envoi du fichier
     return res.send(data.Body);
-
   } catch (err) {
     console.error("❌ Erreur téléchargement :", err);
     if (!res.headersSent) {
-      res.status(500).json({ success: false, message: "Erreur téléchargement", error: err.message });
+      res.status(500).json({
+        success: false,
+        message: "Erreur téléchargement",
+        error: err.message,
+      });
     }
   }
 };
+
 
 const detailForDownload = async (id) => {
   const courrier = await Courrier.findById(id);
@@ -235,24 +253,32 @@ const detailForDownload = async (id) => {
 // Télécharger un courrier depuis Backblaze B2 via fetch() sécurisé
 const secureDownload = async (req, res) => {
   try {
-    const authHeader = req.headers.authorization;
-    if (!authHeader)
-      return res.status(401).json({ success: false, message: "Token d'authentification requis" });
-
-    const token = authHeader.split(" ")[1];
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    console.log("✅ Token décodé :", decoded);
-
+    // ✅ Le middleware authenticate a déjà validé le token et ajouté req.user
     const courrierId = req.params.courrierId;
     const courrier = await Courrier.findById(courrierId);
 
-    if (!courrier || !courrier.fichier_scan)
+    if (!courrier || !courrier.fichier_scan) {
       return res.status(404).json({ success: false, message: "Fichier introuvable" });
+    }
 
-    const fileUrl = courrier.fichier_scan;
-    const fileName = path.basename(fileUrl);
+    // 🔹 Gestion du champ JSON.stringify
+    let fichiers = [];
+    if (courrier.fichier_scan) {
+      try {
+        fichiers = JSON.parse(courrier.fichier_scan);
+      } catch {
+        fichiers = [courrier.fichier_scan];
+      }
+    }
 
-    console.log("📦 Téléchargement depuis :", fileUrl);
+    if (!fichiers.length) {
+      return res.status(404).json({ success: false, message: "Aucun fichier trouvé" });
+    }
+
+    const fileUrl = fichiers[0];
+    const fileName = decodeURIComponent(path.basename(fileUrl));
+
+    console.log("📦 Téléchargement sécurisé depuis :", fileUrl);
 
     const response = await axios.get(fileUrl, { responseType: "stream" });
 
@@ -260,14 +286,16 @@ const secureDownload = async (req, res) => {
     res.setHeader("Content-Type", response.headers["content-type"] || "application/octet-stream");
 
     response.data.pipe(res);
-
   } catch (err) {
-    console.error("❌ Erreur téléchargement :", err.message);
-    if (err.name === "JsonWebTokenError")
-      return res.status(401).json({ success: false, message: "Token invalide" });
-    res.status(500).json({ success: false, message: "Erreur téléchargement", error: err.message });
+    console.error("❌ Erreur téléchargement sécurisé :", err.message);
+    res.status(500).json({
+      success: false,
+      message: "Erreur téléchargement",
+      error: err.message,
+    });
   }
 };
+
 
 
 
