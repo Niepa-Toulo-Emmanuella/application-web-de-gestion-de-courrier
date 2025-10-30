@@ -85,34 +85,29 @@ const router = express.Router();
 
 // 📁 1️⃣ Fichier scanné (hébergé sur S3 / B2)
 // 📁 Téléchargement fichier scanné via query ?url=
+// Téléchargement via redirect direct
 router.get("/api/courriers/download", async (req, res) => {
   const fileUrl = req.query.url;
-  if (!fileUrl) {
-    return res.status(400).json({ success: false, message: "URL manquante" });
-  }
+  if (!fileUrl) return res.status(400).json({ success: false, message: "URL manquante" });
 
   try {
     const decodedUrl = decodeURIComponent(fileUrl);
-    console.log("📥 Téléchargement du fichier scanné :", decodedUrl);
 
     // Si c'est déjà une URL complète (http/https)
     const finalUrl = decodedUrl.startsWith("http")
       ? decodedUrl
       : `https://s3.us-east-005.backblazeb2.com/CourrierBucket2/${decodedUrl}`;
 
-    const response = await fetch(finalUrl);
-    if (!response.ok) throw new Error(`Erreur HTTP ${response.status}`);
+    console.log("📥 Redirection vers :", finalUrl);
 
-    const buffer = await response.arrayBuffer();
-    const fileName = finalUrl.split('/').pop();
-    res.setHeader("Content-Disposition", `attachment; filename="${fileName}"`);
-    res.send(Buffer.from(buffer));
+    // Rediriger le client vers le fichier pour téléchargement
+    res.redirect(finalUrl);
+
   } catch (err) {
     console.error("❌ Erreur téléchargement fichier :", err);
     res.status(500).json({ success: false, message: "Fichier introuvable" });
   }
 });
-
 
 
 
