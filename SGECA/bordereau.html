@@ -229,7 +229,9 @@
 
       const links = fichiers.map(url => {
         const fileName = url.split('/').pop();
-        return `<li><a href="/api/courriers/download/${courrier.id}" target="_blank">📄 ${fileName}</a></li>`;
+        // return `<li><a href="/api/courriers/download/${courrier.id}" target="_blank">📄 ${fileName}</a></li>`;
+        return `<li><a href="/api/courriers/download/${courrierId}" target="_blank">📄 ${fileName}</a></li>`;
+
       }).join('');
 
       fileInfo.innerHTML = `<ul>${links}</ul>`;
