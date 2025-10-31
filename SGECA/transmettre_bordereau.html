@@ -119,6 +119,21 @@
             </thead>
             <tbody></tbody>
         </table>
+
+        <!-- 🆕 Nouveau tableau -->
+        <h2>Liste complète des Bordereaux</h2>
+        <table id="bordereauTable" border="1" style="width:100%; border-collapse:collapse;">
+            <thead>
+                <tr>
+                    <th>Référence</th>
+                    <th>N° Enregistrement</th>
+                    <th>Objet</th>
+                    <th>Date du courrier</th>
+                    <th>Date d’arrivée</th>
+                </tr>
+            </thead>
+            <tbody id="bordereauBody"></tbody>
+        </table>
     </div>
 
     <script>
@@ -128,7 +143,6 @@
         const destinataireSelect = document.getElementById("destinataire_id");
         const notif = document.getElementById("messageNotif");
 
-        // ✅ Décode le JWT pour récupérer l'utilisateur connecté
         function parseJwt(token) {
             try {
                 if (!token) return {};
@@ -140,13 +154,11 @@
             }
         }
 
-        // ✅ Afficher message
         function showNotif(msg, type = "error") {
             notif.textContent = msg;
             notif.className = type;
         }
 
-        // ✅ Charger les bordereaux en attente
         async function loadBordereaux() {
             const token = localStorage.getItem("jwt") || localStorage.getItem("token");
             if (!token) {
@@ -167,15 +179,13 @@
                 bordereauSelect.innerHTML = '<option value="">-- Choisir --</option>';
 
                 if (result.success) {
-                    const enAttente = result.data.filter(b => b.statut === "en_attente" && b.courrier_id); // ✅ filtre ici aussi
+                    const enAttente = result.data.filter(b => b.statut === "en_attente" && b.courrier_id);
                     enAttente.forEach(b => {
-                        // tableau
                         const tr = document.createElement("tr");
                         const date = b.date_arrivee ? b.date_arrivee.split("T")[0] : "";
                         tr.innerHTML = `<td>${b.numero_reference}</td><td>${b.objet}</td><td>${date}</td>`;
                         tbody.appendChild(tr);
 
-                        // select
                         const option = document.createElement("option");
                         option.value = b.id;
                         option.dataset.courrierId = b.courrier_id;
@@ -190,7 +200,6 @@
             }
         }
 
-        // Charger les destinataires une seule fois
         async function loadDestinataires() {
             try {
                 const res = await fetch(`${API_BASE}/users`);
@@ -201,21 +210,17 @@
 
                 if (result.success) {
                     result.data.forEach(u => {
-                        if (u.is_active) { // on n'affiche que les utilisateurs actifs
+                        if (u.is_active) {
                             const option = document.createElement("option");
                             option.value = u.id;
-
-                            // Construction de l'affichage : "Nom Prénom — Rôle"
                             const fullName = `${u.first_name || ''} ${u.last_name || ''}`.trim();
                             const displayName = fullName ? fullName : u.email;
                             const role = u.role ? u.role.charAt(0).toUpperCase() + u.role.slice(1) : 'Sans rôle';
-
                             option.textContent = `${displayName} — ${role}`;
                             destinataireSelect.appendChild(option);
                         }
                     });
                 }
-
 
             } catch (err) {
                 console.error("Erreur chargement destinataires:", err);
@@ -223,32 +228,20 @@
             }
         }
 
-
-
-
-        // ✅ Gestion du formulaire
         form.addEventListener("submit", async (e) => {
             e.preventDefault();
 
             const selectedOption = bordereauSelect.selectedOptions[0];
             const bordereauId = selectedOption.value;
-            const courrierId = selectedOption.dataset.courrierId; // ✅ id du courrier
+            const courrierId = selectedOption.dataset.courrierId;
             const destinataireId = destinataireSelect.value;
 
             const token = localStorage.getItem("jwt") || localStorage.getItem("token");
             const currentUser = parseJwt(token);
             const currentUserId = currentUser.userId || currentUser.id || currentUser.user_id || currentUser.users_id || currentUser.sub;
 
-            // ⚠️ Vérification obligatoire du courrier
-            if (!courrierId) {
-                showNotif("⚠️ Ce bordereau n'a pas de courrier associé", "error");
-                return;
-            }
-
-            if (!bordereauId || !destinataireId || !currentUserId) {
-                showNotif("⚠️ Tous les champs sont obligatoires", "error");
-                return;
-            }
+            if (!courrierId) return showNotif("⚠️ Ce bordereau n'a pas de courrier associé", "error");
+            if (!bordereauId || !destinataireId || !currentUserId) return showNotif("⚠️ Tous les champs sont obligatoires", "error");
 
             try {
                 const res = await fetch(`${API_BASE}/bordereaux/transmettreBordereau`, {
@@ -270,6 +263,7 @@
                 if (res.ok && (result.success || result.message)) {
                     showNotif(result.message || "✅ Transmission réussie", "success");
                     loadBordereaux();
+                    chargerBordereaux();
                 } else {
                     showNotif(result.message || "❌ Erreur lors de la transmission", "error");
                 }
@@ -279,11 +273,52 @@
             }
         });
 
+        // 🔹 Nouveau script : affiche la liste complète
+        async function chargerBordereaux() {
+            try {
+                const token = localStorage.getItem("token") || localStorage.getItem("jwt");
+                const res = await fetch(`${API_BASE}/bordereaux`, {
+                    headers: { "Authorization": `Bearer ${token}` }
+                });
 
-        // ✅ Charger au démarrage
+                const result = await res.json();
+                const tbody = document.getElementById("bordereauBody");
+                tbody.innerHTML = "";
+
+                if (!result.success || !Array.isArray(result.data)) {
+                    tbody.innerHTML = `<tr><td colspan="5">Aucun bordereau trouvé</td></tr>`;
+                    return;
+                }
+
+                const formatDate = (dateStr) => {
+                    if (!dateStr) return "-";
+                    const d = new Date(dateStr);
+                    return d.toLocaleDateString("fr-FR");
+                };
+
+                result.data.forEach(b => {
+                    const tr = document.createElement("tr");
+                    tr.innerHTML = `
+            <td>${b.numero_reference || "-"}</td>
+            <td>${b.numero_enregistrement || "-"}</td>
+            <td>${b.objet || "-"}</td>
+            <td>${formatDate(b.date_courrier)}</td>
+            <td>${formatDate(b.date_arrivee)}</td>
+          `;
+                    tbody.appendChild(tr);
+                });
+
+            } catch (err) {
+                console.error("Erreur lors du chargement des bordereaux :", err);
+                document.getElementById("bordereauBody").innerHTML =
+                    `<tr><td colspan="5">Erreur lors du chargement des données</td></tr>`;
+            }
+        }
+
         window.addEventListener("DOMContentLoaded", () => {
             loadBordereaux();
             loadDestinataires();
+            chargerBordereaux();
         });
     </script>
 </body>
