@@ -80,6 +80,8 @@ router.get("/:id/download", authenticate, ctrl.download);
 
 router.get('/secure-download/:id', authenticate, ctrl.secureDownload);
 
+router.get("/disponibles", authenticate, ctrl.getCourriersDisponibles); 
+
 
 // src/routes/courriers.routes.js
 router.get('/download/:key', ctrl.download);

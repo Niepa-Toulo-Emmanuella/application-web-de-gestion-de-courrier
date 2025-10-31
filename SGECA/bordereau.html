@@ -157,7 +157,7 @@
 
       try {
         // Charger les courriers
-        const res = await fetch("https://application-web-de-gestion-de-courrier.onrender.com/api/courriers", {
+        const res = await fetch("https://application-web-de-gestion-de-courrier.onrender.com/api/courriers/disponibles", {
           headers: { Authorization: "Bearer " + token }
         });
         const result = await res.json();

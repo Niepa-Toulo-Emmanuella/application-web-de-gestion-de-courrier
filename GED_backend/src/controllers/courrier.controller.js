@@ -376,6 +376,27 @@ const secureDownload = async (req, res) => {
 };
 
 
+// ===================== COURRIERS SANS BORDEREAU =====================
+
+const getCourriersDisponibles = async (req, res) => {
+  try {
+    const result = await db.query(`
+      SELECT c.id, c.reference, c.objet
+      FROM courriers c
+      LEFT JOIN bordereaux b ON b.courrier_id = c.id
+      WHERE b.courrier_id IS NULL
+      ORDER BY c.created_at DESC;
+
+    `);
+
+    res.json(result.rows);
+  } catch (err) {
+    console.error("❌ Erreur getCourriersDisponibles :", err);
+    res.status(500).json({ message: "Erreur lors de la récupération des courriers disponibles" });
+  }
+};
+
+
 
 
 
@@ -390,5 +411,6 @@ module.exports = {
   update,
   download,
   detailForDownload,
-  secureDownload
+  secureDownload,
+  getCourriersDisponibles
 };
