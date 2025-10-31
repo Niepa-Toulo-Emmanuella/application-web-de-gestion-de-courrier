@@ -390,6 +390,7 @@ const getCourriersDisponibles = async (req, res) => {
       ORDER BY c.created_at DESC;
 
     `);
+    console.log("Courriers disponibles :", result.rows); // <-- ADD THIS
 
     res.json(result.rows);
   } catch (err) {

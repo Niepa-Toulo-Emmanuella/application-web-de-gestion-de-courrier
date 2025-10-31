@@ -161,6 +161,8 @@
           headers: { Authorization: "Bearer " + token }
         });
         const result = await res.json();
+        // ✅ Vérifier la réponse côté serveur
+        console.log("Réponse de l'API :", result);
         if (result.success && Array.isArray(result.data)) {
           result.data.forEach(courrier => {
             courriersMap[courrier.id] = courrier;
@@ -169,12 +171,15 @@
             option.textContent = `${courrier.reference || 'Réf. inconnue'} - ${courrier.objet || 'Sans objet'}`;
             courrierSelect.appendChild(option);
           });
+        } else {
+          console.warn("⚠️ Aucun courrier disponible ou format inattendu :", result);
         }
 
         loadBordereauxEnAttente();
 
       } catch (err) {
-        console.error("Erreur lors du chargement :", err);
+        alert("Erreur lors du chargement des courriers disponibles. Vérifie la console.");
+        console.error("Erreur fetch courriers disponibles :", err);
       }
     });
 
