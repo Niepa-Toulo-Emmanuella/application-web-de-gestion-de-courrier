@@ -72,11 +72,14 @@ router.delete('/:id', authenticate, ctrl.remove);
 
 router.get("/:id/download", authenticate, ctrl.download);
 
-// Téléchargement sécurisé
-router.get('/download-secure/:courrierId', ctrl.secureDownload);
+// // Téléchargement sécurisé
+// router.get('/download-secure/:courrierId', ctrl.secureDownload);
 
 // Téléchargement sécurisé (via ID, streaming avec token)
-router.get('/secure-download/:courrierId', authenticate, ctrl.secureDownload);
+// router.get('/secure-download/:courrierId', authenticate, ctrl.secureDownload);
+
+router.get('/secure-download/:id', authenticate, ctrl.secureDownload);
+
 
 // src/routes/courriers.routes.js
 router.get('/download/:key', ctrl.download);
