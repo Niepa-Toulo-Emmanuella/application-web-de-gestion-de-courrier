@@ -304,13 +304,10 @@ const secureDownload = async (req, res) => {
 
     console.log("🔐 Téléchargement sécurisé du courrier ID :", courrierId, "index :", index);
 
-    // ✅ Récupération du courrier depuis la DB (avec findById)
-    
-
+    // ✅ Récupération du courrier depuis la DB
     console.log("📬 Recherche du courrier ID :", courrierId);
     const courrier = await Courrier.findById(courrierId);
     console.log("Résultat trouvé :", courrier);
-
 
     if (!courrier) {
       console.warn("⚠️ Courrier introuvable pour l’ID :", courrierId);
@@ -322,13 +319,17 @@ const secureDownload = async (req, res) => {
       return res.status(404).json({ success: false, message: "Aucun fichier à télécharger" });
     }
 
-    // ✅ Convertir la colonne en tableau si elle est en JSON
+    // ✅ Convertir la colonne en tableau si elle est en JSON ou déjà un tableau
     let fichiers = [];
-    try {
-      fichiers = JSON.parse(courrier.fichier_scan);
-    } catch (err) {
-      console.error("❌ Erreur parsing fichier_scan :", err);
-      return res.status(500).json({ success: false, message: "Format fichier invalide" });
+    if (Array.isArray(courrier.fichier_scan)) {
+      fichiers = courrier.fichier_scan;
+    } else {
+      try {
+        fichiers = JSON.parse(courrier.fichier_scan);
+      } catch (err) {
+        console.error("❌ Erreur parsing fichier_scan :", err);
+        return res.status(500).json({ success: false, message: "Format fichier invalide" });
+      }
     }
 
     // ✅ Vérifier si l’index demandé existe
@@ -357,6 +358,7 @@ const secureDownload = async (req, res) => {
 
     // ✅ Stream du fichier vers le client
     response.body.pipe(res);
+
   } catch (err) {
     console.error("❌ Erreur téléchargement sécurisé :", err);
     res.status(500).json({
@@ -366,6 +368,7 @@ const secureDownload = async (req, res) => {
     });
   }
 };
+
 
 
 
