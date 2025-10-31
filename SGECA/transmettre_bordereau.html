@@ -108,19 +108,22 @@
             <div id="messageNotif"></div>
         </form>
 
+        <!-- 🔹 Bordereaux en attente -->
         <h2>Bordereaux en attente</h2>
         <table id="bordereaux-en-attente">
             <thead>
                 <tr>
-                    <th>Numéro</th>
+                    <th>Référence</th>
+                    <th>N° Enregistrement</th>
                     <th>Objet</th>
-                    <th>Date arrivée</th>
+                    <th>Date du courrier</th>
+                    <th>Date d’arrivée</th>
                 </tr>
             </thead>
             <tbody></tbody>
         </table>
 
-        <!-- 🆕 Nouveau tableau -->
+        <!-- 🔹 Liste complète -->
         <h2>Liste complète des Bordereaux</h2>
         <table id="bordereauTable" border="1" style="width:100%; border-collapse:collapse;">
             <thead>
@@ -149,7 +152,7 @@
                 const base64Url = token.split('.')[1];
                 const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
                 return JSON.parse(window.atob(base64));
-            } catch (e) {
+            } catch {
                 return {};
             }
         }
@@ -159,6 +162,7 @@
             notif.className = type;
         }
 
+        // 🔹 Charger les bordereaux en attente
         async function loadBordereaux() {
             const token = localStorage.getItem("jwt") || localStorage.getItem("token");
             if (!token) {
@@ -170,20 +174,26 @@
                 const res = await fetch(`${API_BASE}/bordereaux`, {
                     headers: { Authorization: "Bearer " + token }
                 });
-
-                if (!res.ok) throw new Error("Erreur HTTP " + res.status);
-
                 const result = await res.json();
+
                 const tbody = document.querySelector("#bordereaux-en-attente tbody");
                 tbody.innerHTML = "";
                 bordereauSelect.innerHTML = '<option value="">-- Choisir --</option>';
 
                 if (result.success) {
                     const enAttente = result.data.filter(b => b.statut === "en_attente" && b.courrier_id);
+
+                    const formatDate = (d) => d ? new Date(d).toLocaleDateString("fr-FR") : "-";
+
                     enAttente.forEach(b => {
                         const tr = document.createElement("tr");
-                        const date = b.date_arrivee ? b.date_arrivee.split("T")[0] : "";
-                        tr.innerHTML = `<td>${b.numero_reference}</td><td>${b.objet}</td><td>${date}</td>`;
+                        tr.innerHTML = `
+              <td>${b.numero_reference || "-"}</td>
+              <td>${b.numero_enregistrement || "-"}</td>
+              <td>${b.objet || "-"}</td>
+              <td>${formatDate(b.date_courrier)}</td>
+              <td>${formatDate(b.date_arrivee)}</td>
+            `;
                         tbody.appendChild(tr);
 
                         const option = document.createElement("option");
@@ -200,12 +210,11 @@
             }
         }
 
+        // 🔹 Charger les destinataires
         async function loadDestinataires() {
             try {
                 const res = await fetch(`${API_BASE}/users`);
-                if (!res.ok) throw new Error("Erreur HTTP " + res.status);
                 const result = await res.json();
-
                 destinataireSelect.innerHTML = '<option value="">-- Choisir --</option>';
 
                 if (result.success) {
@@ -214,20 +223,20 @@
                             const option = document.createElement("option");
                             option.value = u.id;
                             const fullName = `${u.first_name || ''} ${u.last_name || ''}`.trim();
-                            const displayName = fullName ? fullName : u.email;
+                            const displayName = fullName || u.email;
                             const role = u.role ? u.role.charAt(0).toUpperCase() + u.role.slice(1) : 'Sans rôle';
                             option.textContent = `${displayName} — ${role}`;
                             destinataireSelect.appendChild(option);
                         }
                     });
                 }
-
             } catch (err) {
                 console.error("Erreur chargement destinataires:", err);
                 showNotif("❌ Impossible de charger les destinataires", "error");
             }
         }
 
+        // 🔹 Transmission
         form.addEventListener("submit", async (e) => {
             e.preventDefault();
 
@@ -238,10 +247,11 @@
 
             const token = localStorage.getItem("jwt") || localStorage.getItem("token");
             const currentUser = parseJwt(token);
-            const currentUserId = currentUser.userId || currentUser.id || currentUser.user_id || currentUser.users_id || currentUser.sub;
+            const currentUserId = currentUser.userId || currentUser.id || currentUser.user_id || currentUser.sub;
 
             if (!courrierId) return showNotif("⚠️ Ce bordereau n'a pas de courrier associé", "error");
-            if (!bordereauId || !destinataireId || !currentUserId) return showNotif("⚠️ Tous les champs sont obligatoires", "error");
+            if (!bordereauId || !destinataireId || !currentUserId)
+                return showNotif("⚠️ Tous les champs sont obligatoires", "error");
 
             try {
                 const res = await fetch(`${API_BASE}/bordereaux/transmettreBordereau`, {
@@ -273,7 +283,7 @@
             }
         });
 
-        // 🔹 Nouveau script : affiche la liste complète
+        // 🔹 Liste complète des bordereaux
         async function chargerBordereaux() {
             try {
                 const token = localStorage.getItem("token") || localStorage.getItem("jwt");
@@ -290,11 +300,7 @@
                     return;
                 }
 
-                const formatDate = (dateStr) => {
-                    if (!dateStr) return "-";
-                    const d = new Date(dateStr);
-                    return d.toLocaleDateString("fr-FR");
-                };
+                const formatDate = (dateStr) => dateStr ? new Date(dateStr).toLocaleDateString("fr-FR") : "-";
 
                 result.data.forEach(b => {
                     const tr = document.createElement("tr");
