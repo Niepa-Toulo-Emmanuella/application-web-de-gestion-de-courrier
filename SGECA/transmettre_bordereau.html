@@ -200,13 +200,23 @@
                 destinataireSelect.innerHTML = '<option value="">-- Choisir --</option>';
 
                 if (result.success) {
-                    result.data.forEach(u => { // ici 'u' = utilisateur
-                        const option = document.createElement("option");
-                        option.value = u.id; // id de l'utilisateur
-                        option.textContent = `${u.first_name || ''} ${u.last_name || ''}`.trim() || u.email;
-                        destinataireSelect.appendChild(option);
+                    result.data.forEach(u => {
+                        if (u.is_active) { // on n'affiche que les utilisateurs actifs
+                            const option = document.createElement("option");
+                            option.value = u.id;
+
+                            // Construction de l'affichage : "Nom Prénom — Rôle"
+                            const fullName = `${u.first_name || ''} ${u.last_name || ''}`.trim();
+                            const displayName = fullName ? fullName : u.email;
+                            const role = u.role ? u.role.charAt(0).toUpperCase() + u.role.slice(1) : 'Sans rôle';
+
+                            option.textContent = `${displayName} — ${role}`;
+                            destinataireSelect.appendChild(option);
+                        }
                     });
                 }
+
+
             } catch (err) {
                 console.error("Erreur chargement destinataires:", err);
                 showNotif("❌ Impossible de charger les destinataires", "error");

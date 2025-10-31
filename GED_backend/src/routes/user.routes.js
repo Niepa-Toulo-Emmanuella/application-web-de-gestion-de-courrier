@@ -1,27 +1,3 @@
-// // routes/user.routes.js
-// const express = require('express');
-// const router = express.Router();
-// const userController = require('../controllers/user.Controller');
-
-// // GET /api/users or /api/users?role=chef
-// // router.get('/', userController.getAll);
-
-// // routes/user.routes.js
-// router.get('/api/users', async (req, res) => {
-//   try {
-//     const result = await pool.query('SELECT * FROM users ORDER BY id');
-//     res.json(result.rows);
-//   } catch (err) {
-//     res.status(500).json({ message: 'Erreur serveur' });
-//   }
-// });
-
-// router.put('/users/:id/activate', userController.toggleActive);
-
-
-// module.exports = router;
-
-
 const express = require('express');
 const router = express.Router();
 const userController = require('../controllers/user.Controller');
