@@ -8,6 +8,8 @@ const axios = require('axios');
 const path = require("path");
 const mime = require('mime-types'); // ajouter en haut
 const jwt = require("jsonwebtoken");
+const db = require('../models/db'); // <-- si ton fichier db.js exporte la connexion PostgreSQL
+
 
 
 
