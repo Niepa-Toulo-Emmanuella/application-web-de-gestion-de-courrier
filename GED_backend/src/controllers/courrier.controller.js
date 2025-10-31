@@ -343,10 +343,14 @@ const secureDownload = async (req, res) => {
 
     // ✅ Télécharger depuis Backblaze B2
     const response = await fetch(fileUrl);
+
     if (!response.ok) {
       console.error("❌ Erreur lors du téléchargement depuis B2 :", response.statusText);
       return res.status(404).json({ success: false, message: "Fichier introuvable sur B2" });
     }
+
+    // ✅ Lire le corps en Buffer (compatible Node 18+)
+    const buffer = Buffer.from(await response.arrayBuffer());
 
     // ✅ Extraire le nom du fichier
     const parts = fileUrl.split("/");
@@ -356,8 +360,10 @@ const secureDownload = async (req, res) => {
     res.setHeader("Content-Disposition", `attachment; filename="${fileName}"`);
     res.setHeader("Content-Type", response.headers.get("content-type") || "application/octet-stream");
 
-    // ✅ Stream du fichier vers le client
-    response.body.pipe(res);
+    // ✅ Envoyer le fichier au client
+    res.send(buffer);
+
+    console.log("✅ Téléchargement réussi :", fileName);
 
   } catch (err) {
     console.error("❌ Erreur téléchargement sécurisé :", err);
@@ -368,6 +374,7 @@ const secureDownload = async (req, res) => {
     });
   }
 };
+
 
 
 
