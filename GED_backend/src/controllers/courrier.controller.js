@@ -392,7 +392,7 @@ const getCourriersDisponibles = async (req, res) => {
     `);
     console.log("Courriers disponibles :", result.rows); // <-- ADD THIS
 
-    res.json(result.rows);
+    res.json({ success: true, data: result.rows }); // <-- ajouter success + data
   } catch (err) {
     console.error("❌ Erreur getCourriersDisponibles :", err);
     res.status(500).json({ message: "Erreur lors de la récupération des courriers disponibles" });
