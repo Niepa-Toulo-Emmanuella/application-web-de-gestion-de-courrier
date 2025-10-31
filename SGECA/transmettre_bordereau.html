@@ -172,14 +172,14 @@
                         // tableau
                         const tr = document.createElement("tr");
                         const date = b.date_arrivee ? b.date_arrivee.split("T")[0] : "";
-                        tr.innerHTML = `<td>${b.numero}</td><td>${b.objet}</td><td>${date}</td>`;
+                        tr.innerHTML = `<td>${b.numero_reference}</td><td>${b.objet}</td><td>${date}</td>`;
                         tbody.appendChild(tr);
 
                         // select
                         const option = document.createElement("option");
                         option.value = b.id;
                         option.dataset.courrierId = b.courrier_id;
-                        option.textContent = `${b.numero} - ${b.objet}`;
+                        option.textContent = `${b.numero_reference} - ${b.objet}`;
                         bordereauSelect.appendChild(option);
                     });
                 }
