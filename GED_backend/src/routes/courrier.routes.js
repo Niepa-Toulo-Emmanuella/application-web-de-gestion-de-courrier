@@ -59,6 +59,7 @@ router.use(authenticate); // tout ce qui suit nécessite connexion
 
 router.get('/', ctrl.list);
 router.get("/:id/download", authenticate, ctrl.download);
+router.get("/disponibles", authenticate, ctrl.getCourriersDisponibles); 
 router.get('/:id', ctrl.detail);
 // router.post('/', upload.single('scan'), ctrl.create);
 router.post('/', upload.array('fichiers', 10), ctrl.create);
@@ -80,7 +81,7 @@ router.get("/:id/download", authenticate, ctrl.download);
 
 router.get('/secure-download/:id', authenticate, ctrl.secureDownload);
 
-router.get("/disponibles", authenticate, ctrl.getCourriersDisponibles); 
+
 
 
 // src/routes/courriers.routes.js
