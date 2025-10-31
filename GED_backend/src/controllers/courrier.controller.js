@@ -380,24 +380,54 @@ const secureDownload = async (req, res) => {
 
 // ===================== COURRIERS SANS BORDEREAU =====================
 
+// const getCourriersDisponibles = async (req, res) => {
+//   try {
+//     const result = await db.query(`
+//       SELECT c.id, c.reference, c.objet
+//       FROM courriers c
+//       LEFT JOIN bordereaux b ON b.courrier_id = c.id
+//       WHERE b.courrier_id IS NULL
+//       ORDER BY c.created_at DESC;
+
+//     `);
+//     console.log("Courriers disponibles :", result.rows); // <-- ADD THIS
+
+//     res.json({ success: true, data: result.rows }); // <-- ajouter success + data
+//   } catch (err) {
+//     console.error("❌ Erreur getCourriersDisponibles :", err);
+//     res.status(500).json({ message: "Erreur lors de la récupération des courriers disponibles" });
+//   }
+// };
+
 const getCourriersDisponibles = async (req, res) => {
   try {
     const result = await db.query(`
-      SELECT c.id, c.reference, c.objet
+      SELECT 
+        c.id,
+        c.reference,
+        c.objet,
+        c.expediteur,
+        c.date_reception,
+        c.date_arrivee,
+        c.numero_enregistrement,
+        c.heure,
+        c.fichier_scan
       FROM courriers c
       LEFT JOIN bordereaux b ON b.courrier_id = c.id
       WHERE b.courrier_id IS NULL
       ORDER BY c.created_at DESC;
-
     `);
-    console.log("Courriers disponibles :", result.rows); // <-- ADD THIS
 
-    res.json({ success: true, data: result.rows }); // <-- ajouter success + data
+    res.json({ success: true, data: result.rows });
   } catch (err) {
     console.error("❌ Erreur getCourriersDisponibles :", err);
-    res.status(500).json({ message: "Erreur lors de la récupération des courriers disponibles" });
+    res.status(500).json({
+      success: false,
+      message: "Erreur lors de la récupération des courriers disponibles",
+    });
   }
 };
+
 
 
 
