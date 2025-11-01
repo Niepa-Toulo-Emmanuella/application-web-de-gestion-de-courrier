@@ -386,58 +386,75 @@ const securePreview = async (req, res) => {
     console.log("[DEBUG] securePreview appelé, courrierId=", courrierId, "index=", index);
 
     const courrier = await Courrier.findById(courrierId);
-    console.log("[DEBUG] Courrier récupéré:", courrier);
     if (!courrier || !courrier.fichier_scan) {
-      console.log("[DEBUG] Courrier ou fichier_scan introuvable");
       return res.status(404).json({ success: false, message: "Fichier introuvable" });
     }
 
     let fichiers = Array.isArray(courrier.fichier_scan)
       ? courrier.fichier_scan
       : JSON.parse(courrier.fichier_scan);
-    console.log("[DEBUG] Fichiers disponibles:", fichiers);
 
     if (index < 0 || index >= fichiers.length) {
-      console.log("[DEBUG] Index invalide:", index);
       return res.status(404).json({ success: false, message: "Index de fichier invalide" });
     }
 
     const fileUrl = fichiers[index];
     console.log("[DEBUG] URL du fichier sélectionné:", fileUrl);
 
-    // Récupération via AWS SDK (Backblaze B2) pour contourner le "attachment"
+    // Détecter l'extension du fichier
+    const ext = path.extname(fileUrl).toLowerCase();
+
+    // ⚡ Liste des extensions Office
+    const officeTypes = [".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx"];
+
+    if (officeTypes.includes(ext)) {
+      // 🔗 Rediriger vers Office Online Viewer
+      const encodedUrl = encodeURIComponent(fileUrl);
+      const viewerUrl = `https://view.officeapps.live.com/op/embed.aspx?src=${encodedUrl}`;
+      console.log("[DEBUG] Office Viewer URL:", viewerUrl);
+
+      // Renvoi d'une page HTML avec iframe pointant vers Office Viewer
+      return res.send(`
+        <!DOCTYPE html>
+        <html>
+        <head><title>Aperçu</title></head>
+        <body style="margin:0">
+          <iframe src="${viewerUrl}" style="width:100%; height:100vh;" frameborder="0"></iframe>
+        </body>
+        </html>
+      `);
+    }
+
+    // 🔹 Sinon, traiter comme PDF ou autre
     let key = fileUrl;
     if (/^https?:\/\//i.test(fileUrl)) {
       const urlObj = new URL(fileUrl);
       key = urlObj.pathname.split(`${process.env.B2_BUCKET_NAME}/`).pop();
       key = decodeURIComponent(key);
     }
-    console.log("[DEBUG] Key pour s3.getObject:", key);
 
     const params = { Bucket: process.env.B2_BUCKET_NAME, Key: key };
     const data = await s3.getObject(params).promise();
-    console.log("[DEBUG] Fichier récupéré depuis B2, ContentType:", data.ContentType, "Taille:", data.ContentLength);
 
-    // ✅ Détection type de fichier pour inline/download
     const pdfTypes = ["application/pdf"];
     const contentType = data.ContentType || mime.lookup(key) || "application/octet-stream";
 
     if (!pdfTypes.includes(contentType)) {
-      // Pas un PDF → forcer le téléchargement
       res.setHeader("Content-Disposition", `attachment; filename="${path.basename(key)}"`);
     } else {
-      // PDF → inline
       res.setHeader("Content-Disposition", `inline; filename="${path.basename(key)}"`);
     }
-    res.setHeader("Content-Type", contentType);
 
+    res.setHeader("Content-Type", contentType);
     res.send(data.Body);
-    console.log("[DEBUG] Fichier envoyé avec disposition correcte (inline/download)");
+    console.log("[DEBUG] Fichier envoyé à l’iframe avec inline ou download");
+
   } catch (err) {
     console.error("❌ Erreur aperçu sécurisé :", err);
     res.status(500).json({ success: false, message: "Erreur lors de l’aperçu" });
   }
 };
+
 
 
 
