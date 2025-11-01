@@ -382,21 +382,27 @@ const securePreview = async (req, res) => {
   try {
     const courrierId = req.params.id;
     const index = parseInt(req.query.index || 0);
+    console.log("[DEBUG] securePreview appelé, courrierId=", courrierId, "index=", index);
 
     const courrier = await Courrier.findById(courrierId);
+    console.log("[DEBUG] Courrier récupéré:", courrier);
     if (!courrier || !courrier.fichier_scan) {
+      console.log("[DEBUG] Courrier ou fichier_scan introuvable");
       return res.status(404).json({ success: false, message: "Fichier introuvable" });
     }
 
     let fichiers = Array.isArray(courrier.fichier_scan)
       ? courrier.fichier_scan
       : JSON.parse(courrier.fichier_scan);
+    console.log("[DEBUG] Fichiers disponibles:", fichiers);
 
     if (index < 0 || index >= fichiers.length) {
+      console.log("[DEBUG] Index invalide:", index);
       return res.status(404).json({ success: false, message: "Index de fichier invalide" });
     }
 
     const fileUrl = fichiers[index];
+    console.log("[DEBUG] URL du fichier sélectionné:", fileUrl);
 
     // Récupération via AWS SDK (Backblaze B2) pour contourner le "attachment"
     let key = fileUrl;
@@ -405,9 +411,11 @@ const securePreview = async (req, res) => {
       key = urlObj.pathname.split(`${process.env.B2_BUCKET_NAME}/`).pop();
       key = decodeURIComponent(key);
     }
+    console.log("[DEBUG] Key pour s3.getObject:", key);
 
     const params = { Bucket: process.env.B2_BUCKET_NAME, Key: key };
     const data = await s3.getObject(params).promise();
+    console.log("[DEBUG] Fichier récupéré depuis B2, ContentType:", data.ContentType, "Taille:", data.ContentLength);
 
     // Définir le content type
     const contentType = data.ContentType || mime.lookup(key) || "application/pdf";
@@ -417,6 +425,7 @@ const securePreview = async (req, res) => {
     res.setHeader("Content-Disposition", `inline; filename="${path.basename(key)}"`);
 
     res.send(data.Body);
+    console.log("[DEBUG] Fichier envoyé à l’iframe avec inline");
   } catch (err) {
     console.error("❌ Erreur aperçu sécurisé :", err);
     res.status(500).json({ success: false, message: "Erreur lors de l’aperçu" });
