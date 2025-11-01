@@ -195,13 +195,12 @@
   <script>
     const form = document.querySelector('#formulaire-bordereau');
     const numeroBordereauInput = document.getElementById('numero_bordereau');
-    const bordereauIdHidden = document.getElementById('bordereau_id_hidden');
     const notif = document.getElementById("messageNotif");
     const courrierSelect = document.getElementById("courrier_id");
-
-    let courriersMap = {};
     const backendUrl = "https://application-web-de-gestion-de-courrier.onrender.com";
     const token = localStorage.getItem("jwt") || localStorage.getItem("token");
+
+    let courriersMap = {};
 
     window.addEventListener("DOMContentLoaded", async () => {
       try {
@@ -218,13 +217,11 @@
             option.textContent = `${courrier.reference || 'Réf. inconnue'} - ${courrier.objet || 'Sans objet'}`;
             courrierSelect.appendChild(option);
           });
-        } else {
-          console.warn("⚠️ Aucun courrier disponible ou format inattendu :", result);
         }
 
         loadBordereauxEnAttente();
       } catch (err) {
-        alert("Erreur lors du chargement des courriers disponibles. Vérifie la console.");
+        alert("Erreur lors du chargement des courriers. Vérifie la console.");
         console.error(err);
       }
     });
@@ -237,8 +234,7 @@
         fileInfo.innerHTML = "Aucun courrier sélectionné";
         ['expediteur', 'reference', 'date_reception', 'date_arrivee',
           'numero_enregistrement', 'heure', 'objet'].forEach(id => {
-            const el = document.getElementById(id);
-            if (el) el.value = '';
+            document.getElementById(id).value = '';
           });
         return;
       }
@@ -285,19 +281,33 @@
         <a href="${backendUrl}/api/courriers/secure-download/${courrierId}?index=${index}" target="_blank">
           📄 ${fileName}
         </a>
-        <button type="button"
-          onclick="apercuFichier('${courrierId}', ${index})">👁️ Aperçu</button>
+        <button type="button" onclick="apercuFichier('${courrierId}', ${index})">👁️ Aperçu</button>
       </li>`;
       }).join('');
 
       fileInfo.innerHTML = `<ul>${links}</ul>`;
     }
 
-    function apercuFichier(courrierId, index = 0) {
+    async function apercuFichier(courrierId, index = 0) {
       const iframe = document.getElementById("previewFrame");
       const modal = document.getElementById("previewModal");
-      iframe.src = `${backendUrl}/api/courriers/secure-preview/${courrierId}?index=${index}&token=${token}`;
-      modal.style.display = "flex";
+
+      try {
+        const res = await fetch(`${backendUrl}/api/courriers/secure-preview/${courrierId}?index=${index}`, {
+          headers: { Authorization: "Bearer " + token }
+        });
+
+        if (!res.ok) throw new Error("Erreur chargement fichier");
+
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        iframe.src = url;
+        modal.style.display = "flex";
+
+      } catch (err) {
+        alert("Impossible d’afficher le fichier. Vérifie la console.");
+        console.error(err);
+      }
     }
 
     document.getElementById("closePreviewBtn").addEventListener("click", () => {
