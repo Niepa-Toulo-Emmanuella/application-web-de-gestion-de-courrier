@@ -184,11 +184,13 @@
     </table>
   </div>
 
-  <!-- Aperçu en surimpression -->
-  <div id="previewOverlay">
-    <div id="previewContainer">
-      <button id="closePreviewBtn">Retour</button>
-      <iframe id="previewFrame"></iframe>
+  <!-- ========================= MODALE D’APERÇU ========================= -->
+  <div id="previewModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%;
+  background:rgba(0,0,0,0.6); justify-content:center; align-items:center; z-index:1000;">
+    <div style="background:white; width:80%; height:90%; border-radius:10px; overflow:hidden; position:relative;">
+      <button onclick="fermerPreview()"
+        style="position:absolute; top:10px; right:15px; background:red; color:white; border:none; padding:5px 10px; border-radius:5px; cursor:pointer;">Fermer</button>
+      <iframe id="previewFrame" style="width:100%; height:100%; border:none;"></iframe>
     </div>
   </div>
 
@@ -299,7 +301,7 @@
         </a>
         <!-- 👁️ Bouton Aperçu : ouverture dans cadre -->
         <button type="button"
-          onclick="previewFile('${courrierId}', ${index})">👁️ Aperçu du fichier</button>
+          onclick="apercuFichier('${courrier.id}')">👁️ Aperçu du fichier</button>
       </li>`;
       }).join('');
 
@@ -414,6 +416,23 @@
       frame.src = ''; // On vide pour stopper le chargement du PDF
       overlay.style.display = 'none';
     });
+
+    // 🔍 Fonction pour afficher le fichier dans la modale
+    function apercuFichier(courrierId, index = 0) {
+      const token = localStorage.getItem("token");
+      const modal = document.getElementById("previewModal");
+      const iframe = document.getElementById("previewFrame");
+
+      // ✅ Charger le fichier directement dans l’iframe
+      iframe.src = `https://application-web-de-gestion-de-courrier.onrender.com/api/courriers/secure-preview/${courrierId}?index=${index}&token=${token}`;
+      modal.style.display = "flex";
+    }
+
+    // 🔙 Fermer la modale
+    function fermerPreview() {
+      document.getElementById("previewModal").style.display = "none";
+      document.getElementById("previewFrame").src = "";
+    }
 
   </script>
 </body>
