@@ -69,27 +69,27 @@
       background-color: #f0f0f0;
     }
 
-    /* --- Overlay pour aperçu fichier --- */
-    #previewOverlay {
+    /* --- Modale Aperçu --- */
+    #previewModal {
+      display: none;
       position: fixed;
       top: 0;
       left: 0;
       width: 100%;
       height: 100%;
-      background-color: rgba(0, 0, 0, 0.8);
-      display: none;
-      align-items: center;
+      background: rgba(0, 0, 0, 0.6);
       justify-content: center;
-      z-index: 9999;
+      align-items: center;
+      z-index: 1000;
     }
 
-    #previewContainer {
-      background-color: #fff;
-      width: 90%;
+    #previewContent {
+      background: white;
+      width: 80%;
       height: 90%;
-      position: relative;
-      border-radius: 8px;
+      border-radius: 10px;
       overflow: hidden;
+      position: relative;
     }
 
     #previewFrame {
@@ -101,13 +101,13 @@
     #closePreviewBtn {
       position: absolute;
       top: 10px;
-      right: 10px;
-      background-color: #d32f2f;
+      right: 15px;
+      background: red;
       color: white;
       border: none;
-      padding: 8px 14px;
+      padding: 5px 10px;
+      border-radius: 5px;
       cursor: pointer;
-      border-radius: 4px;
     }
   </style>
 </head>
@@ -185,12 +185,10 @@
   </div>
 
   <!-- ========================= MODALE D’APERÇU ========================= -->
-  <div id="previewModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%;
-  background:rgba(0,0,0,0.6); justify-content:center; align-items:center; z-index:1000;">
-    <div style="background:white; width:80%; height:90%; border-radius:10px; overflow:hidden; position:relative;">
-      <button onclick="fermerPreview()"
-        style="position:absolute; top:10px; right:15px; background:red; color:white; border:none; padding:5px 10px; border-radius:5px; cursor:pointer;">Fermer</button>
-      <iframe id="previewFrame" style="width:100%; height:100%; border:none;"></iframe>
+  <div id="previewModal">
+    <div id="previewContent">
+      <button id="closePreviewBtn">Fermer</button>
+      <iframe id="previewFrame"></iframe>
     </div>
   </div>
 
@@ -202,18 +200,16 @@
     const courrierSelect = document.getElementById("courrier_id");
 
     let courriersMap = {};
+    const backendUrl = "https://application-web-de-gestion-de-courrier.onrender.com";
+    const token = localStorage.getItem("jwt") || localStorage.getItem("token");
 
     window.addEventListener("DOMContentLoaded", async () => {
-      const token = localStorage.getItem("jwt") || localStorage.getItem("token");
-
       try {
-        // Charger les courriers
-        const res = await fetch("https://application-web-de-gestion-de-courrier.onrender.com/api/courriers/disponibles", {
+        const res = await fetch(`${backendUrl}/api/courriers/disponibles`, {
           headers: { Authorization: "Bearer " + token }
         });
         const result = await res.json();
-        // ✅ Vérifier la réponse côté serveur
-        console.log("Réponse de l'API :", result);
+
         if (result.success && Array.isArray(result.data)) {
           result.data.forEach(courrier => {
             courriersMap[courrier.id] = courrier;
@@ -227,10 +223,9 @@
         }
 
         loadBordereauxEnAttente();
-
       } catch (err) {
         alert("Erreur lors du chargement des courriers disponibles. Vérifie la console.");
-        console.error("Erreur fetch courriers disponibles :", err);
+        console.error(err);
       }
     });
 
@@ -238,7 +233,6 @@
       const courrierId = courrierSelect.value;
       const fileInfo = document.getElementById('file-info');
 
-      // Si aucun courrier sélectionné
       if (!courrierId) {
         fileInfo.innerHTML = "Aucun courrier sélectionné";
         ['expediteur', 'reference', 'date_reception', 'date_arrivee',
@@ -251,7 +245,6 @@
 
       const courrier = courriersMap[courrierId];
       if (courrier) {
-        // Remplir les champs du formulaire
         document.getElementById('expediteur').value = courrier.expediteur || "";
         document.getElementById('reference').value = courrier.reference || "";
         document.getElementById('date_reception').value = (courrier.date_reception || "").split("T")[0];
@@ -260,16 +253,12 @@
         document.getElementById('heure').value = courrier.heure || "";
         document.getElementById('objet').value = courrier.objet || "";
 
-        // Afficher les fichiers attachés
         displayFileInfo(courrier.fichier_scan, courrier.id);
-
-
       }
     });
 
     function displayFileInfo(fichierScan, courrierId) {
       const fileInfo = document.getElementById('file-info');
-
       if (!fichierScan || fichierScan.length === 0) {
         fileInfo.innerHTML = `📄 Aucun fichier attaché`;
         return;
@@ -289,42 +278,37 @@
         fichiers = [fichierScan];
       }
 
-      const backendUrl = "https://application-web-de-gestion-de-courrier.onrender.com";
-
       const links = fichiers.map((url, index) => {
         const fileName = url.split('/').pop();
         return `
       <li>
-        <!-- ✅ Lien de téléchargement direct -->
         <a href="${backendUrl}/api/courriers/secure-download/${courrierId}?index=${index}" target="_blank">
           📄 ${fileName}
         </a>
-        <!-- 👁️ Bouton Aperçu : ouverture dans cadre -->
         <button type="button"
-          onclick="apercuFichier('${courrier.id}')">👁️ Aperçu du fichier</button>
+          onclick="apercuFichier('${courrierId}', ${index})">👁️ Aperçu</button>
       </li>`;
       }).join('');
 
       fileInfo.innerHTML = `<ul>${links}</ul>`;
     }
 
-    // ✅ Nouvelle fonction Aperçu
-    function previewFile(id, index) {
-      const overlay = document.getElementById('previewOverlay');
-      const frame = document.getElementById('previewFrame');
-
-      // 👉 On utilise maintenant la route /secure-preview
-      const previewUrl = `https://application-web-de-gestion-de-courrier.onrender.com/api/courriers/secure-preview/${id}?index=${index}`;
-      document.getElementById("previewFrame").src = previewUrl;
-
-      overlay.style.display = 'flex';
+    function apercuFichier(courrierId, index = 0) {
+      const iframe = document.getElementById("previewFrame");
+      const modal = document.getElementById("previewModal");
+      iframe.src = `${backendUrl}/api/courriers/secure-preview/${courrierId}?index=${index}&token=${token}`;
+      modal.style.display = "flex";
     }
 
+    document.getElementById("closePreviewBtn").addEventListener("click", () => {
+      const iframe = document.getElementById("previewFrame");
+      const modal = document.getElementById("previewModal");
+      iframe.src = "";
+      modal.style.display = "none";
+    });
 
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
-      const token = localStorage.getItem("jwt") || localStorage.getItem("token");
-
       const courrierId = courrierSelect.value;
       if (!courrierId) {
         notif.textContent = "⚠️ Veuillez choisir un courrier.";
@@ -333,7 +317,7 @@
       }
 
       try {
-        const response = await fetch("https://application-web-de-gestion-de-courrier.onrender.com/api/bordereaux", {
+        const response = await fetch(`${backendUrl}/api/bordereaux`, {
           method: "POST",
           headers: {
             "Authorization": "Bearer " + token,
@@ -341,7 +325,7 @@
           },
           body: JSON.stringify({
             courrier_id: courrierId,
-            expediteur_id: 1, // ID de l'utilisateur connecté
+            expediteur_id: 1,
             numero_reference: document.getElementById("reference").value,
             date_courrier: document.getElementById("date_reception").value,
             date_arrivee: document.getElementById("date_arrivee").value,
@@ -357,27 +341,22 @@
           notif.textContent = result.message;
           notif.classList.remove("error");
           notif.classList.add("success");
-
-          // afficher le numéro généré
           numeroBordereauInput.value = result.data.numero;
-
           loadBordereauxEnAttente();
-
         } else {
           notif.textContent = result.message || "Erreur lors de l'enregistrement";
           notif.classList.add("error");
         }
       } catch (err) {
-        console.error("Erreur enregistrement :", err);
+        console.error(err);
         notif.textContent = "❌ Erreur serveur";
         notif.classList.add("error");
       }
     });
 
     async function loadBordereauxEnAttente() {
-      const token = localStorage.getItem("jwt") || localStorage.getItem("token");
       try {
-        const res = await fetch("https://application-web-de-gestion-de-courrier.onrender.com/api/bordereaux", {
+        const res = await fetch(`${backendUrl}/api/bordereaux`, {
           headers: { Authorization: "Bearer " + token }
         });
         const result = await res.json();
@@ -397,43 +376,9 @@
           });
         }
       } catch (err) {
-        console.error("Erreur chargement bordereaux :", err);
+        console.error(err);
       }
     }
-
-    function previewFile(url) {
-      const overlay = document.getElementById('previewOverlay');
-      const frame = document.getElementById('previewFrame');
-
-      frame.src = url;
-      overlay.style.display = 'flex';
-    }
-
-    document.getElementById('closePreviewBtn').addEventListener('click', () => {
-      const overlay = document.getElementById('previewOverlay');
-      const frame = document.getElementById('previewFrame');
-
-      frame.src = ''; // On vide pour stopper le chargement du PDF
-      overlay.style.display = 'none';
-    });
-
-    // 🔍 Fonction pour afficher le fichier dans la modale
-    function apercuFichier(courrierId, index = 0) {
-      const token = localStorage.getItem("token");
-      const modal = document.getElementById("previewModal");
-      const iframe = document.getElementById("previewFrame");
-
-      // ✅ Charger le fichier directement dans l’iframe
-      iframe.src = `https://application-web-de-gestion-de-courrier.onrender.com/api/courriers/secure-preview/${courrierId}?index=${index}&token=${token}`;
-      modal.style.display = "flex";
-    }
-
-    // 🔙 Fermer la modale
-    function fermerPreview() {
-      document.getElementById("previewModal").style.display = "none";
-      document.getElementById("previewFrame").src = "";
-    }
-
   </script>
 </body>
 
