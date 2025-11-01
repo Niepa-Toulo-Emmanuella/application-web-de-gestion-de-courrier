@@ -397,20 +397,32 @@ const securePreview = async (req, res) => {
     }
 
     const fileUrl = fichiers[index];
-    const response = await fetch(fileUrl);
-    if (!response.ok) throw new Error("Erreur lors du téléchargement depuis B2");
 
-    const buffer = Buffer.from(await response.arrayBuffer());
-    const contentType = response.headers.get("content-type") || "application/octet-stream";
+    // Récupération via AWS SDK (Backblaze B2) pour contourner le "attachment"
+    let key = fileUrl;
+    if (/^https?:\/\//i.test(fileUrl)) {
+      const urlObj = new URL(fileUrl);
+      key = urlObj.pathname.split(`${process.env.B2_BUCKET_NAME}/`).pop();
+      key = decodeURIComponent(key);
+    }
 
-    // ✅ Pas de "attachment" ici → affichage direct
+    const params = { Bucket: process.env.B2_BUCKET_NAME, Key: key };
+    const data = await s3.getObject(params).promise();
+
+    // Définir le content type
+    const contentType = data.ContentType || mime.lookup(key) || "application/pdf";
+
+    // 🔹 Affichage inline dans l’iframe
     res.setHeader("Content-Type", contentType);
-    res.send(buffer);
+    res.setHeader("Content-Disposition", `inline; filename="${path.basename(key)}"`);
+
+    res.send(data.Body);
   } catch (err) {
     console.error("❌ Erreur aperçu sécurisé :", err);
     res.status(500).json({ success: false, message: "Erreur lors de l’aperçu" });
   }
 };
+
 
 
 
