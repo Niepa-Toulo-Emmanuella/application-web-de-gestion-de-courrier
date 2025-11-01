@@ -287,25 +287,36 @@
         fichiers = [fichierScan];
       }
 
-      // ✅ ici on met le BON backend
       const backendUrl = "https://application-web-de-gestion-de-courrier.onrender.com";
 
       const links = fichiers.map((url, index) => {
         const fileName = url.split('/').pop();
         return `
       <li>
+        <!-- ✅ Lien de téléchargement direct -->
         <a href="${backendUrl}/api/courriers/secure-download/${courrierId}?index=${index}" target="_blank">
           📄 ${fileName}
         </a>
-        <button type="button" onclick="previewFile('${backendUrl}/api/courriers/secure-download/${courrierId}?index=${index}')">👁️ Aperçu du fichier</button>
+        <!-- 👁️ Bouton Aperçu : ouverture dans cadre -->
+        <button type="button"
+          onclick="previewFile('${courrierId}', ${index})">👁️ Aperçu du fichier</button>
       </li>`;
       }).join('');
 
       fileInfo.innerHTML = `<ul>${links}</ul>`;
     }
 
+    // ✅ Nouvelle fonction Aperçu
+    function previewFile(id, index) {
+      const overlay = document.getElementById('previewOverlay');
+      const frame = document.getElementById('previewFrame');
 
+      // 👉 On utilise maintenant la route /secure-preview
+      const previewUrl = `https://application-web-de-gestion-de-courrier.onrender.com/api/courriers/secure-preview/${id}?index=${index}`;
+      document.getElementById("previewFrame").src = previewUrl;
 
+      overlay.style.display = 'flex';
+    }
 
 
     form.addEventListener("submit", async (e) => {

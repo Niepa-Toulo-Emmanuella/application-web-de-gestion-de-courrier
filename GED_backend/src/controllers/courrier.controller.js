@@ -377,6 +377,42 @@ const secureDownload = async (req, res) => {
   }
 };
 
+// ✅ Version "prévisualisation"
+const securePreview = async (req, res) => {
+  try {
+    const courrierId = req.params.id;
+    const index = parseInt(req.query.index || 0);
+
+    const courrier = await Courrier.findById(courrierId);
+    if (!courrier || !courrier.fichier_scan) {
+      return res.status(404).json({ success: false, message: "Fichier introuvable" });
+    }
+
+    let fichiers = Array.isArray(courrier.fichier_scan)
+      ? courrier.fichier_scan
+      : JSON.parse(courrier.fichier_scan);
+
+    if (index < 0 || index >= fichiers.length) {
+      return res.status(404).json({ success: false, message: "Index de fichier invalide" });
+    }
+
+    const fileUrl = fichiers[index];
+    const response = await fetch(fileUrl);
+    if (!response.ok) throw new Error("Erreur lors du téléchargement depuis B2");
+
+    const buffer = Buffer.from(await response.arrayBuffer());
+    const contentType = response.headers.get("content-type") || "application/octet-stream";
+
+    // ✅ Pas de "attachment" ici → affichage direct
+    res.setHeader("Content-Type", contentType);
+    res.send(buffer);
+  } catch (err) {
+    console.error("❌ Erreur aperçu sécurisé :", err);
+    res.status(500).json({ success: false, message: "Erreur lors de l’aperçu" });
+  }
+};
+
+
 
 // ===================== COURRIERS SANS BORDEREAU =====================
 
@@ -445,5 +481,6 @@ module.exports = {
   download,
   detailForDownload,
   secureDownload,
-  getCourriersDisponibles
+  getCourriersDisponibles,
+  securePreview
 };

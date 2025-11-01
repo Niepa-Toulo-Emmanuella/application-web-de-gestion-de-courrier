@@ -79,6 +79,7 @@ router.get("/:id/download", authenticate, ctrl.download);
 // Téléchargement sécurisé (via ID, streaming avec token)
 // router.get('/secure-download/:courrierId', authenticate, ctrl.secureDownload);
 
+router.get('/secure-preview/:id', authenticate, ctrl.securePreview);
 router.get('/secure-download/:id', authenticate, ctrl.secureDownload);
 
 
