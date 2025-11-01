@@ -84,6 +84,7 @@ const create = async (req, res) => {
 
         // 🧠 Corriger le nom (reconvertir depuis Latin1 → UTF8)
         let safeName = Buffer.from(file.originalname, "latin1").toString("utf8");
+        safeName = safeName.normalize("NFC"); // ✅ normalisation UTF-8
         console.log("✅ Nom corrigé UTF-8 :", safeName);
 
         // 🆙 Upload vers Backblaze
@@ -417,15 +418,21 @@ const securePreview = async (req, res) => {
     const data = await s3.getObject(params).promise();
     console.log("[DEBUG] Fichier récupéré depuis B2, ContentType:", data.ContentType, "Taille:", data.ContentLength);
 
-    // Définir le content type
-    const contentType = data.ContentType || mime.lookup(key) || "application/pdf";
+    // ✅ Détection type de fichier pour inline/download
+    const pdfTypes = ["application/pdf"];
+    const contentType = data.ContentType || mime.lookup(key) || "application/octet-stream";
 
-    // 🔹 Affichage inline dans l’iframe
+    if (!pdfTypes.includes(contentType)) {
+      // Pas un PDF → forcer le téléchargement
+      res.setHeader("Content-Disposition", `attachment; filename="${path.basename(key)}"`);
+    } else {
+      // PDF → inline
+      res.setHeader("Content-Disposition", `inline; filename="${path.basename(key)}"`);
+    }
     res.setHeader("Content-Type", contentType);
-    res.setHeader("Content-Disposition", `inline; filename="${path.basename(key)}"`);
 
     res.send(data.Body);
-    console.log("[DEBUG] Fichier envoyé à l’iframe avec inline");
+    console.log("[DEBUG] Fichier envoyé avec disposition correcte (inline/download)");
   } catch (err) {
     console.error("❌ Erreur aperçu sécurisé :", err);
     res.status(500).json({ success: false, message: "Erreur lors de l’aperçu" });
