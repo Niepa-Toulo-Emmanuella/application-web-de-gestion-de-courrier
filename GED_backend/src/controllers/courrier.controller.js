@@ -408,21 +408,24 @@ const securePreview = async (req, res) => {
     const ext = path.extname(fileUrl).toLowerCase();
     const officeTypes = [".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx"];
 
-    // Récupérer le fichier depuis S3
+    // ✅ Télécharger depuis S3 / Backblaze
     const key = decodeURIComponent(new URL(fileUrl).pathname.split(`${process.env.B2_BUCKET_NAME}/`).pop());
     const s3Data = await s3.getObject({ Bucket: process.env.B2_BUCKET_NAME, Key: key }).promise();
     const fileBuffer = s3Data.Body;
 
+    // ✅ Conversion si c’est un fichier Office
     if (officeTypes.includes(ext)) {
-      // ⚡ Conversion via CloudConvert API
       if (!process.env.CLOUDCONVERT_API_KEY) {
-        return res.status(500).json({ success: false, message: "Clé API CloudConvert non définie" });
+        throw new Error("Clé API CloudConvert manquante");
       }
 
       const formData = new FormData();
-      formData.append("file", fileBuffer, path.basename(fileUrl));
-      formData.append("inputformat", ext.replace(".", "").toLowerCase());
+      formData.append("file", fileBuffer, { filename: `document${ext}` });
+      formData.append("inputformat", ext.replace(".", ""));
       formData.append("outputformat", "pdf");
+
+      console.log("🔑 Envoi à CloudConvert...");
+      console.log("CloudConvert Key:", process.env.CLOUDCONVERT_API_KEY ? "✅ chargée" : "❌ absente");
 
       const cloudRes = await axios.post(
         "https://api.cloudconvert.com/v2/convert",
@@ -432,30 +435,24 @@ const securePreview = async (req, res) => {
             ...formData.getHeaders(),
             Authorization: `Bearer ${process.env.CLOUDCONVERT_API_KEY}`,
           },
-          responseType: "arraybuffer"
+          responseType: "arraybuffer",
         }
       );
 
+      console.log("✅ Conversion terminée !");
       res.setHeader("Content-Type", "application/pdf");
       res.setHeader("Content-Disposition", `inline; filename="${path.basename(fileUrl, ext)}.pdf"`);
       return res.send(cloudRes.data);
     }
 
-    // 🔹 PDF ou autre → affichage direct
+    // ✅ Sinon → renvoyer directement
     const contentType = s3Data.ContentType || mime.lookup(key) || "application/octet-stream";
-
-    if (contentType.includes("pdf")) {
-      res.setHeader("Content-Disposition", `inline; filename="${path.basename(key)}"`);
-    } else {
-      res.setHeader("Content-Disposition", `attachment; filename="${path.basename(key)}"`);
-    }
-
     res.setHeader("Content-Type", contentType);
+    res.setHeader("Content-Disposition", `inline; filename="${path.basename(key)}"`);
     res.send(fileBuffer);
-
   } catch (err) {
-    console.error("❌ Erreur aperçu sécurisé :", err);
-    res.status(500).json({ success: false, message: "Erreur lors de l’aperçu" });
+    console.error("❌ Erreur aperçu sécurisé :", err.response?.data || err.message);
+    res.status(500).json({ success: false, message: "Erreur lors de l’aperçu", error: err.message });
   }
 };
 
