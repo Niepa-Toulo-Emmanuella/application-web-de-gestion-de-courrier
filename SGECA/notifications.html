@@ -50,6 +50,40 @@
     button:hover {
       background: #004d40;
     }
+
+    /* ✅ Style pour la fenêtre d’aperçu */
+    #overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.7);
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+
+    #overlay iframe {
+      width: 80%;
+      height: 90%;
+      border: none;
+      background: white;
+    }
+
+    #closeOverlay {
+      position: absolute;
+      top: 20px;
+      right: 40px;
+      background: red;
+      color: white;
+      border: none;
+      font-size: 18px;
+      padding: 5px 15px;
+      cursor: pointer;
+      border-radius: 8px;
+    }
   </style>
 </head>
 
@@ -71,6 +105,12 @@
     <tbody></tbody>
   </table>
 
+  <!-- ✅ Fenêtre d’aperçu -->
+  <div id="overlay">
+    <button id="closeOverlay" onclick="closePreview()">Fermer ✖</button>
+    <iframe id="previewFrame"></iframe>
+  </div>
+
   <script>
     console.log("✅ Nouvelle version du script chargée");
 
@@ -91,29 +131,33 @@
           data.data.forEach(n => {
             console.log("📬 Notification :", n);
 
-            // 📎 Bordereau
+            // 📎 Bordereau avec bouton aperçu
             const bordereauLink = n.fichier_bordereau
-              ? `<a href="https://application-web-de-gestion-de-courrier.onrender.com/api/bordereaux/download/${encodeURIComponent(n.fichier_bordereau)}" target="_blank">
-                  📎 ${n.fichier_bordereau.split('/').pop()}
-                </a>`
+              ? `
+              <a href="https://application-web-de-gestion-de-courrier.onrender.com/api/bordereaux/download/${encodeURIComponent(n.fichier_bordereau)}" target="_blank">
+                📎 ${n.fichier_bordereau.split('/').pop()}
+              </a><br>
+              <button onclick="previewFile('https://application-web-de-gestion-de-courrier.onrender.com/${n.fichier_bordereau}')">👁️ Aperçu</button>
+              `
               : "—";
 
-            // 📎 Courrier
-            // 📎 Courriers (gère les multiples fichiers)
+            // 📎 Courriers (multiples fichiers possibles)
             let courrierLink = "—";
-
             if (n.fichier_scan && Array.isArray(n.fichier_scan) && n.fichier_scan.length > 0) {
-              courrierLink = n.fichier_scan
-                .map((url, idx) => {
-                  const fileName = decodeURIComponent(url.split("/").pop());
-                  return `<a href="javascript:void(0)" onclick="telecharger(${n.courrier_id}, ${idx}, '${fileName}')">📎 ${fileName}</a>`;
-                })
-                .join("<br>");
+              courrierLink = n.fichier_scan.map((url, idx) => {
+                const fileName = decodeURIComponent(url.split("/").pop());
+                return `
+                  <a href="javascript:void(0)" onclick="telecharger(${n.courrier_id}, ${idx}, '${fileName}')">📎 ${fileName}</a>
+                  <button onclick="previewCourrier(${n.courrier_id}, ${idx})">👁️ Aperçu</button>
+                `;
+              }).join("<br>");
             } else if (typeof n.fichier_scan === "string") {
               const fileName = decodeURIComponent(n.fichier_scan.split("/").pop());
-              courrierLink = `<a href="javascript:void(0)" onclick="telecharger(${n.courrier_id}, 0, '${fileName}')">📎 ${fileName}</a>`;
+              courrierLink = `
+                <a href="javascript:void(0)" onclick="telecharger(${n.courrier_id}, 0, '${fileName}')">📎 ${fileName}</a>
+                <button onclick="previewCourrier(${n.courrier_id}, 0)">👁️ Aperçu</button>
+              `;
             }
-
 
             const tr = document.createElement("tr");
             tr.innerHTML = `
@@ -123,9 +167,7 @@
               <td>${new Date(n.date_envoi).toLocaleString()}</td>
               <td>${bordereauLink}</td>
               <td>${courrierLink}</td>
-              <td>
-                <button onclick="imputer('${n.bordereau_id}')">Imputer</button>
-              </td>
+              <td><button onclick="imputer('${n.bordereau_id}')">Imputer</button></td>
             `;
             tbody.appendChild(tr);
           });
@@ -163,6 +205,58 @@
       }
     }
 
+    // 👁️ Aperçu du fichier de bordereau (fichier public)
+    function previewFile(url) {
+      const iframe = document.getElementById("previewFrame");
+      if (url.endsWith(".pdf")) {
+        iframe.src = url;
+      } else if (url.endsWith(".docx") || url.endsWith(".xlsx")) {
+        iframe.src = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(url)}`;
+      } else {
+        iframe.src = url;
+      }
+      document.getElementById("overlay").style.display = "flex";
+    }
+
+    // 👁️ Aperçu du courrier (via endpoint sécurisé)
+    async function previewCourrier(courrierId, index = 0) {
+      const token = localStorage.getItem("token");
+      const iframe = document.getElementById("previewFrame");
+      const overlay = document.getElementById("overlay");
+
+      try {
+        const res = await fetch(`https://application-web-de-gestion-de-courrier.onrender.com/api/courriers/secure-preview/${courrierId}?index=${index}`, {
+          headers: { Authorization: "Bearer " + token }
+        });
+
+        if (!res.ok) throw new Error("Erreur chargement du fichier");
+
+        const blob = await res.blob();
+        const fileType = blob.type;
+
+        if (fileType.includes("pdf")) {
+          iframe.src = URL.createObjectURL(blob);
+        } else if (fileType.includes("word") || fileType.includes("officedocument")) {
+          const officeUrl = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(URL.createObjectURL(blob))}`;
+          iframe.src = officeUrl;
+        } else {
+          iframe.src = URL.createObjectURL(blob);
+        }
+
+        overlay.style.display = "flex";
+      } catch (err) {
+        console.error("❌ Erreur aperçu :", err);
+        alert("Impossible d’afficher un aperçu pour ce fichier");
+      }
+    }
+
+    // 🔒 Fermer la fenêtre d’aperçu
+    function closePreview() {
+      const overlay = document.getElementById("overlay");
+      const iframe = document.getElementById("previewFrame");
+      iframe.src = "";
+      overlay.style.display = "none";
+    }
 
     // 🧾 Imputation
     function imputer(bordereauId) {
