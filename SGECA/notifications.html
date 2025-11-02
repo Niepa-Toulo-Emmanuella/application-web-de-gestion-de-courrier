@@ -20,7 +20,9 @@
 
     table {
       width: 100%;
-      border-collapse: collapse;
+      border-collapse: separate;
+      border-spacing: 0 12px;
+      /* ✅ Espacement vertical entre les lignes */
       background: white;
       border-radius: 10px;
       overflow: hidden;
@@ -29,8 +31,9 @@
 
     th,
     td {
-      padding: 12px 15px;
+      padding: 15px;
       text-align: left;
+      vertical-align: middle;
     }
 
     th {
@@ -41,8 +44,10 @@
       letter-spacing: 0.5px;
     }
 
-    tr:nth-child(even) {
-      background-color: #f9f9f9;
+    tr {
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
     }
 
     tr:hover {
@@ -53,6 +58,8 @@
       color: #00796b;
       text-decoration: none;
       font-weight: 600;
+      margin-right: 8px;
+      display: inline-block;
     }
 
     a:hover {
@@ -60,14 +67,16 @@
     }
 
     .btn {
-      padding: 6px 10px;
+      padding: 6px 12px;
       border: none;
-      border-radius: 5px;
+      border-radius: 6px;
       cursor: pointer;
       font-size: 13px;
       font-weight: 600;
       transition: all 0.2s ease;
-      margin: 2px;
+      margin: 2px 2px 4px 0;
+      /* ✅ Plus d'espacement entre les boutons */
+      display: inline-block;
     }
 
     .btn-imputer {
@@ -97,6 +106,7 @@
       justify-content: center;
       align-items: center;
       z-index: 1000;
+      padding: 20px;
     }
 
     #overlay iframe {
@@ -124,6 +134,11 @@
 
     #closeOverlay:hover {
       background: #b71c1c;
+    }
+
+    /* ✅ Espacement interne pour colonnes avec plusieurs fichiers */
+    .file-block {
+      margin-bottom: 8px;
     }
   </style>
 </head>
@@ -153,7 +168,7 @@
   </div>
 
   <script>
-    console.log("✅ Nouvelle version stylée du script chargée");
+    console.log("✅ Nouvelle version stylée et aérée du script chargée");
 
     async function loadNotifications() {
       const token = localStorage.getItem("token");
@@ -170,26 +185,26 @@
 
         if (data.success && data.data.length > 0) {
           data.data.forEach(n => {
-            // 📎 Bordereau
+            // Bordereau
             const bordereauLink = n.fichier_bordereau
-              ? `
-                <a href="https://application-web-de-gestion-de-courrier.onrender.com/api/bordereaux/download/${encodeURIComponent(n.fichier_bordereau)}" target="_blank">
-                  📎 ${n.fichier_bordereau.split('/').pop()}
-                </a><br>
-                <button class="btn btn-preview" onclick="previewFile('https://application-web-de-gestion-de-courrier.onrender.com/${n.fichier_bordereau}')">👁️ Aperçu</button>
-              `
+              ? `<div class="file-block">
+                  <a href="https://application-web-de-gestion-de-courrier.onrender.com/api/bordereaux/download/${encodeURIComponent(n.fichier_bordereau)}" target="_blank">
+                    📎 ${n.fichier_bordereau.split('/').pop()}
+                  </a>
+                  <button class="btn btn-preview" onclick="previewFile('https://application-web-de-gestion-de-courrier.onrender.com/${n.fichier_bordereau}')">👁️ Aperçu</button>
+                </div>`
               : "—";
 
-            // 📎 Courriers
+            // Courriers
             let courrierLink = "—";
             if (n.fichier_scan && Array.isArray(n.fichier_scan) && n.fichier_scan.length > 0) {
               courrierLink = n.fichier_scan.map((url, idx) => {
                 const fileName = decodeURIComponent(url.split("/").pop());
-                return `
-                  <a href="javascript:void(0)" onclick="telecharger(${n.courrier_id}, ${idx}, '${fileName}')">📎 ${fileName}</a>
-                  <button class="btn btn-preview" onclick="previewCourrier(${n.courrier_id}, ${idx})">👁️ Aperçu</button>
-                `;
-              }).join("<br>");
+                return `<div class="file-block">
+                          <a href="javascript:void(0)" onclick="telecharger(${n.courrier_id}, ${idx}, '${fileName}')">📎 ${fileName}</a>
+                          <button class="btn btn-preview" onclick="previewCourrier(${n.courrier_id}, ${idx})">👁️ Aperçu</button>
+                        </div>`;
+              }).join('');
             }
 
             const tr = document.createElement("tr");
@@ -212,7 +227,6 @@
       }
     }
 
-    // 📩 Télécharger
     async function telecharger(courrierId, index = 0, fileName) {
       const token = localStorage.getItem("token");
       try {
@@ -229,7 +243,6 @@
       }
     }
 
-    // 👁️ Aperçu
     function previewFile(url) {
       const iframe = document.getElementById("previewFrame");
       if (url.endsWith(".pdf")) iframe.src = url;
