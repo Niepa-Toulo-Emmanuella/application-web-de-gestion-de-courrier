@@ -389,6 +389,8 @@ const securePreview = async (req, res) => {
     const courrierId = req.params.id;
     const index = parseInt(req.query.index || 0);
 
+    console.log("[DEBUG] securePreview appelé, courrierId=", courrierId, "index=", index);
+
     const courrier = await Courrier.findById(courrierId);
     if (!courrier || !courrier.fichier_scan) {
       return res.status(404).json({ success: false, message: "Fichier introuvable" });
@@ -413,9 +415,13 @@ const securePreview = async (req, res) => {
 
     if (officeTypes.includes(ext)) {
       // ⚡ Conversion via CloudConvert API
+      if (!process.env.CLOUDCONVERT_API_KEY) {
+        return res.status(500).json({ success: false, message: "Clé API CloudConvert non définie" });
+      }
+
       const formData = new FormData();
       formData.append("file", fileBuffer, path.basename(fileUrl));
-      formData.append("inputformat", ext.replace(".", ""));
+      formData.append("inputformat", ext.replace(".", "").toLowerCase());
       formData.append("outputformat", "pdf");
 
       const cloudRes = await axios.post(
@@ -452,6 +458,7 @@ const securePreview = async (req, res) => {
     res.status(500).json({ success: false, message: "Erreur lors de l’aperçu" });
   }
 };
+
 
 
 
