@@ -9,6 +9,7 @@ const path = require("path");
 const mime = require('mime-types'); // ajouter en haut
 const jwt = require("jsonwebtoken");
 const db = require('../models/db'); // <-- si ton fichier db.js exporte la connexion PostgreSQL
+const FormData = require("form-data");
 
 
 
@@ -380,8 +381,8 @@ const secureDownload = async (req, res) => {
 };
 
 // ✅ Version "prévisualisation"
-const axios = require("axios");
-const FormData = require("form-data");
+
+
 
 const securePreview = async (req, res) => {
   try {
