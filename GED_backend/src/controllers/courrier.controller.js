@@ -9,6 +9,7 @@ const path = require("path");
 const mime = require('mime-types'); // ajouter en haut
 const jwt = require("jsonwebtoken");
 const db = require('../models/db'); // <-- si ton fichier db.js exporte la connexion PostgreSQL
+const libre = require('libreoffice-convert');
 
 
 
@@ -383,7 +384,6 @@ const securePreview = async (req, res) => {
   try {
     const courrierId = req.params.id;
     const index = parseInt(req.query.index || 0);
-    console.log("[DEBUG] securePreview appelé, courrierId=", courrierId, "index=", index);
 
     const courrier = await Courrier.findById(courrierId);
     if (!courrier || !courrier.fichier_scan) {
@@ -399,55 +399,42 @@ const securePreview = async (req, res) => {
     }
 
     const fileUrl = fichiers[index];
-    console.log("[DEBUG] URL du fichier sélectionné:", fileUrl);
-
-    // Détecter l'extension du fichier
     const ext = path.extname(fileUrl).toLowerCase();
-
-    // ⚡ Liste des extensions Office
     const officeTypes = [".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx"];
 
+    // ⚡ Si fichier Office, convertir en PDF
     if (officeTypes.includes(ext)) {
-      // 🔗 Rediriger vers Office Online Viewer
-      const encodedUrl = encodeURIComponent(fileUrl);
-      const viewerUrl = `https://view.officeapps.live.com/op/embed.aspx?src=${encodedUrl}`;
-      console.log("[DEBUG] Office Viewer URL:", viewerUrl);
+      // Récupérer le fichier depuis S3
+      const key = decodeURIComponent(new URL(fileUrl).pathname.split(`${process.env.B2_BUCKET_NAME}/`).pop());
+      const s3Data = await s3.getObject({ Bucket: process.env.B2_BUCKET_NAME, Key: key }).promise();
+      const inputBuffer = s3Data.Body;
 
-      // Renvoi d'une page HTML avec iframe pointant vers Office Viewer
-      return res.send(`
-        <!DOCTYPE html>
-        <html>
-        <head><title>Aperçu</title></head>
-        <body style="margin:0">
-          <iframe src="${viewerUrl}" style="width:100%; height:100vh;" frameborder="0"></iframe>
-        </body>
-        </html>
-      `);
+      // Conversion en PDF
+      const pdfBuffer = await new Promise((resolve, reject) => {
+        libre.convert(inputBuffer, '.pdf', undefined, (err, done) => {
+          if (err) return reject(err);
+          resolve(done);
+        });
+      });
+
+      res.setHeader("Content-Type", "application/pdf");
+      res.setHeader("Content-Disposition", `inline; filename="${path.basename(fileUrl, ext)}.pdf"`);
+      return res.send(pdfBuffer);
     }
 
-    // 🔹 Sinon, traiter comme PDF ou autre
-    let key = fileUrl;
-    if (/^https?:\/\//i.test(fileUrl)) {
-      const urlObj = new URL(fileUrl);
-      key = urlObj.pathname.split(`${process.env.B2_BUCKET_NAME}/`).pop();
-      key = decodeURIComponent(key);
-    }
-
-    const params = { Bucket: process.env.B2_BUCKET_NAME, Key: key };
-    const data = await s3.getObject(params).promise();
-
-    const pdfTypes = ["application/pdf"];
+    // 🔹 Sinon PDF ou autre → affichage direct
+    const key = decodeURIComponent(new URL(fileUrl).pathname.split(`${process.env.B2_BUCKET_NAME}/`).pop());
+    const data = await s3.getObject({ Bucket: process.env.B2_BUCKET_NAME, Key: key }).promise();
     const contentType = data.ContentType || mime.lookup(key) || "application/octet-stream";
 
-    if (!pdfTypes.includes(contentType)) {
-      res.setHeader("Content-Disposition", `attachment; filename="${path.basename(key)}"`);
-    } else {
+    if (contentType.includes("pdf")) {
       res.setHeader("Content-Disposition", `inline; filename="${path.basename(key)}"`);
+    } else {
+      res.setHeader("Content-Disposition", `attachment; filename="${path.basename(key)}"`);
     }
 
     res.setHeader("Content-Type", contentType);
     res.send(data.Body);
-    console.log("[DEBUG] Fichier envoyé à l’iframe avec inline ou download");
 
   } catch (err) {
     console.error("❌ Erreur aperçu sécurisé :", err);
