@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
   <meta charset="UTF-8">
   <title>Notifications reçues</title>
@@ -8,28 +9,35 @@
       font-family: Arial, sans-serif;
       padding: 20px;
     }
+
     table {
       width: 100%;
       border-collapse: collapse;
       margin-top: 20px;
     }
-    th, td {
+
+    th,
+    td {
       border: 1px solid #ccc;
       padding: 10px;
       text-align: left;
     }
+
     th {
       background: #00695c;
       color: white;
     }
+
     a {
       text-decoration: none;
       color: #00695c;
       font-weight: bold;
     }
+
     a:hover {
       text-decoration: underline;
     }
+
     button {
       padding: 5px 10px;
       background: #00695c;
@@ -38,11 +46,13 @@
       border-radius: 5px;
       cursor: pointer;
     }
+
     button:hover {
       background: #004d40;
     }
   </style>
 </head>
+
 <body>
   <h2>🔔 Notifications reçues</h2>
 
@@ -89,12 +99,21 @@
               : "—";
 
             // 📎 Courrier
-            const courrierFileName = n.fichier_scan ? n.fichier_scan.split('/').pop() : null;
-            const courrierLink = n.fichier_scan
-              ? `<a href="javascript:void(0)" onclick="telecharger(${n.courrier_id}, '${courrierFileName}')">
-                  📎 ${courrierFileName}
-                </a>`
-              : "—";
+            // 📎 Courriers (gère les multiples fichiers)
+            let courrierLink = "—";
+
+            if (n.fichier_scan && Array.isArray(n.fichier_scan) && n.fichier_scan.length > 0) {
+              courrierLink = n.fichier_scan
+                .map((url, idx) => {
+                  const fileName = decodeURIComponent(url.split("/").pop());
+                  return `<a href="javascript:void(0)" onclick="telecharger(${n.courrier_id}, ${idx}, '${fileName}')">📎 ${fileName}</a>`;
+                })
+                .join("<br>");
+            } else if (typeof n.fichier_scan === "string") {
+              const fileName = decodeURIComponent(n.fichier_scan.split("/").pop());
+              courrierLink = `<a href="javascript:void(0)" onclick="telecharger(${n.courrier_id}, 0, '${fileName}')">📎 ${fileName}</a>`;
+            }
+
 
             const tr = document.createElement("tr");
             tr.innerHTML = `
@@ -119,14 +138,15 @@
     }
 
     // 📩 Télécharger le courrier via le backend
-    async function telecharger(courrierId, fileName) {
+    async function telecharger(courrierId, index = 0, fileName) {
       const token = localStorage.getItem("token");
       if (!token) return alert("Token manquant");
 
       try {
-        const res = await fetch(`https://application-web-de-gestion-de-courrier.onrender.com/api/courriers/${courrierId}/download`, {
-          headers: { "Authorization": "Bearer " + token }
-        });
+        const res = await fetch(
+          `https://application-web-de-gestion-de-courrier.onrender.com/api/courriers/secure-download/${courrierId}?index=${index}`,
+          { headers: { Authorization: "Bearer " + token } }
+        );
 
         if (!res.ok) throw new Error("Erreur téléchargement");
 
@@ -143,6 +163,7 @@
       }
     }
 
+
     // 🧾 Imputation
     function imputer(bordereauId) {
       sessionStorage.setItem("bordereau_id", bordereauId);
@@ -152,4 +173,5 @@
     loadNotifications();
   </script>
 </body>
+
 </html>
