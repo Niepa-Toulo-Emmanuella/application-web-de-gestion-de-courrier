@@ -6,60 +6,94 @@
   <title>Notifications reçues</title>
   <style>
     body {
-      font-family: Arial, sans-serif;
-      padding: 20px;
+      font-family: "Segoe UI", Arial, sans-serif;
+      background-color: #f5f7fa;
+      padding: 40px;
+      color: #333;
+    }
+
+    h2 {
+      color: #00695c;
+      text-align: center;
+      margin-bottom: 30px;
     }
 
     table {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 20px;
+      background: white;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     }
 
     th,
     td {
-      border: 1px solid #ccc;
-      padding: 10px;
+      padding: 12px 15px;
       text-align: left;
     }
 
     th {
       background: #00695c;
       color: white;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    tr:nth-child(even) {
+      background-color: #f9f9f9;
+    }
+
+    tr:hover {
+      background-color: #eef6f4;
     }
 
     a {
+      color: #00796b;
       text-decoration: none;
-      color: #00695c;
-      font-weight: bold;
+      font-weight: 600;
     }
 
     a:hover {
       text-decoration: underline;
     }
 
-    button {
-      padding: 5px 10px;
-      background: #00695c;
-      color: white;
+    .btn {
+      padding: 6px 10px;
       border: none;
       border-radius: 5px;
       cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+      transition: all 0.2s ease;
+      margin: 2px;
     }
 
-    button:hover {
-      background: #004d40;
+    .btn-imputer {
+      background-color: #00796b;
+      color: white;
     }
 
-    /* ✅ Style pour la fenêtre d’aperçu */
+    .btn-imputer:hover {
+      background-color: #004d40;
+    }
+
+    .btn-preview {
+      background-color: #2196f3;
+      color: white;
+    }
+
+    .btn-preview:hover {
+      background-color: #1565c0;
+    }
+
+    /* ✅ Fenêtre d’aperçu stylée */
     #overlay {
       display: none;
       position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.7);
+      inset: 0;
+      background: rgba(0, 0, 0, 0.8);
       justify-content: center;
       align-items: center;
       z-index: 1000;
@@ -67,22 +101,29 @@
 
     #overlay iframe {
       width: 80%;
-      height: 90%;
+      height: 85%;
       border: none;
       background: white;
+      border-radius: 10px;
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
     }
 
     #closeOverlay {
       position: absolute;
       top: 20px;
       right: 40px;
-      background: red;
+      background: #e53935;
       color: white;
       border: none;
-      font-size: 18px;
-      padding: 5px 15px;
+      font-size: 16px;
+      padding: 8px 16px;
       cursor: pointer;
       border-radius: 8px;
+      transition: background 0.2s ease;
+    }
+
+    #closeOverlay:hover {
+      background: #b71c1c;
     }
   </style>
 </head>
@@ -112,7 +153,7 @@
   </div>
 
   <script>
-    console.log("✅ Nouvelle version du script chargée");
+    console.log("✅ Nouvelle version stylée du script chargée");
 
     async function loadNotifications() {
       const token = localStorage.getItem("token");
@@ -120,7 +161,7 @@
 
       try {
         const res = await fetch("https://application-web-de-gestion-de-courrier.onrender.com/api/notifications", {
-          headers: { "Authorization": "Bearer " + token }
+          headers: { Authorization: "Bearer " + token }
         });
         const data = await res.json();
 
@@ -129,34 +170,26 @@
 
         if (data.success && data.data.length > 0) {
           data.data.forEach(n => {
-            console.log("📬 Notification :", n);
-
-            // 📎 Bordereau avec bouton aperçu
+            // 📎 Bordereau
             const bordereauLink = n.fichier_bordereau
               ? `
-              <a href="https://application-web-de-gestion-de-courrier.onrender.com/api/bordereaux/download/${encodeURIComponent(n.fichier_bordereau)}" target="_blank">
-                📎 ${n.fichier_bordereau.split('/').pop()}
-              </a><br>
-              <button onclick="previewFile('https://application-web-de-gestion-de-courrier.onrender.com/${n.fichier_bordereau}')">👁️ Aperçu</button>
+                <a href="https://application-web-de-gestion-de-courrier.onrender.com/api/bordereaux/download/${encodeURIComponent(n.fichier_bordereau)}" target="_blank">
+                  📎 ${n.fichier_bordereau.split('/').pop()}
+                </a><br>
+                <button class="btn btn-preview" onclick="previewFile('https://application-web-de-gestion-de-courrier.onrender.com/${n.fichier_bordereau}')">👁️ Aperçu</button>
               `
               : "—";
 
-            // 📎 Courriers (multiples fichiers possibles)
+            // 📎 Courriers
             let courrierLink = "—";
             if (n.fichier_scan && Array.isArray(n.fichier_scan) && n.fichier_scan.length > 0) {
               courrierLink = n.fichier_scan.map((url, idx) => {
                 const fileName = decodeURIComponent(url.split("/").pop());
                 return `
                   <a href="javascript:void(0)" onclick="telecharger(${n.courrier_id}, ${idx}, '${fileName}')">📎 ${fileName}</a>
-                  <button onclick="previewCourrier(${n.courrier_id}, ${idx})">👁️ Aperçu</button>
+                  <button class="btn btn-preview" onclick="previewCourrier(${n.courrier_id}, ${idx})">👁️ Aperçu</button>
                 `;
               }).join("<br>");
-            } else if (typeof n.fichier_scan === "string") {
-              const fileName = decodeURIComponent(n.fichier_scan.split("/").pop());
-              courrierLink = `
-                <a href="javascript:void(0)" onclick="telecharger(${n.courrier_id}, 0, '${fileName}')">📎 ${fileName}</a>
-                <button onclick="previewCourrier(${n.courrier_id}, 0)">👁️ Aperçu</button>
-              `;
             }
 
             const tr = document.createElement("tr");
@@ -167,98 +200,67 @@
               <td>${new Date(n.date_envoi).toLocaleString()}</td>
               <td>${bordereauLink}</td>
               <td>${courrierLink}</td>
-              <td><button onclick="imputer('${n.bordereau_id}')">Imputer</button></td>
+              <td><button class="btn btn-imputer" onclick="imputer('${n.bordereau_id}')">Imputer</button></td>
             `;
             tbody.appendChild(tr);
           });
         } else {
-          tbody.innerHTML = "<tr><td colspan='7'>Aucune notification reçue</td></tr>";
+          tbody.innerHTML = "<tr><td colspan='7' style='text-align:center;color:#999;'>Aucune notification reçue</td></tr>";
         }
       } catch (err) {
         console.error("❌ Erreur lors du chargement des notifications :", err);
       }
     }
 
-    // 📩 Télécharger le courrier via le backend
+    // 📩 Télécharger
     async function telecharger(courrierId, index = 0, fileName) {
       const token = localStorage.getItem("token");
-      if (!token) return alert("Token manquant");
-
       try {
-        const res = await fetch(
-          `https://application-web-de-gestion-de-courrier.onrender.com/api/courriers/secure-download/${courrierId}?index=${index}`,
-          { headers: { Authorization: "Bearer " + token } }
-        );
-
-        if (!res.ok) throw new Error("Erreur téléchargement");
-
+        const res = await fetch(`https://application-web-de-gestion-de-courrier.onrender.com/api/courriers/secure-download/${courrierId}?index=${index}`, {
+          headers: { Authorization: "Bearer " + token }
+        });
         const blob = await res.blob();
         const a = document.createElement("a");
         a.href = URL.createObjectURL(blob);
         a.download = fileName;
-        document.body.appendChild(a);
         a.click();
-        a.remove();
       } catch (err) {
         console.error("❌ Erreur telecharger :", err);
-        alert("Erreur pendant le téléchargement du fichier");
       }
     }
 
-    // 👁️ Aperçu du fichier de bordereau (fichier public)
+    // 👁️ Aperçu
     function previewFile(url) {
       const iframe = document.getElementById("previewFrame");
-      if (url.endsWith(".pdf")) {
-        iframe.src = url;
-      } else if (url.endsWith(".docx") || url.endsWith(".xlsx")) {
+      if (url.endsWith(".pdf")) iframe.src = url;
+      else if (url.endsWith(".docx") || url.endsWith(".xlsx"))
         iframe.src = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(url)}`;
-      } else {
-        iframe.src = url;
-      }
+      else iframe.src = url;
       document.getElementById("overlay").style.display = "flex";
     }
 
-    // 👁️ Aperçu du courrier (via endpoint sécurisé)
     async function previewCourrier(courrierId, index = 0) {
       const token = localStorage.getItem("token");
       const iframe = document.getElementById("previewFrame");
-      const overlay = document.getElementById("overlay");
-
       try {
         const res = await fetch(`https://application-web-de-gestion-de-courrier.onrender.com/api/courriers/secure-preview/${courrierId}?index=${index}`, {
           headers: { Authorization: "Bearer " + token }
         });
-
-        if (!res.ok) throw new Error("Erreur chargement du fichier");
-
         const blob = await res.blob();
-        const fileType = blob.type;
-
-        if (fileType.includes("pdf")) {
-          iframe.src = URL.createObjectURL(blob);
-        } else if (fileType.includes("word") || fileType.includes("officedocument")) {
-          const officeUrl = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(URL.createObjectURL(blob))}`;
-          iframe.src = officeUrl;
-        } else {
-          iframe.src = URL.createObjectURL(blob);
-        }
-
-        overlay.style.display = "flex";
+        const url = URL.createObjectURL(blob);
+        if (blob.type.includes("pdf")) iframe.src = url;
+        else iframe.src = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(url)}`;
+        document.getElementById("overlay").style.display = "flex";
       } catch (err) {
         console.error("❌ Erreur aperçu :", err);
-        alert("Impossible d’afficher un aperçu pour ce fichier");
       }
     }
 
-    // 🔒 Fermer la fenêtre d’aperçu
     function closePreview() {
-      const overlay = document.getElementById("overlay");
-      const iframe = document.getElementById("previewFrame");
-      iframe.src = "";
-      overlay.style.display = "none";
+      document.getElementById("overlay").style.display = "none";
+      document.getElementById("previewFrame").src = "";
     }
 
-    // 🧾 Imputation
     function imputer(bordereauId) {
       sessionStorage.setItem("bordereau_id", bordereauId);
       window.location.href = "imputation.html";
