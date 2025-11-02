@@ -9,7 +9,7 @@ const path = require("path");
 const mime = require('mime-types'); // ajouter en haut
 const jwt = require("jsonwebtoken");
 const db = require('../models/db'); // <-- si ton fichier db.js exporte la connexion PostgreSQL
-const libre = require('libreoffice-convert');
+
 
 
 
@@ -380,6 +380,9 @@ const secureDownload = async (req, res) => {
 };
 
 // ✅ Version "prévisualisation"
+const axios = require("axios");
+const FormData = require("form-data");
+
 const securePreview = async (req, res) => {
   try {
     const courrierId = req.params.id;
@@ -402,30 +405,37 @@ const securePreview = async (req, res) => {
     const ext = path.extname(fileUrl).toLowerCase();
     const officeTypes = [".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx"];
 
-    // ⚡ Si fichier Office, convertir en PDF
-    if (officeTypes.includes(ext)) {
-      // Récupérer le fichier depuis S3
-      const key = decodeURIComponent(new URL(fileUrl).pathname.split(`${process.env.B2_BUCKET_NAME}/`).pop());
-      const s3Data = await s3.getObject({ Bucket: process.env.B2_BUCKET_NAME, Key: key }).promise();
-      const inputBuffer = s3Data.Body;
+    // Récupérer le fichier depuis S3
+    const key = decodeURIComponent(new URL(fileUrl).pathname.split(`${process.env.B2_BUCKET_NAME}/`).pop());
+    const s3Data = await s3.getObject({ Bucket: process.env.B2_BUCKET_NAME, Key: key }).promise();
+    const fileBuffer = s3Data.Body;
 
-      // Conversion en PDF
-      const pdfBuffer = await new Promise((resolve, reject) => {
-        libre.convert(inputBuffer, '.pdf', undefined, (err, done) => {
-          if (err) return reject(err);
-          resolve(done);
-        });
-      });
+    if (officeTypes.includes(ext)) {
+      // ⚡ Conversion via CloudConvert API
+      const formData = new FormData();
+      formData.append("file", fileBuffer, path.basename(fileUrl));
+      formData.append("inputformat", ext.replace(".", ""));
+      formData.append("outputformat", "pdf");
+
+      const cloudRes = await axios.post(
+        "https://api.cloudconvert.com/v2/convert",
+        formData,
+        {
+          headers: {
+            ...formData.getHeaders(),
+            Authorization: `Bearer ${process.env.CLOUDCONVERT_API_KEY}`,
+          },
+          responseType: "arraybuffer"
+        }
+      );
 
       res.setHeader("Content-Type", "application/pdf");
       res.setHeader("Content-Disposition", `inline; filename="${path.basename(fileUrl, ext)}.pdf"`);
-      return res.send(pdfBuffer);
+      return res.send(cloudRes.data);
     }
 
-    // 🔹 Sinon PDF ou autre → affichage direct
-    const key = decodeURIComponent(new URL(fileUrl).pathname.split(`${process.env.B2_BUCKET_NAME}/`).pop());
-    const data = await s3.getObject({ Bucket: process.env.B2_BUCKET_NAME, Key: key }).promise();
-    const contentType = data.ContentType || mime.lookup(key) || "application/octet-stream";
+    // 🔹 PDF ou autre → affichage direct
+    const contentType = s3Data.ContentType || mime.lookup(key) || "application/octet-stream";
 
     if (contentType.includes("pdf")) {
       res.setHeader("Content-Disposition", `inline; filename="${path.basename(key)}"`);
@@ -434,7 +444,7 @@ const securePreview = async (req, res) => {
     }
 
     res.setHeader("Content-Type", contentType);
-    res.send(data.Body);
+    res.send(fileBuffer);
 
   } catch (err) {
     console.error("❌ Erreur aperçu sécurisé :", err);
