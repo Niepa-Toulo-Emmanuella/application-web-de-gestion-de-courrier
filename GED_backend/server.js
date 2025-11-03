@@ -1,3 +1,4 @@
+// server.js
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
@@ -21,6 +22,9 @@ app.use(cors({
   ],
   credentials: true,
 }));
+
+// ✅ Important pour les requêtes OPTIONS (préflight)
+app.options('*', cors());
 
 // 📧 Test d’envoi d’e-mail
 app.get('/test-mail', async (req, res) => {
