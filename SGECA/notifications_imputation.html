@@ -274,7 +274,7 @@
         ${t.id ? `
           <div class="file-block">
             <a class="file-link" href="${bordereauLink}" target="_blank">📄 Voir le fichier du bordereau</a>
-            <button class="btn btn-preview" onclick="previewBordereau(${t.id})">👁️ Aperçu</button>
+            <button class="btn btn-preview" onclick="previewBordereau(${t.fichier_bordereau})">👁️ Aperçu</button>
           </div>
         ` : ''}
       
@@ -345,11 +345,17 @@
       }
     }
 
-    function previewBordereau(bordereauId) {
+    function previewBordereau(fichierBordereau) {
+      if (!fichierBordereau) {
+        alert("Aucun fichier bordereau trouvé.");
+        return;
+      }
+
       const iframe = document.getElementById("previewFrame");
-      iframe.src = `${API_BASE}/bordereaux/secure-preview/${bordereauId}`;
+      iframe.src = `${API_BASE}/bordereaux/secure-preview/${encodeURIComponent(fichierBordereau)}?token=${token}`;
       document.getElementById("overlay").style.display = "flex";
     }
+
 
 
 
