@@ -368,3 +368,23 @@ exports.getTransmissionsForUser = async (req, res) => {
     res.status(500).json({ success: false, message: "Erreur serveur" });
   }
 };
+
+exports.securePreviewByKey = async (req, res) => {
+  try {
+    const { key } = req.body;
+    if (!key) return res.status(400).json({ success: false, message: "Clé introuvable" });
+
+    // 🔒 Récupération depuis B2
+    const file = await s3.getObject({
+      Bucket: process.env.B2_BUCKET_NAME,
+      Key: key
+    }).promise();
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.send(file.Body);
+  } catch (err) {
+    console.error("Erreur aperçu imputation :", err);
+    res.status(500).json({ success: false, message: "Erreur serveur" });
+  }
+};
+
