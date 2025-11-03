@@ -191,7 +191,7 @@
                   <a href="https://application-web-de-gestion-de-courrier.onrender.com/api/bordereaux/download/${encodeURIComponent(n.fichier_bordereau)}" target="_blank">
                     📎 ${n.fichier_bordereau.split('/').pop()}
                   </a>
-                  <button class="btn btn-preview" onclick="previewFile('https://application-web-de-gestion-de-courrier.onrender.com/${n.fichier_bordereau}')">👁️ Aperçu</button>
+                  <button class="btn btn-preview" onclick="previewBordereau('${n.bordereau_id}')">👁️ Aperçu</button>
                 </div>`
               : "—";
 
@@ -278,6 +278,13 @@
       sessionStorage.setItem("bordereau_id", bordereauId);
       window.location.href = "imputation.html";
     }
+
+    function previewBordereau(bordereauId) {
+      const iframe = document.getElementById("previewFrame");
+      iframe.src = `https://application-web-de-gestion-de-courrier.onrender.com/api/bordereaux/secure-preview/${bordereauId}`;
+      document.getElementById("overlay").style.display = "flex";
+    }
+
 
     loadNotifications();
   </script>

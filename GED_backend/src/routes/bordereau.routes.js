@@ -56,6 +56,7 @@ router.get('/courriers/download/:fileName', async (req, res) => {
 router.use(authenticate); // toutes les routes suivantes nécessitent authentification
 router.get('/secure-preview/:id', authenticate, bordereauController.securePreview);
 
+
 // ---------------- ROUTES BORDEREAUX ----------------
 // router.get('/registre-transmission', bordereauController.registreTransmission);
 
