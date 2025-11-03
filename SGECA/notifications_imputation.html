@@ -123,7 +123,7 @@
     </tbody>
   </table>
 
-  <!-- Modal -->
+  <!-- Modal détails -->
   <div id="detailsModal">
     <div id="modalContentWrapper">
       <span id="closeModal">&times;</span>
@@ -132,12 +132,51 @@
     </div>
   </div>
 
+  <!-- 🔍 Aperçu du courrier -->
+  <div id="overlay" style="
+    display: none;
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0,0,0,0.7);
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+  ">
+    <div style="
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      width: 90%;
+      max-width: 900px;
+      height: 90%;
+      display: flex;
+      flex-direction: column;
+    ">
+      <button id="closeOverlay" style="
+        align-self: flex-end;
+        background: #00695c;
+        color: white;
+        border: none;
+        padding: 8px 12px;
+        border-radius: 5px;
+        cursor: pointer;
+      ">Fermer ✖</button>
+      <iframe id="previewFrame" style="flex-grow: 1; width: 100%; border: none;"></iframe>
+    </div>
+  </div>
+
   <script>
+    // 🔒 Bouton fermer aperçu
+    document.getElementById("closeOverlay").onclick = () => {
+      document.getElementById("overlay").style.display = "none";
+      document.getElementById("previewFrame").src = "";
+    };
+
     const API_BASE = "https://application-web-de-gestion-de-courrier.onrender.com/api";
     const token = localStorage.getItem("token");
 
     async function telechargerCourrier(courrierId, index = 0, fileName) {
-      const token = localStorage.getItem("token");
       try {
         const res = await fetch(`${API_BASE}/courriers/secure-download/${courrierId}?index=${index}`, {
           headers: { Authorization: "Bearer " + token }
@@ -156,7 +195,6 @@
     }
 
     async function previewCourrier(courrierId, index = 0) {
-      const token = localStorage.getItem("token");
       const iframe = document.getElementById("previewFrame");
       try {
         const res = await fetch(`${API_BASE}/courriers/secure-preview/${courrierId}?index=${index}`, {
@@ -172,15 +210,11 @@
       }
     }
 
-
-
-
     function showDetails(t) {
       const modal = document.getElementById('detailsModal');
       const content = document.getElementById('modalContent');
       modal.style.display = 'flex';
 
-      // Construire le lien complet pour le téléchargement
       const imputationLink = t.fichier_imputation
         ? `https://application-web-de-gestion-de-courrier.onrender.com/api/imputations/download/${encodeURIComponent(t.fichier_imputation)}`
         : null;
@@ -189,51 +223,39 @@
         ? `https://application-web-de-gestion-de-courrier.onrender.com/api/bordereaux/download/${encodeURIComponent(t.fichier_bordereau)}`
         : null;
 
-
-      // ✅ Gestion des fichiers scannés
       let fichiers = [];
       if (Array.isArray(t.fichier_scan)) {
         fichiers = t.fichier_scan;
       } else if (typeof t.fichier_scan === 'string' && t.fichier_scan.trim() !== '') {
-        fichiers = [t.fichier_scan]; // Convertir en tableau
+        fichiers = [t.fichier_scan];
       }
-      // const scanLink = t.courrier_id
-      //   ? `https://application-web-de-gestion-de-courrier.onrender.com/api/courriers/secure-download/${t.courrier_id}`
-      //   : null;
-
-
-      console.log("Données reçues pour ce courrier :", t);
 
       content.innerHTML = `
-            <h4>Bordereau d’imputation</h4>
-            <p><strong>Instructions :</strong> ${t.instructions || '-'}</p>
-            <p><strong>Durée :</strong> ${t.duree_traitement || '-'} jours</p>
-            <p><strong>Observations :</strong> ${t.observations || '-'}</p>
-            ${imputationLink ? `<p><a class="file-link" href="${imputationLink}" target="_blank">📄 Voir le fichier de l’imputation</a></p>` : ''}
+        <h4>Bordereau d’imputation</h4>
+        <p><strong>Instructions :</strong> ${t.instructions || '-'}</p>
+        <p><strong>Durée :</strong> ${t.duree_traitement || '-'} jours</p>
+        <p><strong>Observations :</strong> ${t.observations || '-'}</p>
+        ${imputationLink ? `<p><a class="file-link" href="${imputationLink}" target="_blank">📄 Voir le fichier de l’imputation</a></p>` : ''}
 
-            <h4>Bordereau de transmission</h4>
-            <p><strong>Expéditeur :</strong> ${t.expediteur_prenom || ''} ${t.expediteur_nom || ''}</p>
-            <p><strong>Destinataire :</strong> ${t.destinataire_prenom || ''} ${t.destinataire_nom || ''}</p>
-            ${bordereauLink ? `<p><a class="file-link" href="${bordereauLink}" target="_blank">📄 Voir le fichier du bordereau</a></p>` : ''}
+        <h4>Bordereau de transmission</h4>
+        <p><strong>Expéditeur :</strong> ${t.expediteur_prenom || ''} ${t.expediteur_nom || ''}</p>
+        <p><strong>Destinataire :</strong> ${t.destinataire_prenom || ''} ${t.destinataire_nom || ''}</p>
+        ${bordereauLink ? `<p><a class="file-link" href="${bordereauLink}" target="_blank">📄 Voir le fichier du bordereau</a></p>` : ''}
 
-            <h4>Courrier</h4>
-            <p><strong>Référence :</strong> ${t.courrier_reference || '-'}</p>
-            <p><strong>Objet :</strong> ${t.courrier_objet || '-'}</p>
-            ${fichiers.length > 0
+        <h4>Courrier</h4>
+        <p><strong>Référence :</strong> ${t.courrier_reference || '-'}</p>
+        <p><strong>Objet :</strong> ${t.courrier_objet || '-'}</p>
+
+        ${fichiers.length > 0
           ? fichiers.map((fichier, idx) => `
-                <div class="file-block">
-                  <a class="file-link" href="javascript:void(0)" onclick="telechargerCourrier('${t.courrier_id}', ${idx}, '${fichier.split('/').pop()}')">📎 ${fichier.split('/').pop()}</a>
-                  <button class="btn btn-preview" onclick="previewCourrier('${t.courrier_id}', ${idx})">👁️ Aperçu</button>
-                </div>
-              `).join('')
+              <div class="file-block">
+                <a class="file-link" href="javascript:void(0)" onclick="telechargerCourrier('${t.courrier_id}', ${idx}, '${fichier.split('/').pop()}')">📎 ${fichier.split('/').pop()}</a>
+                <button class="btn btn-preview" onclick="previewCourrier('${t.courrier_id}', ${idx})">👁️ Aperçu</button>
+              </div>
+            `).join('')
           : '<p>📄 Aucun fichier scanné disponible</p>'
         }
-                
-        `;
-    }
-    // 🔒 Log clic sur téléchargement
-    function logDownload(type, url) {
-      console.log(`⬇️ Clic sur téléchargement [${type}] : ${url}`);
+      `;
     }
 
     document.getElementById('closeModal').onclick = () => {
@@ -253,8 +275,6 @@
         const user = JSON.parse(atob(token.split('.')[1]));
         const userId = user.userId || user.id;
 
-        console.log("🧑 ID utilisateur :", userId || user.id);
-
         const res = await fetch(`${API_BASE}/imputations/transmissions/${userId}`, {
           headers: { "Authorization": "Bearer " + token }
         });
@@ -262,12 +282,8 @@
         if (!res.ok) throw new Error("Erreur HTTP " + res.status);
         const data = await res.json();
 
-        console.log("📦 Données reçues du backend :", data);
-
         if (data.success && data.data.length > 0) {
           tbody.innerHTML = "";
-          console.log("Toutes les transmissions :", data.data);
-
           data.data.forEach(t => {
             const tr = document.createElement("tr");
             tr.onclick = () => showDetails(t);
@@ -289,30 +305,6 @@
         tbody.innerHTML = '<tr><td colspan="6" class="center">❌ Erreur réseau</td></tr>';
       }
     }
-
-    async function telechargerImputation(fichier_imputation) {
-      const token = localStorage.getItem("token");
-      const res = await fetch(`https://application-web-de-gestion-de-courrier.onrender.com/api/imputations/download/${encodeURIComponent(fichier_imputation)}`, {
-        headers: { "Authorization": "Bearer " + token }
-      });
-
-      const blob = await res.blob();
-      const a = document.createElement("a");
-      a.href = URL.createObjectURL(blob);
-      a.download = fichier_imputation.split('/').pop();
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-    }
-
-    // async function previewCourrier(courrierId) {
-    //   const token = localStorage.getItem("token");
-    //   const previewUrl = `${API_BASE}/courriers/secure-preview/${courrierId}`;
-
-    //   // Ouvrir dans un nouvel onglet
-    //   window.open(previewUrl + "?token=" + token, "_blank");
-    // }
-
 
     window.addEventListener("DOMContentLoaded", loadTransmissions);
   </script>
