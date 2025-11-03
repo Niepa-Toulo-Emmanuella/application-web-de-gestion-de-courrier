@@ -38,6 +38,18 @@
             text-align: center;
         }
 
+        /* ✅ Espacement plus large dans la colonne pièce jointe */
+        td.attachments {
+            white-space: nowrap;
+            min-width: 200px;
+        }
+
+        td.attachments a {
+            margin: 0 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+        }
+
         #table-bordereaux tbody tr:hover {
             background-color: #eef4ff;
         }
@@ -58,7 +70,6 @@
 
         .btn-outline-primary {
             font-size: 0.85rem;
-            border-radius: 20px;
         }
 
         h2 {
@@ -147,7 +158,7 @@
 
                     if (Array.isArray(fichiers) && fichiers.length > 0) {
                         fichiersHTML = fichiers.map((url, i) =>
-                            `<a href="${url}" target="_blank" class="btn btn-sm btn-outline-primary me-1">📎 Voir ${i + 1}</a>`
+                            `<a href="${url}" target="_blank" class="btn btn-sm btn-outline-primary">📎 Voir ${i + 1}</a>`
                         ).join('');
                     }
                 } catch (err) {
@@ -164,7 +175,7 @@
                 <td class="small-text">${dateArrivee}</td>
                 <td>${b.numero_enregistrement ?? '—'}</td>
                 <td>${heure}</td>
-                <td>${fichiersHTML}</td>
+                <td class="attachments">${fichiersHTML}</td>
                 <td><span class="badge ${statutClass}">${b.statut ?? '—'}</span></td>
             </tr>`;
         }
