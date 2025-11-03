@@ -383,17 +383,20 @@ const secureDownload = async (req, res) => {
 // ✅ Version "prévisualisation"
 
 
-
 const securePreview = async (req, res) => {
   try {
     const courrierId = req.params.id;
     const index = parseInt(req.query.index || 0);
 
+    console.log(`[DEBUG] securePreview appelé, courrierId=${courrierId}, index=${index}`);
+
+    // 🔹 Récupération du courrier
     const courrier = await Courrier.findById(courrierId);
     if (!courrier || !courrier.fichier_scan) {
       return res.status(404).json({ success: false, message: "Fichier introuvable" });
     }
 
+    // 🔹 Liste des fichiers
     let fichiers = Array.isArray(courrier.fichier_scan)
       ? courrier.fichier_scan
       : JSON.parse(courrier.fichier_scan);
@@ -406,53 +409,99 @@ const securePreview = async (req, res) => {
     const ext = path.extname(fileUrl).toLowerCase();
     const officeTypes = [".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx"];
 
-    // 🔹 Récupération du fichier depuis S3
+    // 🔹 Téléchargement depuis B2
     const key = decodeURIComponent(new URL(fileUrl).pathname.split(`${process.env.B2_BUCKET_NAME}/`).pop());
     const s3Data = await s3.getObject({ Bucket: process.env.B2_BUCKET_NAME, Key: key }).promise();
     const fileBuffer = s3Data.Body;
 
-    // 🔸 Conversion pour fichiers Office
+    // ============================================================
+    // 🧩 CAS 1 : Fichier Office → Conversion en PDF via CloudConvert
+    // ============================================================
     if (officeTypes.includes(ext)) {
       console.log("🔑 Envoi à CloudConvert...");
       console.log("CloudConvert Key:", process.env.CLOUDCONVERT_API_KEY ? "✅ chargée" : "❌ manquante");
 
-      const formData = new FormData();
-      formData.append("input", "upload");
-      formData.append("file", fileBuffer, path.basename(fileUrl));
-      formData.append("outputformat", "pdf");
-
-      const cloudRes = await axios.post(
-        "https://api.cloudconvert.com/v2/convert",
-        formData,
+      // ⚙️ Étape 1 : créer un job CloudConvert
+      const jobResponse = await axios.post(
+        "https://api.cloudconvert.com/v2/jobs",
+        {
+          tasks: {
+            "import-my-file": {
+              operation: "import/upload",
+            },
+            "convert-my-file": {
+              operation: "convert",
+              input: "import-my-file",
+              output_format: "pdf",
+            },
+            "export-my-file": {
+              operation: "export/url",
+              input: "convert-my-file",
+            },
+          },
+        },
         {
           headers: {
-            ...formData.getHeaders(),
             Authorization: `Bearer ${process.env.CLOUDCONVERT_API_KEY}`,
           },
-          responseType: "arraybuffer",
         }
       );
 
+      const uploadUrl = jobResponse.data.data.tasks.find(t => t.name === "import-my-file").result.form.url;
+      const uploadParams = jobResponse.data.data.tasks.find(t => t.name === "import-my-file").result.form.parameters;
+
+      // ⚙️ Étape 2 : uploader le fichier vers CloudConvert
+      const uploadForm = new FormData();
+      for (const [key, value] of Object.entries(uploadParams)) {
+        uploadForm.append(key, value);
+      }
+      uploadForm.append("file", fileBuffer, path.basename(fileUrl));
+
+      await axios.post(uploadUrl, uploadForm, { headers: uploadForm.getHeaders() });
+
+      // ⚙️ Étape 3 : attendre la fin de la conversion
+      let exportUrl = null;
+      for (let i = 0; i < 20; i++) {
+        const statusRes = await axios.get(`https://api.cloudconvert.com/v2/jobs/${jobResponse.data.data.id}`, {
+          headers: { Authorization: `Bearer ${process.env.CLOUDCONVERT_API_KEY}` },
+        });
+
+        const exportTask = statusRes.data.data.tasks.find(
+          t => t.name === "export-my-file" && t.status === "finished"
+        );
+
+        if (exportTask && exportTask.result && exportTask.result.files[0]) {
+          exportUrl = exportTask.result.files[0].url;
+          break;
+        }
+        await new Promise(r => setTimeout(r, 2000)); // attendre 2 secondes
+      }
+
+      if (!exportUrl) throw new Error("Conversion CloudConvert non terminée");
+
+      // ⚙️ Étape 4 : télécharger le PDF final
+      const pdfRes = await axios.get(exportUrl, { responseType: "arraybuffer" });
       res.setHeader("Content-Type", "application/pdf");
       res.setHeader("Content-Disposition", `inline; filename="${path.basename(fileUrl, ext)}.pdf"`);
-      return res.send(cloudRes.data);
+      return res.send(pdfRes.data);
     }
 
-    // 🔸 Fichiers PDF déjà prêts
+    // ============================================================
+    // 🧩 CAS 2 : PDF ou image → affichage direct
+    // ============================================================
     const contentType = s3Data.ContentType || mime.lookup(key) || "application/octet-stream";
     res.setHeader("Content-Type", contentType);
     res.setHeader("Content-Disposition", `inline; filename="${path.basename(key)}"`);
     res.send(fileBuffer);
 
   } catch (err) {
-    console.error("❌ Erreur aperçu sécurisé :", err);
+    console.error("❌ Erreur aperçu sécurisé :", err.message || err);
     if (err.response?.data) {
-      console.error("↳ CloudConvert Response:", err.response.data.toString());
+      console.error("↳ CloudConvert Response:", err.response.data);
     }
     res.status(500).json({ success: false, message: "Erreur lors de l’aperçu" });
   }
 };
-
 
 
 
