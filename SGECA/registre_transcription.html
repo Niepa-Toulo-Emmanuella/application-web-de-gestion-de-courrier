@@ -53,9 +53,6 @@
             vertical-align: middle !important;
         }
 
-
-
-
         .small-text {
             font-size: 0.875rem;
         }
@@ -83,6 +80,39 @@
             border-radius: 12px;
             overflow: hidden;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        /* ---------- Animations de glissement ---------- */
+        @keyframes slide-in-left {
+            0% {
+                transform: translateX(-50px);
+                opacity: 0;
+            }
+
+            100% {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes slide-in-right {
+            0% {
+                transform: translateX(50px);
+                opacity: 0;
+            }
+
+            100% {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        tr.slide-left {
+            animation: slide-in-left 0.5s ease forwards;
+        }
+
+        tr.slide-right {
+            animation: slide-in-right 0.5s ease forwards;
         }
     </style>
 </head>
@@ -182,13 +212,16 @@
             </tr>`;
         }
 
-
-        /** Affiche le tableau */
+        /** Affiche le tableau avec animation de glissement */
         function afficherTableau(bordereaux) {
             if (!bordereaux.length) {
                 tbody.innerHTML = '<tr><td colspan="9" class="text-center fst-italic">Aucun bordereau trouvé.</td></tr>';
             } else {
-                tbody.innerHTML = bordereaux.map(renderRow).join('');
+                tbody.innerHTML = bordereaux.map((b, index) => {
+                    const rowHTML = renderRow(b);
+                    const directionClass = index % 2 === 0 ? 'slide-left' : 'slide-right';
+                    return rowHTML.replace('<tr>', `<tr class="${directionClass}">`);
+                }).join('');
             }
         }
 
