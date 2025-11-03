@@ -389,8 +389,6 @@ const securePreview = async (req, res) => {
     const courrierId = req.params.id;
     const index = parseInt(req.query.index || 0);
 
-    console.log("[DEBUG] securePreview appelé, courrierId=", courrierId, "index=", index);
-
     const courrier = await Courrier.findById(courrierId);
     if (!courrier || !courrier.fichier_scan) {
       return res.status(404).json({ success: false, message: "Fichier introuvable" });
@@ -408,24 +406,20 @@ const securePreview = async (req, res) => {
     const ext = path.extname(fileUrl).toLowerCase();
     const officeTypes = [".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx"];
 
-    // ✅ Télécharger depuis S3 / Backblaze
+    // 🔹 Récupération du fichier depuis S3
     const key = decodeURIComponent(new URL(fileUrl).pathname.split(`${process.env.B2_BUCKET_NAME}/`).pop());
     const s3Data = await s3.getObject({ Bucket: process.env.B2_BUCKET_NAME, Key: key }).promise();
     const fileBuffer = s3Data.Body;
 
-    // ✅ Conversion si c’est un fichier Office
+    // 🔸 Conversion pour fichiers Office
     if (officeTypes.includes(ext)) {
-      if (!process.env.CLOUDCONVERT_API_KEY) {
-        throw new Error("Clé API CloudConvert manquante");
-      }
+      console.log("🔑 Envoi à CloudConvert...");
+      console.log("CloudConvert Key:", process.env.CLOUDCONVERT_API_KEY ? "✅ chargée" : "❌ manquante");
 
       const formData = new FormData();
-      formData.append("file", fileBuffer, { filename: `document${ext}` });
-      formData.append("inputformat", ext.replace(".", ""));
+      formData.append("input", "upload");
+      formData.append("file", fileBuffer, path.basename(fileUrl));
       formData.append("outputformat", "pdf");
-
-      console.log("🔑 Envoi à CloudConvert...");
-      console.log("CloudConvert Key:", process.env.CLOUDCONVERT_API_KEY ? "✅ chargée" : "❌ absente");
 
       const cloudRes = await axios.post(
         "https://api.cloudconvert.com/v2/convert",
@@ -439,22 +433,26 @@ const securePreview = async (req, res) => {
         }
       );
 
-      console.log("✅ Conversion terminée !");
       res.setHeader("Content-Type", "application/pdf");
       res.setHeader("Content-Disposition", `inline; filename="${path.basename(fileUrl, ext)}.pdf"`);
       return res.send(cloudRes.data);
     }
 
-    // ✅ Sinon → renvoyer directement
+    // 🔸 Fichiers PDF déjà prêts
     const contentType = s3Data.ContentType || mime.lookup(key) || "application/octet-stream";
     res.setHeader("Content-Type", contentType);
     res.setHeader("Content-Disposition", `inline; filename="${path.basename(key)}"`);
     res.send(fileBuffer);
+
   } catch (err) {
-    console.error("❌ Erreur aperçu sécurisé :", err.response?.data || err.message);
-    res.status(500).json({ success: false, message: "Erreur lors de l’aperçu", error: err.message });
+    console.error("❌ Erreur aperçu sécurisé :", err);
+    if (err.response?.data) {
+      console.error("↳ CloudConvert Response:", err.response.data.toString());
+    }
+    res.status(500).json({ success: false, message: "Erreur lors de l’aperçu" });
   }
 };
+
 
 
 
