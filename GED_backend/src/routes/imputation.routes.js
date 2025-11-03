@@ -19,8 +19,11 @@ router.post('/', authenticate, imputationController.create);
 
 // Transmettre un bordereau d’imputation
 router.post("/transmettre", authenticate, imputationController.createTransmission);
+
+
 // Route pour aperçu sécurisé d’un PDF d’imputation
-router.post('/imputations/secure-preview-by-key', authenticate, imputationController.securePreviewByKey);
+router.post('/secure-preview-by-key', authenticate, imputationController.securePreviewByKey);
+
 
 router.get('/', authenticate, imputationController.getAll); // liste des imputations
 // Récupérer toutes les transmissions pour une imputation
