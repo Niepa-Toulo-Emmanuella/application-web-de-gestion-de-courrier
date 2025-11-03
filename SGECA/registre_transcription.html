@@ -121,17 +121,30 @@
             const heure = b.heure ?? '—';
             const statutClass = b.statut === 'envoye' ? 'badge-bg-envoye' : 'badge-bg-attente';
 
-            // 🔹 Correction ici : décoder les fichiers scannés
+            // ✅ Gestion robuste de fichier_scan
             let fichiersHTML = '—';
-            try {
-                const fichiers = JSON.parse(b.fichier_scan);
-                if (Array.isArray(fichiers) && fichiers.length > 0) {
-                    fichiersHTML = fichiers.map((url, i) =>
-                        `<a href="${url}" target="_blank" class="btn btn-sm btn-outline-primary me-1">📎 Voir ${i + 1}</a>`
-                    ).join('');
+            if (b.fichier_scan) {
+                try {
+                    let fichiers = b.fichier_scan;
+
+                    // Si c’est une chaîne JSON valide → on la parse
+                    if (typeof fichiers === 'string' && fichiers.trim().startsWith('[')) {
+                        fichiers = JSON.parse(fichiers);
+                    }
+                    // Si c’est une chaîne simple → on la met dans un tableau
+                    else if (typeof fichiers === 'string') {
+                        fichiers = [fichiers];
+                    }
+
+                    // Générer les boutons
+                    if (Array.isArray(fichiers) && fichiers.length > 0) {
+                        fichiersHTML = fichiers.map((url, i) =>
+                            `<a href="${url}" target="_blank" class="btn btn-sm btn-outline-primary me-1">📎 Voir ${i + 1}</a>`
+                        ).join('');
+                    }
+                } catch (err) {
+                    console.warn('Erreur décodage fichier_scan', err, b.fichier_scan);
                 }
-            } catch (err) {
-                console.warn('Erreur décodage fichier_scan', err, b.fichier_scan);
             }
 
             return `
@@ -147,6 +160,7 @@
                 <td><span class="badge ${statutClass}">${b.statut ?? '—'}</span></td>
             </tr>`;
         }
+
 
         /** Affiche le tableau */
         function afficherTableau(bordereaux) {
