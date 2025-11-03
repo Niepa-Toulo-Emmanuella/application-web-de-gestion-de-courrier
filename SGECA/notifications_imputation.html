@@ -189,6 +189,14 @@
         ? `https://application-web-de-gestion-de-courrier.onrender.com/api/bordereaux/download/${encodeURIComponent(t.fichier_bordereau)}`
         : null;
 
+
+      // ✅ Gestion des fichiers scannés
+      let fichiers = [];
+      if (Array.isArray(t.fichier_scan)) {
+        fichiers = t.fichier_scan;
+      } else if (typeof t.fichier_scan === 'string' && t.fichier_scan.trim() !== '') {
+        fichiers = [t.fichier_scan]; // Convertir en tableau
+      }
       // const scanLink = t.courrier_id
       //   ? `https://application-web-de-gestion-de-courrier.onrender.com/api/courriers/secure-download/${t.courrier_id}`
       //   : null;
@@ -211,18 +219,17 @@
             <h4>Courrier</h4>
             <p><strong>Référence :</strong> ${t.courrier_reference || '-'}</p>
             <p><strong>Objet :</strong> ${t.courrier_objet || '-'}</p>
-            <p><strong>Date d’arrivée :</strong> ${t.courrier_date_arrivee ? new Date(t.courrier_date_arrivee).toLocaleDateString() : '-'}</p>
-            ${t.fichier_scan && t.fichiers_scan.length > 0
-          ? t.fichier_scan.map((fichier, idx) => `
-                  <div class="file-block">
-                    <a class="file-link" href="javascript:void(0)" onclick="telechargerCourrier('${t.courrier_id}', ${idx}, '${fichier.split('/').pop()}')">📎 ${fichier.split('/').pop()}</a>
-                    <button class="btn btn-preview" onclick="previewCourrier('${t.courrier_id}', ${idx})">👁️ Aperçu</button>
-                  </div>
-                `).join('')
+            ${fichiers.length > 0
+          ? fichiers.map((fichier, idx) => `
+                <div class="file-block">
+                  <a class="file-link" href="javascript:void(0)" onclick="telechargerCourrier('${t.courrier_id}', ${idx}, '${fichier.split('/').pop()}')">📎 ${fichier.split('/').pop()}</a>
+                  <button class="btn btn-preview" onclick="previewCourrier('${t.courrier_id}', ${idx})">👁️ Aperçu</button>
+                </div>
+              `).join('')
           : '<p>📄 Aucun fichier scanné disponible</p>'
         }
                 
-      `;
+        `;
     }
     // 🔒 Log clic sur téléchargement
     function logDownload(type, url) {
