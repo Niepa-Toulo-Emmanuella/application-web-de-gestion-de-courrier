@@ -233,11 +233,7 @@
     //   document.getElementById("overlay").style.display = "flex";
     // }
 
-    function previewBordereau(bordereauId) {
-      const iframe = document.getElementById("previewFrame");
-      iframe.src = `https://application-web-de-gestion-de-courrier.onrender.com/api/bordereaux/secure-preview/${bordereauId}`;
-      document.getElementById("overlay").style.display = "flex";
-    }
+
 
 
 
@@ -275,14 +271,13 @@
         <h4>Bordereau de transmission</h4>
         <p><strong>Expéditeur :</strong> ${t.expediteur_prenom || ''} ${t.expediteur_nom || ''}</p>
         <p><strong>Destinataire :</strong> ${t.destinataire_prenom || ''} ${t.destinataire_nom || ''}</p>
-        ${bordereauLink ? `
+        ${t.id ? `
           <div class="file-block">
             <a class="file-link" href="${bordereauLink}" target="_blank">📄 Voir le fichier du bordereau</a>
-            <button class="btn btn-preview" onclick="previewBordereau('${t.bordereau_id}')">👁️ Aperçu</button>
+            <button class="btn btn-preview" onclick="previewBordereau(${t.id})">👁️ Aperçu</button>
           </div>
-
         ` : ''}
-
+      
 
         <h4>Courrier</h4>
         <p><strong>Référence :</strong> ${t.courrier_reference || '-'}</p>
@@ -349,6 +344,14 @@
         tbody.innerHTML = '<tr><td colspan="6" class="center">❌ Erreur réseau</td></tr>';
       }
     }
+
+    function previewBordereau(bordereauId) {
+      const iframe = document.getElementById("previewFrame");
+      iframe.src = `${API_BASE}/bordereaux/secure-preview/${bordereauId}`;
+      document.getElementById("overlay").style.display = "flex";
+    }
+
+
 
     window.addEventListener("DOMContentLoaded", loadTransmissions);
   </script>
