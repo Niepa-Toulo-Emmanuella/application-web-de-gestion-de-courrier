@@ -99,6 +99,20 @@
     a.file-link:hover {
       text-decoration: underline;
     }
+
+    .btn-preview {
+      background: #00695c;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      padding: 4px 8px;
+      cursor: pointer;
+      margin-left: 10px;
+    }
+
+    .btn-preview:hover {
+      background: #004d40;
+    }
   </style>
 </head>
 
@@ -132,7 +146,7 @@
     </div>
   </div>
 
-  <!-- 🔍 Aperçu du courrier -->
+  <!-- 🔍 Aperçu (Courrier ou Bordereau) -->
   <div id="overlay" style="
     display: none;
     position: fixed;
@@ -176,6 +190,7 @@
     const API_BASE = "https://application-web-de-gestion-de-courrier.onrender.com/api";
     const token = localStorage.getItem("token");
 
+    // 🔽 Téléchargement d’un courrier
     async function telechargerCourrier(courrierId, index = 0, fileName) {
       try {
         const res = await fetch(`${API_BASE}/courriers/secure-download/${courrierId}?index=${index}`, {
@@ -194,6 +209,7 @@
       }
     }
 
+    // 👁️ Aperçu d’un courrier
     async function previewCourrier(courrierId, index = 0) {
       const iframe = document.getElementById("previewFrame");
       try {
@@ -206,21 +222,41 @@
         else iframe.src = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(url)}`;
         document.getElementById("overlay").style.display = "flex";
       } catch (err) {
-        console.error("❌ Erreur aperçu :", err);
+        console.error("❌ Erreur aperçu courrier :", err);
       }
     }
 
+    // 👁️ Aperçu d’un bordereau
+    async function previewBordereau(bordereauId) {
+      const iframe = document.getElementById("previewFrame");
+      if (!iframe) return alert("Erreur : aperçu indisponible.");
+      try {
+        const res = await fetch(`${API_BASE}/bordereaux/secure-preview/${bordereauId}`, {
+          headers: { Authorization: "Bearer " + token }
+        });
+        if (!res.ok) throw new Error("Erreur HTTP " + res.status);
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        iframe.src = url;
+        document.getElementById("overlay").style.display = "flex";
+      } catch (err) {
+        console.error("❌ Erreur aperçu bordereau :", err);
+        alert("Impossible d’afficher le bordereau.");
+      }
+    }
+
+    // 🧾 Détails de la transmission
     function showDetails(t) {
       const modal = document.getElementById('detailsModal');
       const content = document.getElementById('modalContent');
       modal.style.display = 'flex';
 
       const imputationLink = t.fichier_imputation
-        ? `https://application-web-de-gestion-de-courrier.onrender.com/api/imputations/download/${encodeURIComponent(t.fichier_imputation)}`
+        ? `${API_BASE}/imputations/download/${encodeURIComponent(t.fichier_imputation)}`
         : null;
 
       const bordereauLink = t.fichier_bordereau
-        ? `https://application-web-de-gestion-de-courrier.onrender.com/api/bordereaux/download/${encodeURIComponent(t.fichier_bordereau)}`
+        ? `${API_BASE}/bordereaux/download/${encodeURIComponent(t.fichier_bordereau)}`
         : null;
 
       let fichiers = [];
@@ -240,7 +276,10 @@
         <h4>Bordereau de transmission</h4>
         <p><strong>Expéditeur :</strong> ${t.expediteur_prenom || ''} ${t.expediteur_nom || ''}</p>
         <p><strong>Destinataire :</strong> ${t.destinataire_prenom || ''} ${t.destinataire_nom || ''}</p>
-        ${bordereauLink ? `<p><a class="file-link" href="${bordereauLink}" target="_blank">📄 Voir le fichier du bordereau</a></p>` : ''}
+        ${bordereauLink ? `
+          <div>
+            <a class="file-link" href="javascript:void(0)" onclick="previewBordereau('${t.bordereau_id}')">📄 Voir le fichier du bordereau</a>
+          </div>` : '<p>📄 Aucun bordereau disponible</p>'}
 
         <h4>Courrier</h4>
         <p><strong>Référence :</strong> ${t.courrier_reference || '-'}</p>
@@ -250,7 +289,7 @@
           ? fichiers.map((fichier, idx) => `
               <div class="file-block">
                 <a class="file-link" href="javascript:void(0)" onclick="telechargerCourrier('${t.courrier_id}', ${idx}, '${fichier.split('/').pop()}')">📎 ${fichier.split('/').pop()}</a>
-                <button class="btn btn-preview" onclick="previewCourrier('${t.courrier_id}', ${idx})">👁️ Aperçu</button>
+                <button class="btn-preview" onclick="previewCourrier('${t.courrier_id}', ${idx})">👁️ Aperçu</button>
               </div>
             `).join('')
           : '<p>📄 Aucun fichier scanné disponible</p>'
@@ -262,6 +301,7 @@
       document.getElementById('detailsModal').style.display = 'none';
     };
 
+    // 🔄 Chargement des transmissions
     async function loadTransmissions() {
       const tbody = document.querySelector("#transmissionsTable tbody");
       tbody.innerHTML = '<tr><td colspan="6" class="center">Chargement...</td></tr>';
