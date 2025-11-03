@@ -229,21 +229,22 @@
     // 👁️ Aperçu d’un bordereau
     async function previewBordereau(bordereauId) {
       const iframe = document.getElementById("previewFrame");
-      if (!iframe) return alert("Erreur : aperçu indisponible.");
       try {
         const res = await fetch(`${API_BASE}/bordereaux/secure-preview/${bordereauId}`, {
           headers: { Authorization: "Bearer " + token }
         });
         if (!res.ok) throw new Error("Erreur HTTP " + res.status);
+
         const blob = await res.blob();
         const url = URL.createObjectURL(blob);
         iframe.src = url;
         document.getElementById("overlay").style.display = "flex";
       } catch (err) {
         console.error("❌ Erreur aperçu bordereau :", err);
-        alert("Impossible d’afficher le bordereau.");
+        alert("Impossible d’afficher l’aperçu du bordereau.");
       }
     }
+
 
     // 🧾 Détails de la transmission
     function showDetails(t) {
@@ -277,9 +278,12 @@
         <p><strong>Expéditeur :</strong> ${t.expediteur_prenom || ''} ${t.expediteur_nom || ''}</p>
         <p><strong>Destinataire :</strong> ${t.destinataire_prenom || ''} ${t.destinataire_nom || ''}</p>
         ${bordereauLink ? `
-          <div>
-            <a class="file-link" href="javascript:void(0)" onclick="previewBordereau('${t.bordereau_id}')">📄 Voir le fichier du bordereau</a>
-          </div>` : '<p>📄 Aucun bordereau disponible</p>'}
+          <div class="file-block">
+            <a class="file-link" href="${bordereauLink}" target="_blank">📄 Voir le fichier du bordereau</a>
+            <button class="btn btn-preview" onclick="previewBordereau('${t.bordereau_id || t.id}')">👁️ Aperçu</button>
+          </div>
+        ` : ''}
+
 
         <h4>Courrier</h4>
         <p><strong>Référence :</strong> ${t.courrier_reference || '-'}</p>
