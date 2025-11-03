@@ -338,3 +338,49 @@ exports.securePreview = async (req, res) => {
     res.status(500).json({ success: false, message: "Erreur aperçu PDF" });
   }
 };
+
+// ------------------------------------------------------------------
+// Aperçu sécurisé d’un bordereau à partir de la clé S3 (POST)
+// ------------------------------------------------------------------
+exports.securePreviewByKey = async (req, res) => {
+  try {
+    const { key } = req.body;
+
+    if (!key) {
+      return res.status(400).json({ success: false, message: "Clé du bordereau manquante." });
+    }
+
+    // 🔒 (Optionnel) Vérifie que l’utilisateur est bien connecté / autorisé
+    // if (!req.user) return res.status(401).json({ success: false, message: "Non autorisé" });
+
+    // Protection basique
+    if (key.includes("..")) {
+      return res.status(400).json({ success: false, message: "Chemin de fichier invalide." });
+    }
+
+    console.log("✅ Aperçu demandé pour la clé :", key);
+
+    // Lecture du fichier depuis ton bucket B2/S3
+    const params = {
+      Bucket: process.env.B2_BUCKET_NAME,
+      Key: key,
+    };
+
+    const s3Data = await s3.getObject(params).promise();
+
+    // Envoi du PDF inline
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader(
+      "Content-Disposition",
+      `inline; filename="${key.split("/").pop()}"`
+    );
+    return res.send(s3Data.Body);
+
+  } catch (err) {
+    console.error("❌ Erreur dans securePreviewByKey :", err);
+    return res
+      .status(500)
+      .json({ success: false, message: "Erreur lors du chargement du bordereau." });
+  }
+};
+

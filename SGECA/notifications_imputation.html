@@ -345,16 +345,41 @@
       }
     }
 
-    function previewBordereau(fichierBordereau) {
-      if (!fichierBordereau) {
-        alert("Aucun fichier bordereau trouvé.");
+    function previewBordereauSecure(key) {
+      if (!key) {
+        alert("Aucun bordereau à afficher.");
         return;
       }
 
-      const iframe = document.getElementById("previewFrame");
-      iframe.src = `${API_BASE}/bordereaux/secure-preview/${encodeURIComponent(fichierBordereau)}?token=${token}`;
-      document.getElementById("overlay").style.display = "flex";
+      const token = localStorage.getItem("token");
+
+      fetch(`${API_BASE}/bordereaux/secure-preview-by-key`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({ key })
+      })
+        .then(async (res) => {
+          if (!res.ok) {
+            const err = await res.json();
+            throw new Error(err.message || "Erreur lors du chargement du bordereau");
+          }
+          return res.blob();
+        })
+        .then((blob) => {
+          const url = URL.createObjectURL(blob);
+          const iframe = document.getElementById("previewFrame");
+          iframe.src = url;
+          document.getElementById("overlay").style.display = "flex";
+        })
+        .catch((err) => {
+          console.error("Erreur aperçu bordereau :", err);
+          alert(err.message);
+        });
     }
+
 
 
 

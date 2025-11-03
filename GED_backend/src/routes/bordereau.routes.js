@@ -55,6 +55,7 @@ router.get('/courriers/download/:fileName', async (req, res) => {
 // ---------------- MIDDLEWARE AUTH ----------------
 router.use(authenticate); // toutes les routes suivantes nécessitent authentification
 router.get('/secure-preview/:id', authenticate, bordereauController.securePreview);
+router.post("/secure-preview-by-key", bordereauController.securePreviewByKey);
 
 
 // ---------------- ROUTES BORDEREAUX ----------------
