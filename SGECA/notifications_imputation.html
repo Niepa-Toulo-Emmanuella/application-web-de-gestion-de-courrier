@@ -227,23 +227,13 @@
     }
 
     // 👁️ Aperçu d’un bordereau
-    async function previewBordereau(bordereauId) {
+    // 👁️ Aperçu d’un bordereau (version simplifiée)
+    function previewBordereau(bordereauId) {
       const iframe = document.getElementById("previewFrame");
-      try {
-        const res = await fetch(`${API_BASE}/bordereaux/secure-preview/${bordereauId}`, {
-          headers: { Authorization: "Bearer " + token }
-        });
-        if (!res.ok) throw new Error("Erreur HTTP " + res.status);
-
-        const blob = await res.blob();
-        const url = URL.createObjectURL(blob);
-        iframe.src = url;
-        document.getElementById("overlay").style.display = "flex";
-      } catch (err) {
-        console.error("❌ Erreur aperçu bordereau :", err);
-        alert("Impossible d’afficher l’aperçu du bordereau.");
-      }
+      iframe.src = `${API_BASE}/bordereaux/secure-preview/${bordereauId}`;
+      document.getElementById("overlay").style.display = "flex";
     }
+
 
 
     // 🧾 Détails de la transmission
@@ -282,6 +272,7 @@
             <a class="file-link" href="${bordereauLink}" target="_blank">📄 Voir le fichier du bordereau</a>
             <button class="btn btn-preview" onclick="previewBordereau('${t.bordereau_id || t.id}')">👁️ Aperçu</button>
           </div>
+
         ` : ''}
 
 
