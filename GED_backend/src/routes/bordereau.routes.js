@@ -17,6 +17,7 @@ const s3 = new AWS.S3({
   secretAccessKey: process.env.B2_APP_KEY,
 });
 
+
 // ---------------- ROUTES PUBLIQUES (téléchargement des fichiers) ----------------
 
 // Télécharger un PDF de bordereau
@@ -53,6 +54,7 @@ router.get('/courriers/download/:fileName', async (req, res) => {
 
 // ---------------- MIDDLEWARE AUTH ----------------
 router.use(authenticate); // toutes les routes suivantes nécessitent authentification
+router.get('/secure-preview/:id', authenticate, bordereauController.securePreview);
 
 // ---------------- ROUTES BORDEREAUX ----------------
 // router.get('/registre-transmission', bordereauController.registreTransmission);

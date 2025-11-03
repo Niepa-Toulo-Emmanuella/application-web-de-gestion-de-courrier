@@ -315,3 +315,43 @@ exports.registreTransmission = async (req, res) => {
     res.status(500).json({ success: false, message: err.message });
   }
 };
+
+// ---------------- APERÇU SÉCURISÉ BORDEAU ---------------------
+exports.securePreview = async (req, res) => {
+  try {
+    const bordereauId = req.params.id;
+    console.log(`[DEBUG] securePreviewBordereau appelé, bordereauId=${bordereauId}`);
+
+    // 🔹 Récupérer le bordereau dans la BDD
+    const row = await Bordereau.findById(bordereauId);
+    if (!row || !row.fichier_bordereau) {
+      return res.status(404).json({ success: false, message: "Bordereau introuvable" });
+    }
+
+    // 🔹 Construire l'URL complète si nécessaire
+    const fileUrl = row.fichier_bordereau.startsWith("http")
+      ? row.fichier_bordereau
+      : `https://s3.us-east-005.backblazeb2.com/${process.env.B2_BUCKET_NAME}/${row.fichier_bordereau}`;
+
+    const key = decodeURIComponent(new URL(fileUrl).pathname.split(`${process.env.B2_BUCKET_NAME}/`).pop());
+    console.log("[DEBUG] Lecture du fichier sur S3 :", key);
+
+    // 🔹 Télécharger le PDF depuis Backblaze B2
+    const s3Data = await s3.getObject({
+      Bucket: process.env.B2_BUCKET_NAME,
+      Key: key,
+    }).promise();
+
+    const fileBuffer = s3Data.Body;
+
+    // 🔹 Définir le type et renvoyer le PDF
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Disposition", `inline; filename="bordereau_${bordereauId}.pdf"`);
+    return res.send(fileBuffer);
+
+  } catch (err) {
+    console.error("❌ Erreur aperçu bordereau :", err);
+    res.status(500).json({ success: false, message: "Erreur lors de l’aperçu du bordereau" });
+  }
+};
+
