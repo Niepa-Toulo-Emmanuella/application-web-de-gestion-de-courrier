@@ -213,7 +213,13 @@
             <p><strong>Référence :</strong> ${t.courrier_reference || '-'}</p>
             <p><strong>Objet :</strong> ${t.courrier_objet || '-'}</p>
             <p><strong>Date d’arrivée :</strong> ${t.courrier_date_arrivee ? new Date(t.courrier_date_arrivee).toLocaleDateString() : '-'}</p>
-            ${t.courrier_id ? `<p><button onclick="telechargerCourrier(${t.courrier_id})">📄 Télécharger le fichier scanné</button></p>` : '<p>📄 Aucun fichier scanné disponible</p>'}
+            ${t.courrier_id
+          ? `<p>
+                  <button onclick="telechargerCourrier(${t.courrier_id})">📄 Télécharger le fichier scanné</button>
+                  <button onclick="previewCourrier(${t.courrier_id})">👁️ Aperçu</button>
+              </p>`
+          : '<p>📄 Aucun fichier scanné disponible</p>'}
+                
         `;
     }
     // 🔒 Log clic sur téléchargement
@@ -288,6 +294,14 @@
       document.body.appendChild(a);
       a.click();
       a.remove();
+    }
+
+    async function previewCourrier(courrierId) {
+      const token = localStorage.getItem("token");
+      const previewUrl = `${API_BASE}/courriers/secure-preview/${courrierId}`;
+
+      // Ouvrir dans un nouvel onglet
+      window.open(previewUrl + "?token=" + token, "_blank");
     }
 
 
