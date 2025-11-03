@@ -227,12 +227,12 @@
     }
 
     // 👁️ Aperçu d’un bordereau
-    // 👁️ Aperçu d’un bordereau (version simplifiée)
-    function previewBordereau(bordereauId) {
+    function previewBordereau(fichierBordereau) {
       const iframe = document.getElementById("previewFrame");
-      iframe.src = `${API_BASE}/bordereaux/secure-preview/${bordereauId}`;
+      iframe.src = `${API_BASE}/bordereaux/secure-preview/${encodeURIComponent(fichierBordereau)}`;
       document.getElementById("overlay").style.display = "flex";
     }
+
 
 
 
@@ -272,7 +272,7 @@
         ${bordereauLink ? `
           <div class="file-block">
             <a class="file-link" href="${bordereauLink}" target="_blank">📄 Voir le fichier du bordereau</a>
-            <button class="btn btn-preview" onclick="previewBordereau('${t.bordereau_id || t.id}')">👁️ Aperçu</button>
+            <button class="btn btn-preview" onclick="previewBordereau('${t.fichier_bordereau}')">👁️ Aperçu</button>
           </div>
 
         ` : ''}
