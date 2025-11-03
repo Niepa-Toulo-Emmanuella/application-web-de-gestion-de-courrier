@@ -212,8 +212,8 @@
             <p><strong>Référence :</strong> ${t.courrier_reference || '-'}</p>
             <p><strong>Objet :</strong> ${t.courrier_objet || '-'}</p>
             <p><strong>Date d’arrivée :</strong> ${t.courrier_date_arrivee ? new Date(t.courrier_date_arrivee).toLocaleDateString() : '-'}</p>
-            ${t.fichiers_scan && t.fichiers_scan.length > 0
-          ? t.fichiers_scan.map((fichier, idx) => `
+            ${t.fichier_scan && t.fichiers_scan.length > 0
+          ? t.fichier_scan.map((fichier, idx) => `
                   <div class="file-block">
                     <a class="file-link" href="javascript:void(0)" onclick="telechargerCourrier('${t.courrier_id}', ${idx}, '${fichier.split('/').pop()}')">📎 ${fichier.split('/').pop()}</a>
                     <button class="btn btn-preview" onclick="previewCourrier('${t.courrier_id}', ${idx})">👁️ Aperçu</button>
