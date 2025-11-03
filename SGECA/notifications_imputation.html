@@ -136,43 +136,42 @@
     const API_BASE = "https://application-web-de-gestion-de-courrier.onrender.com/api";
     const token = localStorage.getItem("token");
 
-    async function telechargerCourrier(courrierId) {
+    async function telechargerCourrier(courrierId, index = 0, fileName) {
       const token = localStorage.getItem("token");
-      if (!token) {
-        alert("Veuillez vous reconnecter pour télécharger le fichier.");
-        return;
-      }
-
       try {
-        const res = await fetch(`${API_BASE}/courriers/secure-download/${courrierId}`, {
+        const res = await fetch(`${API_BASE}/courriers/secure-download/${courrierId}?index=${index}`, {
           headers: { Authorization: "Bearer " + token }
         });
-
-        if (!res.ok) throw new Error(`Erreur HTTP ${res.status}`);
-
-        // Récupérer le nom du fichier depuis le header
-        const dispo = res.headers.get("Content-Disposition");
-        const match = dispo && dispo.match(/filename="(.+)"/);
-        const filename = match ? match[1] : `courrier_${courrierId}`;
-
-        // Convertir en blob et télécharger
         const blob = await res.blob();
-        const url = URL.createObjectURL(blob);
-
         const a = document.createElement("a");
-        a.href = url;
-        a.download = filename;
+        a.href = URL.createObjectURL(blob);
+        a.download = fileName;
         document.body.appendChild(a);
         a.click();
         a.remove();
-        URL.revokeObjectURL(url);
-
-        console.log(`✅ Téléchargement réussi : ${filename}`);
       } catch (err) {
         console.error("❌ Erreur téléchargement :", err);
-        alert("Erreur lors du téléchargement du fichier. Vérifiez votre connexion et vos droits d'accès.");
+        alert("Erreur lors du téléchargement du fichier.");
       }
     }
+
+    async function previewCourrier(courrierId, index = 0) {
+      const token = localStorage.getItem("token");
+      const iframe = document.getElementById("previewFrame");
+      try {
+        const res = await fetch(`${API_BASE}/courriers/secure-preview/${courrierId}?index=${index}`, {
+          headers: { Authorization: "Bearer " + token }
+        });
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        if (blob.type.includes("pdf")) iframe.src = url;
+        else iframe.src = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(url)}`;
+        document.getElementById("overlay").style.display = "flex";
+      } catch (err) {
+        console.error("❌ Erreur aperçu :", err);
+      }
+    }
+
 
 
 
@@ -213,14 +212,17 @@
             <p><strong>Référence :</strong> ${t.courrier_reference || '-'}</p>
             <p><strong>Objet :</strong> ${t.courrier_objet || '-'}</p>
             <p><strong>Date d’arrivée :</strong> ${t.courrier_date_arrivee ? new Date(t.courrier_date_arrivee).toLocaleDateString() : '-'}</p>
-            ${t.courrier_id
-          ? `<p>
-                  <button onclick="telechargerCourrier(${t.courrier_id})">📄 Télécharger le fichier scanné</button>
-                  <button onclick="previewCourrier(${t.courrier_id})">👁️ Aperçu</button>
-              </p>`
-          : '<p>📄 Aucun fichier scanné disponible</p>'}
+            ${t.fichiers_scan && t.fichiers_scan.length > 0
+          ? t.fichiers_scan.map((fichier, idx) => `
+                  <div class="file-block">
+                    <a class="file-link" href="javascript:void(0)" onclick="telechargerCourrier('${t.courrier_id}', ${idx}, '${fichier.split('/').pop()}')">📎 ${fichier.split('/').pop()}</a>
+                    <button class="btn btn-preview" onclick="previewCourrier('${t.courrier_id}', ${idx})">👁️ Aperçu</button>
+                  </div>
+                `).join('')
+          : '<p>📄 Aucun fichier scanné disponible</p>'
+        }
                 
-        `;
+      `;
     }
     // 🔒 Log clic sur téléchargement
     function logDownload(type, url) {
@@ -296,13 +298,13 @@
       a.remove();
     }
 
-    async function previewCourrier(courrierId) {
-      const token = localStorage.getItem("token");
-      const previewUrl = `${API_BASE}/courriers/secure-preview/${courrierId}`;
+    // async function previewCourrier(courrierId) {
+    //   const token = localStorage.getItem("token");
+    //   const previewUrl = `${API_BASE}/courriers/secure-preview/${courrierId}`;
 
-      // Ouvrir dans un nouvel onglet
-      window.open(previewUrl + "?token=" + token, "_blank");
-    }
+    //   // Ouvrir dans un nouvel onglet
+    //   window.open(previewUrl + "?token=" + token, "_blank");
+    // }
 
 
     window.addEventListener("DOMContentLoaded", loadTransmissions);

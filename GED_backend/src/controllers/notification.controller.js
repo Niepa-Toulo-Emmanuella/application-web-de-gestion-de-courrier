@@ -32,6 +32,8 @@ exports.getReceptions = async (req, res) => {
       [destinataireId]
     );
 
+    
+
     console.log("📬 Notifications trouvées :", result.rows);
 
     res.json({ success: true, data: result.rows });
