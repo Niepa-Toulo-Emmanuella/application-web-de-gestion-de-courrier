@@ -238,6 +238,7 @@
 
     // 🧾 Détails de la transmission
     function showDetails(t) {
+      console.log("🔍 Détails de la transmission sélectionnée :", t); // 🔍 Affiche l'objet complet
       const modal = document.getElementById('detailsModal');
       const content = document.getElementById('modalContent');
       modal.style.display = 'flex';
@@ -256,6 +257,7 @@
       } else if (typeof t.fichier_scan === 'string' && t.fichier_scan.trim() !== '') {
         fichiers = [t.fichier_scan];
       }
+      console.log("📄 Fichiers scannés :", fichiers); // 🔍 Affiche les fichiers scannés
 
       content.innerHTML = `
         <h4>Bordereau d’imputation</h4>
@@ -316,6 +318,7 @@
 
         if (!res.ok) throw new Error("Erreur HTTP " + res.status);
         const data = await res.json();
+        console.log("✅ Réponse API transmissions :", data); // 🔍 Affiche tout ce qui est reçu
 
         if (data.success && data.data.length > 0) {
           tbody.innerHTML = "";
