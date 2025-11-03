@@ -1,3 +1,4 @@
+<!-- registre_transcription.html -->
 <!DOCTYPE html>
 <html lang="fr">
 
@@ -120,6 +121,19 @@
             const heure = b.heure ?? '—';
             const statutClass = b.statut === 'envoye' ? 'badge-bg-envoye' : 'badge-bg-attente';
 
+            // 🔹 Correction ici : décoder les fichiers scannés
+            let fichiersHTML = '—';
+            try {
+                const fichiers = JSON.parse(b.fichier_scan);
+                if (Array.isArray(fichiers) && fichiers.length > 0) {
+                    fichiersHTML = fichiers.map((url, i) =>
+                        `<a href="${url}" target="_blank" class="btn btn-sm btn-outline-primary me-1">📎 Voir ${i + 1}</a>`
+                    ).join('');
+                }
+            } catch (err) {
+                console.warn('Erreur décodage fichier_scan', err, b.fichier_scan);
+            }
+
             return `
             <tr>
                 <td>${b.numero_reference ?? '—'}</td>
@@ -129,11 +143,7 @@
                 <td class="small-text">${dateArrivee}</td>
                 <td>${b.numero_enregistrement ?? '—'}</td>
                 <td>${heure}</td>
-                <td>
-                    ${b.fichier_scan
-                    ? `<a href="${b.fichier_scan}" target="_blank" class="btn btn-sm btn-outline-primary">📎 Voir</a>`
-                    : '—'}
-                </td>
+                <td>${fichiersHTML}</td>
                 <td><span class="badge ${statutClass}">${b.statut ?? '—'}</span></td>
             </tr>`;
         }
