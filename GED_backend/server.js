@@ -66,6 +66,15 @@ const imputationRoutes = require('./src/routes/imputation.routes');
 // 🔐 Sécurité
 app.use(helmet());
 
+// ✅ Autoriser ton frontend à afficher des iframes avec bordereaux
+app.use((req, res, next) => {
+  res.setHeader(
+    "Content-Security-Policy",
+    "frame-ancestors 'self' https://application-web-de-gestion-de-courrier.onrender.com https://application-web-de-gestion-de-courrier-1.onrender.com"
+  );
+  next();
+});
+
 // 📦 Middleware parsing
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
