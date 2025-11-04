@@ -81,6 +81,12 @@
       border-radius: 5px;
       cursor: pointer;
     }
+
+    #previewFrame {
+      flex-grow: 1;
+      width: 100%;
+      border: none;
+    }
   </style>
 </head>
 
@@ -124,7 +130,7 @@
   <div id="overlay">
     <div id="overlay-content">
       <button id="closeOverlay">Fermer ✖</button>
-      <iframe id="previewFrame" style="flex-grow:1; width:100%; border:none;"></iframe>
+      <iframe id="previewFrame"></iframe>
     </div>
   </div>
 
@@ -222,8 +228,7 @@
               `<div>
              <a href="javascript:void(0)" onclick="console.log('📎 Aperçu courrier demandé pour courrierId=${b.numero_enregistrement}, index=${i}'); previewCourrier('${b.numero_enregistrement}', ${i})" class="text-decoration-none">📎 ${url.split('/').pop()}</a>
              <button class="btn-preview" onclick="console.log('👁️ Aperçu courrier demandé pour courrierId=${b.numero_enregistrement}, index=${i}'); previewCourrier('${b.numero_enregistrement}', ${i})">👁️ Aperçu</button>
-           </div>`
-            ).join('');
+           </div>`).join('');
           }
         } catch (err) {
           console.warn('Erreur décodage fichier_scan', err, b.fichier_scan);
