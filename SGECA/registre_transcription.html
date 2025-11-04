@@ -35,44 +35,15 @@
             background-color: #e9f0ff;
         }
 
-        /* Colonne pièce jointe plus large */
-        #table-bordereaux td:nth-child(8) {
-            white-space: nowrap;
-            min-width: 200px;
-            text-align: center;
-        }
-
-        #table-bordereaux td a.btn {
-            margin: 3px 5px;
-            padding: 6px 12px;
-            border-radius: 20px;
-        }
-
+        /* Colonnes du tableau */
         #table-bordereaux td,
         #table-bordereaux th {
             vertical-align: middle !important;
-        }
-
-        /* Forcer la colonne statut à rester visible */
-        #table-bordereaux td:last-child,
-        #table-bordereaux th:last-child {
-            min-width: 120px;
-            /* largeur minimum suffisante */
-            white-space: nowrap;
-            /* pas de retour à la ligne */
-            text-align: center;
-        }
-
-        /* Ajuster les autres colonnes pour ne pas trop se compresser */
-        #table-bordereaux td,
-        #table-bordereaux th {
             overflow: hidden;
             text-overflow: ellipsis;
-            /* "..." si texte trop long */
         }
 
-        /* Forcer les boutons dans la colonne pièce jointe à s'aligner horizontalement */
-        /* Colonne pièce jointe plus large et boutons alignés horizontalement */
+        /* Colonne pièce jointe */
         #table-bordereaux td:nth-child(8) {
             min-width: 200px;
             /* largeur minimum */
@@ -92,13 +63,30 @@
             /* espace entre boutons */
         }
 
+        /* Boutons dans la colonne pièce jointe */
+        #table-bordereaux td a.btn {
+            margin: 3px 5px;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+        }
 
+        /* Forcer la colonne statut à rester visible */
+        #table-bordereaux td:last-child,
+        #table-bordereaux th:last-child {
+            min-width: 120px;
+            /* largeur minimum suffisante */
+            white-space: nowrap;
+            /* pas de retour à la ligne */
+            text-align: center;
+        }
 
-
+        /* Texte plus petit pour certaines cellules */
         .small-text {
             font-size: 0.875rem;
         }
 
+        /* Badges statut */
         .badge-bg-envoye {
             background-color: #198754;
             color: #fff;
@@ -107,10 +95,6 @@
         .badge-bg-attente {
             background-color: #6c757d;
             color: #fff;
-        }
-
-        .btn-outline-primary {
-            font-size: 0.85rem;
         }
 
         h2 {
@@ -157,6 +141,7 @@
             animation: slide-in-right 0.5s ease forwards;
         }
     </style>
+
 </head>
 
 <body class="bg-light">
