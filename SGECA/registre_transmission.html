@@ -139,84 +139,82 @@
     document.getElementById("closeOverlay").onclick = () => {
       document.getElementById("overlay").style.display = "none";
       document.getElementById("previewFrame").src = "";
+      console.log("🔒 Overlay fermé");
     };
 
-    // 🧾 Fonction pour afficher un fichier dans l’overlay
     function afficherApercuDepuisBlob(blob) {
       const url = URL.createObjectURL(blob);
       const iframe = document.getElementById("previewFrame");
+      console.log("🔍 Blob reçu pour aperçu :", blob);
       if (blob.type.includes("pdf")) iframe.src = url;
       else iframe.src = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(url)}`;
       document.getElementById("overlay").style.display = "flex";
+      console.log("👁️ Aperçu affiché dans l'iframe");
     }
 
-    // 👁️ Aperçu d’un bordereau
     async function previewBordereauSecure(key) {
+      console.log("📂 Aperçu bordereau demandé pour key:", key);
       try {
         const res = await fetch(`${API_BASE}/api/bordereaux/secure-preview-by-key`, {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`
-          },
+          headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
           body: JSON.stringify({ key })
         });
+        console.log("✅ Réponse API bordereau :", res);
         if (!res.ok) throw new Error("Erreur lors du chargement du bordereau");
         const blob = await res.blob();
         afficherApercuDepuisBlob(blob);
       } catch (err) {
-        console.error("Erreur aperçu bordereau :", err);
+        console.error("❌ Erreur aperçu bordereau :", err);
         alert(err.message);
       }
     }
 
-    // 👁️ Aperçu d’un bordereau d’imputation
     async function previewImputationSecure(key) {
+      console.log("📂 Aperçu imputation demandé pour key:", key);
       try {
         const res = await fetch(`${API_BASE}/api/imputations/secure-preview-by-key`, {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`
-          },
+          headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
           body: JSON.stringify({ key })
         });
+        console.log("✅ Réponse API imputation :", res);
         if (!res.ok) throw new Error("Erreur lors du chargement de l’imputation");
         const blob = await res.blob();
         afficherApercuDepuisBlob(blob);
       } catch (err) {
-        console.error("Erreur aperçu imputation :", err);
+        console.error("❌ Erreur aperçu imputation :", err);
         alert(err.message);
       }
     }
 
-    // 👁️ Aperçu d’un courrier scanné
     async function previewCourrier(courrierId, index = 0) {
+      console.log(`📎 Aperçu courrier demandé pour courrierId=${courrierId}, index=${index}`);
       try {
         const res = await fetch(`${API_BASE}/api/courriers/secure-preview/${courrierId}?index=${index}`, {
           headers: { Authorization: "Bearer " + token }
         });
+        console.log("✅ Réponse API courrier :", res);
         if (!res.ok) throw new Error("Erreur lors du chargement du courrier");
         const blob = await res.blob();
         afficherApercuDepuisBlob(blob);
       } catch (err) {
-        console.error("Erreur aperçu courrier :", err);
+        console.error("❌ Erreur aperçu courrier :", err);
         alert(err.message);
       }
     }
 
-    // 🔹 Rendu d'une ligne du tableau
     function renderRow(b) {
+      console.log("🔹 Ligne reçue :", b);
       const date = b.date_depart ? new Date(b.date_depart).toLocaleDateString("fr-FR") : "—";
 
-      // 🔸 Pièces jointes (courriers)
+      // Courriers scannés
       let fichiersHTML = '—';
       if (b.fichier_scan) {
         try {
           let fichiers = b.fichier_scan;
           if (typeof fichiers === 'string' && fichiers.trim().startsWith('[')) fichiers = JSON.parse(fichiers);
           else if (typeof fichiers === 'string') fichiers = [fichiers];
-
           if (Array.isArray(fichiers) && fichiers.length > 0) {
             fichiersHTML = fichiers.map((url, i) =>
               `<div>
@@ -226,11 +224,10 @@
             ).join('');
           }
         } catch (err) {
-          console.warn('Erreur décodage fichier_scan', err, b.fichier_scan);
+          console.warn('⚠️ Erreur décodage fichier_scan', err, b.fichier_scan);
         }
       }
 
-      // 🔸 Imputation
       const fichierImputation = b.fichier_imputation
         ? `<div>
              <a href="${b.fichier_imputation}" target="_blank" class="text-decoration-none">📄 Ouvrir</a>
@@ -238,7 +235,6 @@
            </div>`
         : "—";
 
-      // 🔸 Bordereau
       const fichierBordereau = b.fichier_bordereau
         ? `<div>
              <a href="${b.fichier_bordereau}" target="_blank" class="text-decoration-none">📄 Ouvrir</a>
@@ -260,8 +256,8 @@
         </tr>`;
     }
 
-    // 🔹 Affichage du tableau
     function afficherTableau(data) {
+      console.log("📊 Données pour affichage :", data);
       if (!data || data.length === 0) {
         tbody.innerHTML = `<tr><td colspan="9" class="text-center text-muted fst-italic">Aucun enregistrement trouvé.</td></tr>`;
       } else {
@@ -269,7 +265,6 @@
       }
     }
 
-    // 🔹 Filtre local
     function filtrer(data, terme) {
       const t = terme.toLowerCase();
       return data.filter(
@@ -282,21 +277,22 @@
       );
     }
 
-    // 🔹 Chargement des données
     async function chargerBordereaux() {
       alertBox.classList.add("d-none");
       loadingBox.classList.remove("d-none");
+      console.log("⏳ Chargement des bordereaux...");
       try {
         const res = await fetch(`${API_BASE}/api/bordereaux/registre-transmission`, {
           headers: { Authorization: `Bearer ${token}` },
         });
+        console.log("✅ Réponse API registre-transmission :", res);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const { success, data, message } = await res.json();
         if (!success) throw new Error(message ?? "Erreur de chargement");
         window._bordereaux = data;
         afficherTableau(data);
       } catch (err) {
-        console.error(err);
+        console.error("❌ Erreur chargement bordereaux :", err);
         alertBox.textContent = err.message ?? "Erreur serveur";
         alertBox.classList.remove("d-none");
       } finally {
@@ -304,7 +300,6 @@
       }
     }
 
-    // 🔹 Recherche locale
     searchInput.addEventListener("input", (e) => {
       const terme = e.target.value.trim();
       const data = window._bordereaux ?? [];
