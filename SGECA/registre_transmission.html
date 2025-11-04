@@ -237,12 +237,18 @@
       }
 
       // 🔸 Imputation
+      // 🔸 Imputation (clé relative extraite)
       const fichierImputation = b.fichier_imputation
-        ? `<div>
-         <a href="${b.fichier_imputation}" target="_blank" class="text-decoration-none">📄 Ouvrir</a>
-         <button class="btn-preview" onclick="console.log('📂 Aperçu imputation demandé pour key:', '${b.fichier_imputation}'); previewImputationSecure('${b.fichier_imputation}')">👁️ Aperçu</button>
-       </div>`
+        ? (() => {
+          // On récupère seulement la clé relative dans le bucket
+          const key = b.fichier_imputation.split('/CourrierBucket2/')[1];
+          return `<div>
+            <a href="${b.fichier_imputation}" target="_blank" class="text-decoration-none">Ouvrir</a>
+            <button class="btn-preview" onclick="previewImputationSecure('${key}')">Aperçu</button>
+          </div>`;
+        })()
         : "—";
+
 
       // 🔸 Bordereau
       const fichierBordereau = b.fichier_bordereau
