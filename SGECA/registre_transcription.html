@@ -71,6 +71,18 @@
             /* "..." si texte trop long */
         }
 
+        /* Forcer les boutons dans la colonne pièce jointe à s'aligner horizontalement */
+        #table-bordereaux td:nth-child(8) {
+            display: flex;
+            justify-content: center;
+            /* Centrer horizontalement */
+            flex-wrap: wrap;
+            /* Si beaucoup de boutons, passer à la ligne suivante */
+            gap: 5px;
+            /* Espacement entre les boutons */
+        }
+
+
 
         .small-text {
             font-size: 0.875rem;
