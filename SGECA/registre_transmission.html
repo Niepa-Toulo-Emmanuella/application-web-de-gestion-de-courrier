@@ -32,6 +32,55 @@
     tbody tr:hover {
       background-color: #eef3ff;
     }
+
+    .btn-preview {
+      background: #0d6efd;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      padding: 2px 6px;
+      cursor: pointer;
+      font-size: 0.8rem;
+    }
+
+    .btn-preview:hover {
+      background: #084298;
+    }
+
+    /* Overlay pour aperçu */
+    #overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.7);
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+    }
+
+    #overlay-content {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      width: 90%;
+      max-width: 900px;
+      height: 90%;
+      display: flex;
+      flex-direction: column;
+    }
+
+    #closeOverlay {
+      align-self: flex-end;
+      background: #0d6efd;
+      color: white;
+      border: none;
+      padding: 8px 12px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
   </style>
 </head>
 
@@ -71,38 +120,109 @@
     </div>
   </div>
 
+  <!-- 🔍 Aperçu (overlay global) -->
+  <div id="overlay">
+    <div id="overlay-content">
+      <button id="closeOverlay">Fermer ✖</button>
+      <iframe id="previewFrame" style="flex-grow:1; width:100%; border:none;"></iframe>
+    </div>
+  </div>
+
   <script>
     const API_BASE = "https://application-web-de-gestion-de-courrier.onrender.com";
     const tbody = document.querySelector("#table-bordereaux tbody");
     const alertBox = document.querySelector("#alert");
     const loadingBox = document.querySelector("#loading");
     const searchInput = document.querySelector("#searchInput");
+    const token = localStorage.getItem("token");
 
-    // 🔹 Rendu d'une ligne
+    document.getElementById("closeOverlay").onclick = () => {
+      document.getElementById("overlay").style.display = "none";
+      document.getElementById("previewFrame").src = "";
+    };
+
+    // 🧾 Fonction pour afficher un fichier dans l’overlay
+    function afficherApercuDepuisBlob(blob) {
+      const url = URL.createObjectURL(blob);
+      const iframe = document.getElementById("previewFrame");
+      if (blob.type.includes("pdf")) iframe.src = url;
+      else iframe.src = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(url)}`;
+      document.getElementById("overlay").style.display = "flex";
+    }
+
+    // 👁️ Aperçu d’un bordereau
+    async function previewBordereauSecure(key) {
+      try {
+        const res = await fetch(`${API_BASE}/api/bordereaux/secure-preview-by-key`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+          },
+          body: JSON.stringify({ key })
+        });
+        if (!res.ok) throw new Error("Erreur lors du chargement du bordereau");
+        const blob = await res.blob();
+        afficherApercuDepuisBlob(blob);
+      } catch (err) {
+        console.error("Erreur aperçu bordereau :", err);
+        alert(err.message);
+      }
+    }
+
+    // 👁️ Aperçu d’un bordereau d’imputation
+    async function previewImputationSecure(key) {
+      try {
+        const res = await fetch(`${API_BASE}/api/imputations/secure-preview-by-key`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+          },
+          body: JSON.stringify({ key })
+        });
+        if (!res.ok) throw new Error("Erreur lors du chargement de l’imputation");
+        const blob = await res.blob();
+        afficherApercuDepuisBlob(blob);
+      } catch (err) {
+        console.error("Erreur aperçu imputation :", err);
+        alert(err.message);
+      }
+    }
+
+    // 👁️ Aperçu d’un courrier scanné
+    async function previewCourrier(courrierId, index = 0) {
+      try {
+        const res = await fetch(`${API_BASE}/api/courriers/secure-preview/${courrierId}?index=${index}`, {
+          headers: { Authorization: "Bearer " + token }
+        });
+        if (!res.ok) throw new Error("Erreur lors du chargement du courrier");
+        const blob = await res.blob();
+        afficherApercuDepuisBlob(blob);
+      } catch (err) {
+        console.error("Erreur aperçu courrier :", err);
+        alert(err.message);
+      }
+    }
+
+    // 🔹 Rendu d'une ligne du tableau
     function renderRow(b) {
-      const date = b.date_depart
-        ? new Date(b.date_depart).toLocaleDateString("fr-FR")
-        : "—";
+      const date = b.date_depart ? new Date(b.date_depart).toLocaleDateString("fr-FR") : "—";
 
-      // ✅ Gestion robuste de fichier_scan
+      // 🔸 Pièces jointes (courriers)
       let fichiersHTML = '—';
       if (b.fichier_scan) {
         try {
           let fichiers = b.fichier_scan;
+          if (typeof fichiers === 'string' && fichiers.trim().startsWith('[')) fichiers = JSON.parse(fichiers);
+          else if (typeof fichiers === 'string') fichiers = [fichiers];
 
-          // Si c’est une chaîne JSON valide → on la parse
-          if (typeof fichiers === 'string' && fichiers.trim().startsWith('[')) {
-            fichiers = JSON.parse(fichiers);
-          }
-          // Si c’est une chaîne simple → on la met dans un tableau
-          else if (typeof fichiers === 'string') {
-            fichiers = [fichiers];
-          }
-
-          // Générer les boutons
           if (Array.isArray(fichiers) && fichiers.length > 0) {
             fichiersHTML = fichiers.map((url, i) =>
-              `<a href="${url}" target="_blank" class="text-decoration-none">📎 Voir ${i + 1}</a>`
+              `<div>
+                 <a href="javascript:void(0)" onclick="previewCourrier('${b.courrier_id || b.id}', ${i})" class="text-decoration-none">📎 ${url.split('/').pop()}</a>
+                 <button class="btn-preview" onclick="previewCourrier('${b.courrier_id || b.id}', ${i})">👁️ Aperçu</button>
+               </div>`
             ).join('');
           }
         } catch (err) {
@@ -110,16 +230,21 @@
         }
       }
 
+      // 🔸 Imputation
       const fichierImputation = b.fichier_imputation
-        ? `<a href="${b.fichier_imputation}" target="_blank" class="text-decoration-none">📄 Ouvrir</a>`
+        ? `<div>
+             <a href="${b.fichier_imputation}" target="_blank" class="text-decoration-none">📄 Ouvrir</a>
+             <button class="btn-preview" onclick="previewImputationSecure('${b.fichier_imputation}')">👁️ Aperçu</button>
+           </div>`
         : "—";
 
-      // Frontend
+      // 🔸 Bordereau
       const fichierBordereau = b.fichier_bordereau
-        ? `<a href="${b.fichier_bordereau}" target="_blank" class="text-decoration-none">📄 Ouvrir</a>`
+        ? `<div>
+             <a href="${b.fichier_bordereau}" target="_blank" class="text-decoration-none">📄 Ouvrir</a>
+             <button class="btn-preview" onclick="previewBordereauSecure('${b.fichier_bordereau}')">👁️ Aperçu</button>
+           </div>`
         : "—";
-
-
 
       return `
         <tr>
@@ -135,7 +260,7 @@
         </tr>`;
     }
 
-    // 🔹 Afficher le tableau
+    // 🔹 Affichage du tableau
     function afficherTableau(data) {
       if (!data || data.length === 0) {
         tbody.innerHTML = `<tr><td colspan="9" class="text-center text-muted fst-italic">Aucun enregistrement trouvé.</td></tr>`;
@@ -157,13 +282,13 @@
       );
     }
 
-    // 🔹 Charger les données
+    // 🔹 Chargement des données
     async function chargerBordereaux() {
       alertBox.classList.add("d-none");
       loadingBox.classList.remove("d-none");
       try {
         const res = await fetch(`${API_BASE}/api/bordereaux/registre-transmission`, {
-          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+          headers: { Authorization: `Bearer ${token}` },
         });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const { success, data, message } = await res.json();
@@ -179,7 +304,7 @@
       }
     }
 
-    // 🔹 Écoute recherche
+    // 🔹 Recherche locale
     searchInput.addEventListener("input", (e) => {
       const terme = e.target.value.trim();
       const data = window._bordereaux ?? [];
