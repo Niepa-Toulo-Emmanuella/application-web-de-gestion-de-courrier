@@ -226,8 +226,8 @@
           if (Array.isArray(fichiers) && fichiers.length > 0) {
             fichiersHTML = fichiers.map((url, i) =>
               `<div>
-             <a href="javascript:void(0)" onclick="console.log('📎 Aperçu courrier demandé pour courrierId=${b.numero_enregistrement}, index=${i}'); previewCourrier('${b.numero_enregistrement}', ${i})" class="text-decoration-none">📎 ${url.split('/').pop()}</a>
-             <button class="btn-preview" onclick="console.log('👁️ Aperçu courrier demandé pour courrierId=${b.numero_enregistrement}, index=${i}'); previewCourrier('${b.numero_enregistrement}', ${i})">👁️ Aperçu</button>
+             <a href="javascript:void(0)" onclick="console.log('📎 Aperçu courrier demandé pour courrierId=${b._id}, index=${i}'); previewCourrier('${b._id}', ${i})" class="text-decoration-none">📎 ${url.split('/').pop()}</a>
+             <button class="btn-preview" onclick="console.log('👁️ Aperçu courrier demandé pour courrierId=${b._id}, index=${i}'); previewCourrier('${b._id}', ${i})">👁️ Aperçu</button>
            </div>`).join('');
           }
         } catch (err) {
