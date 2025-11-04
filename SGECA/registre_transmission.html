@@ -251,12 +251,17 @@
 
 
       // 🔸 Bordereau
+      // 🔸 Bordereau (clé relative extraite)
       const fichierBordereau = b.fichier_bordereau
-        ? `<div>
-         <a href="${b.fichier_bordereau}" target="_blank" class="text-decoration-none">📄 Ouvrir</a>
-         <button class="btn-preview" onclick="console.log('📂 Aperçu bordereau demandé pour key:', '${b.fichier_bordereau}'); previewBordereauSecure('${b.fichier_bordereau}')">👁️ Aperçu</button>
-       </div>`
+        ? (() => {
+          const key = b.fichier_bordereau.split('/CourrierBucket2/')[1];
+          return `<div>
+            <a href="${b.fichier_bordereau}" target="_blank" class="text-decoration-none">Ouvrir</a>
+            <button class="btn-preview" onclick="previewBordereauSecure('${key}')">Aperçu</button>
+          </div>`;
+        })()
         : "—";
+
 
       return `
     <tr>
