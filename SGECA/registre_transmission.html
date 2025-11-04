@@ -194,21 +194,21 @@
       }
     }
 
-    async function previewCourrier(courrierId, index = 0) {
-      console.log(`📎 Aperçu courrier demandé pour courrierId=${courrierId}, index=${index}`);
-      try {
-        const res = await fetch(`${API_BASE}/api/courriers/secure-preview/${courrierId}?index=${index}`, {
-          headers: { Authorization: "Bearer " + token }
-        });
-        console.log("✅ Réponse API courrier :", res);
-        if (!res.ok) throw new Error("Erreur lors du chargement du courrier");
-        const blob = await res.blob();
-        afficherApercuDepuisBlob(blob);
-      } catch (err) {
-        console.error("❌ Erreur aperçu courrier :", err);
-        alert(err.message);
+    function previewCourrier(url) {
+      console.log("👁️ Aperçu fichier :", url);
+      if (!url) return alert("Aucun fichier à afficher");
+
+      const iframe = document.getElementById("previewFrame");
+      if (url.endsWith(".pdf")) {
+        iframe.src = url;
+      } else if (url.match(/\.(docx|pptx|xlsx)$/)) {
+        iframe.src = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(url)}`;
+      } else {
+        iframe.src = url;
       }
+      document.getElementById("overlay").style.display = "flex";
     }
+
 
     function renderRow(b) {
       console.log("🔹 Ligne reçue :", b); // Vérifier tout l'objet
@@ -224,11 +224,12 @@
           else if (typeof fichiers === 'string') fichiers = [fichiers];
 
           if (Array.isArray(fichiers) && fichiers.length > 0) {
-            fichiersHTML = fichiers.map((url, i) =>
+            fichiersHTML = fichiers.map((url) =>
               `<div>
-             <a href="javascript:void(0)" onclick="console.log('📎 Aperçu courrier demandé pour courrierId=${b._id}, index=${i}'); previewCourrier('${b._id}', ${i})" class="text-decoration-none">📎 ${url.split('/').pop()}</a>
-             <button class="btn-preview" onclick="console.log('👁️ Aperçu courrier demandé pour courrierId=${b._id}, index=${i}'); previewCourrier('${b._id}', ${i})">👁️ Aperçu</button>
-           </div>`).join('');
+                <span>📎 ${url.split('/').pop()}</span>
+                  <button class="btn-preview" onclick="previewCourrier('${url}')">👁️ Aperçu</button>
+              </div>`
+            ).join('');
           }
         } catch (err) {
           console.warn('Erreur décodage fichier_scan', err, b.fichier_scan);
