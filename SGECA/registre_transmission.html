@@ -102,7 +102,7 @@
           // Générer les boutons
           if (Array.isArray(fichiers) && fichiers.length > 0) {
             fichiersHTML = fichiers.map((url, i) =>
-              `<a href="${url}" target="_blank" class="btn btn-sm btn-outline-primary me-1">📎 Voir ${i + 1}</a>`
+              `<a href="${url}" target="_blank" class="text-decoration-none"">📎 Voir ${i + 1}</a>`
             ).join('');
           }
         } catch (err) {
