@@ -226,8 +226,8 @@
           if (Array.isArray(fichiers) && fichiers.length > 0) {
             fichiersHTML = fichiers.map((url) =>
               `<div>
-                <span>📎 ${url.split('/').pop()}</span>
-                  <button class="btn-preview" onclick="previewCourrier('${url}')">👁️ Aperçu</button>
+                <a href="${url}" target="_blank" class="text-decoration-none">📎 ${url.split('/').pop()}</a>
+                <button class="btn-preview" onclick="previewCourrier('${url}')">👁️ Aperçu</button>
               </div>`
             ).join('');
           }
