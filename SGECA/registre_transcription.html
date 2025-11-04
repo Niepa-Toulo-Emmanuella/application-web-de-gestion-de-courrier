@@ -41,26 +41,26 @@
             vertical-align: middle !important;
             overflow: hidden;
             text-overflow: ellipsis;
-            word-break: break-word;
-            /* Evite chevauchement du texte */
-        }
-
-        /* Ligne avec hauteur minimale pour éviter chevauchement */
-        #table-bordereaux tbody tr {
-            min-height: 50px;
         }
 
         /* Colonne pièce jointe */
         #table-bordereaux td:nth-child(8) {
-            min-width: 220px;
+            min-width: 200px;
+            /* largeur minimum */
             text-align: center;
+            /* centre horizontalement */
             vertical-align: middle;
+            /* centre verticalement */
             white-space: normal;
+            /* permet le retour à la ligne si nécessaire */
             padding: 0.5rem 0;
+            /* espace vertical pour éviter chevauchement */
             display: flex;
             justify-content: center;
             flex-wrap: wrap;
+            /* passer à la ligne si trop de boutons */
             gap: 5px;
+            /* espace entre boutons */
         }
 
         /* Boutons dans la colonne pièce jointe */
@@ -71,11 +71,13 @@
             font-size: 0.85rem;
         }
 
-        /* Colonne statut */
+        /* Forcer la colonne statut à rester visible */
         #table-bordereaux td:last-child,
         #table-bordereaux th:last-child {
             min-width: 120px;
+            /* largeur minimum suffisante */
             white-space: nowrap;
+            /* pas de retour à la ligne */
             text-align: center;
         }
 
@@ -139,7 +141,6 @@
             animation: slide-in-right 0.5s ease forwards;
         }
     </style>
-
 
 </head>
 
