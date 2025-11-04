@@ -205,55 +205,59 @@
     }
 
     function renderRow(b) {
-      console.log("🔹 Ligne reçue :", b);
+      console.log("🔹 Ligne reçue :", b); // Vérifier tout l'objet
+
       const date = b.date_depart ? new Date(b.date_depart).toLocaleDateString("fr-FR") : "—";
 
-      // Courriers scannés
+      // 🔸 Pièces jointes (courriers)
       let fichiersHTML = '—';
       if (b.fichier_scan) {
         try {
           let fichiers = b.fichier_scan;
           if (typeof fichiers === 'string' && fichiers.trim().startsWith('[')) fichiers = JSON.parse(fichiers);
           else if (typeof fichiers === 'string') fichiers = [fichiers];
+
           if (Array.isArray(fichiers) && fichiers.length > 0) {
             fichiersHTML = fichiers.map((url, i) =>
               `<div>
-                 <a href="javascript:void(0)" onclick="previewCourrier('${b.courrier_id || b.id}', ${i})" class="text-decoration-none">📎 ${url.split('/').pop()}</a>
-                 <button class="btn-preview" onclick="previewCourrier('${b.courrier_id || b.id}', ${i})">👁️ Aperçu</button>
-               </div>`
+             <a href="javascript:void(0)" onclick="console.log('📎 Aperçu courrier demandé pour courrierId=${b.numero_enregistrement}, index=${i}'); previewCourrier('${b.numero_enregistrement}', ${i})" class="text-decoration-none">📎 ${url.split('/').pop()}</a>
+             <button class="btn-preview" onclick="console.log('👁️ Aperçu courrier demandé pour courrierId=${b.numero_enregistrement}, index=${i}'); previewCourrier('${b.numero_enregistrement}', ${i})">👁️ Aperçu</button>
+           </div>`
             ).join('');
           }
         } catch (err) {
-          console.warn('⚠️ Erreur décodage fichier_scan', err, b.fichier_scan);
+          console.warn('Erreur décodage fichier_scan', err, b.fichier_scan);
         }
       }
 
+      // 🔸 Imputation
       const fichierImputation = b.fichier_imputation
         ? `<div>
-             <a href="${b.fichier_imputation}" target="_blank" class="text-decoration-none">📄 Ouvrir</a>
-             <button class="btn-preview" onclick="previewImputationSecure('${b.fichier_imputation}')">👁️ Aperçu</button>
-           </div>`
+         <a href="${b.fichier_imputation}" target="_blank" class="text-decoration-none">📄 Ouvrir</a>
+         <button class="btn-preview" onclick="console.log('📂 Aperçu imputation demandé pour key:', '${b.fichier_imputation}'); previewImputationSecure('${b.fichier_imputation}')">👁️ Aperçu</button>
+       </div>`
         : "—";
 
+      // 🔸 Bordereau
       const fichierBordereau = b.fichier_bordereau
         ? `<div>
-             <a href="${b.fichier_bordereau}" target="_blank" class="text-decoration-none">📄 Ouvrir</a>
-             <button class="btn-preview" onclick="previewBordereauSecure('${b.fichier_bordereau}')">👁️ Aperçu</button>
-           </div>`
+         <a href="${b.fichier_bordereau}" target="_blank" class="text-decoration-none">📄 Ouvrir</a>
+         <button class="btn-preview" onclick="console.log('📂 Aperçu bordereau demandé pour key:', '${b.fichier_bordereau}'); previewBordereauSecure('${b.fichier_bordereau}')">👁️ Aperçu</button>
+       </div>`
         : "—";
 
       return `
-        <tr>
-          <td>${date}</td>
-          <td>${b.numero_reference ?? "—"}</td>
-          <td>${b.numero_enregistrement ?? "—"}</td>
-          <td>${b.objet ?? "—"}</td>
-          <td>${b.destinataire ?? "—"}</td>
-          <td>${b.observations ?? "—"}</td>
-          <td>${fichiersHTML}</td>
-          <td>${fichierImputation}</td>
-          <td>${fichierBordereau}</td>
-        </tr>`;
+    <tr>
+      <td>${date}</td>
+      <td>${b.numero_reference ?? "—"}</td>
+      <td>${b.numero_enregistrement ?? "—"}</td>
+      <td>${b.objet ?? "—"}</td>
+      <td>${Array.isArray(b.destinataire) ? b.destinataire.join(', ') : (b.destinataire ?? "—")}</td>
+      <td>${b.observations ?? "—"}</td>
+      <td>${fichiersHTML}</td>
+      <td>${fichierImputation}</td>
+      <td>${fichierBordereau}</td>
+    </tr>`;
     }
 
     function afficherTableau(data) {
