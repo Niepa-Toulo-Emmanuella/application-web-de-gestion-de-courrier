@@ -224,6 +224,7 @@
         const searchInp = $('#searchInput');
 
         /** Rendu d'une ligne */
+        /** Rendu d'une ligne */
         function renderRow(b) {
             const dateCourrier = b.date_courrier ? new Date(b.date_courrier).toLocaleDateString('fr-FR') : '—';
             const dateArrivee = b.date_arrivee ? new Date(b.date_arrivee).toLocaleDateString('fr-FR') : '—';
@@ -245,12 +246,17 @@
                         fichiers = [fichiers];
                     }
 
-                    // Générer les boutons
+                    // Générer les boutons "Voir" + "Aperçu"
                     if (Array.isArray(fichiers) && fichiers.length > 0) {
-                        fichiersHTML = fichiers.map((url, i) =>
-                            `<a href="${url}" target="_blank" class="btn btn-sm btn-outline-primary me-1">📎 Voir ${i + 1}</a>`
-
-                        ).join('');
+                        fichiersHTML = fichiers.map((url, i) => {
+                            // On récupère la clé relative (pour l’aperçu sécurisé si besoin)
+                            const key = url.split('/CourrierBucket2/')[1] || '';
+                            return `
+                        <div class="d-flex align-items-center justify-content-center flex-wrap gap-2">
+                            <a href="${url}" target="_blank" class="btn btn-sm btn-outline-primary">📎 Voir ${i + 1}</a>
+                            <button class="btn btn-sm btn-outline-secondary" onclick="previewFile('${key}')">👁️ Aperçu</button>
+                        </div>`;
+                        }).join('');
                     }
                 } catch (err) {
                     console.warn('Erreur décodage fichier_scan', err, b.fichier_scan);
@@ -270,6 +276,7 @@
                 <td><span class="badge ${statutClass}">${b.statut ?? '—'}</span></td>
             </tr>`;
         }
+
 
         /** Affiche le tableau avec animation de glissement */
         function afficherTableau(bordereaux) {
@@ -325,6 +332,14 @@
             const data = window._bordereaux ?? [];
             afficherTableau(filtrer(data, terme));
         });
+
+        /** Aperçu sécurisé d’un fichier */
+        function previewFile(key) {
+            if (!key) return alert("Aucun fichier à prévisualiser.");
+            const previewUrl = `https://application-web-de-gestion-de-courrier.onrender.com/api/bordereaux/preview/${key}`;
+            window.open(previewUrl, '_blank', 'noopener');
+        }
+
 
         // Initialisation
         document.addEventListener('DOMContentLoaded', chargerBordereaux);
