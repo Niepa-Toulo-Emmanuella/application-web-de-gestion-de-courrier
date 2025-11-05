@@ -137,6 +137,7 @@
         const imputations = data.data || data; // selon ton backend
         const select = document.getElementById("imputationSelect");
         imputations.forEach(i => {
+          console.log(i); // <-- ajoute ça pour voir toutes les propriétés
           const option = document.createElement("option");
           const dateText = i.date_depart ? new Date(i.date_depart).toLocaleDateString() : 'Date non définie';
           option.value = i.id;
