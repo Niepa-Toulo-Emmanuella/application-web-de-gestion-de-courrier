@@ -281,8 +281,13 @@ exports.createTransmission = async (req, res) => {
 exports.getAll = async (req, res) => {
   try {
     const result = await db.query(
-      'SELECT * FROM imputations WHERE statut = $1 ORDER BY id DESC',
-      ['en_attente']
+      `
+      SELECT i.*, c.objet AS courrier_objet
+      FROM imputations i
+      LEFT JOIN courriers c ON c.id = i.courrier_id
+      WHERE i.statut = $1
+      ORDER BY i.id DESC
+    `, ['en_attente']
     );
     res.json(result.rows);
   } catch (err) {
