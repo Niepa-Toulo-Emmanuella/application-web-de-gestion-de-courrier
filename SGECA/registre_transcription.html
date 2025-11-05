@@ -12,12 +12,20 @@
         /* ---------- Styles spécifiques registre ---------- */
         body {
             background-color: #f8f9fa;
+            font-family: "Segoe UI", Roboto, sans-serif;
+        }
+
+        h2 {
+            color: #182848;
+            font-weight: 600;
+            letter-spacing: 0.5px;
         }
 
         #searchInput {
             max-width: 400px;
             border-radius: 50px;
             border: 1px solid #ced4da;
+            padding: 8px 18px;
         }
 
         #table-bordereaux {
@@ -32,115 +40,98 @@
         }
 
         #table-bordereaux tbody tr:hover {
-            background-color: #e9f0ff;
+            background-color: #eef3ff;
+            transition: background-color 0.2s ease-in-out;
         }
 
-        /* Colonne pièce jointe plus large */
-        /* #table-bordereaux td:nth-child(8) {
-            white-space: nowrap;
-            min-width: 200px;
-            text-align: center;
-        } */
-
-        #table-bordereaux td a.btn {
-            margin: 3px 5px;
-            padding: 6px 12px;
-            border-radius: 20px;
-        }
-
+        /* Largeur et espacement général */
         #table-bordereaux td,
         #table-bordereaux th {
             vertical-align: middle !important;
-        }
-
-        /* Forcer la colonne statut à rester visible */
-        #table-bordereaux td:last-child,
-        #table-bordereaux th:last-child {
-            min-width: 120px;
-            /* largeur minimum suffisante */
-            white-space: nowrap;
-            /* pas de retour à la ligne */
+            padding: 14px 12px;
             text-align: center;
         }
 
-        /* Ajuster les autres colonnes pour ne pas trop se compresser */
-        #table-bordereaux td,
-        #table-bordereaux th {
-            overflow: hidden;
-            text-overflow: ellipsis;
-            /* "..." si texte trop long */
-        }
-
-        /* Forcer les boutons dans la colonne pièce jointe à s'aligner horizontalement */
-        /* Colonne pièce jointe plus large et boutons alignés horizontalement */
-
-        /* 🔧 Correction du décalage de hauteur de ligne */
+        /* Meilleure hauteur de ligne */
         #table-bordereaux tbody tr {
-            min-height: 60px;
-            /* Hauteur minimale cohérente */
+            min-height: 70px;
         }
 
-        #table-bordereaux td {
-            vertical-align: middle !important;
-            padding-top: 12px;
-            padding-bottom: 12px;
-        }
-
-        /* Aligner correctement la colonne Pièce jointe */
+        /* Colonne pièce jointe bien espacée */
         #table-bordereaux td:nth-child(8) {
             display: flex;
             justify-content: center;
             align-items: center;
-            gap: 6px;
             flex-wrap: wrap;
-            min-height: 50px;
+            gap: 10px;
+            min-width: 220px;
+            padding: 10px;
         }
 
-        /* Harmoniser les boutons "Voir" */
-        #table-bordereaux td a.btn {
+        /* Boutons uniformes */
+        #table-bordereaux td a.btn,
+        #table-bordereaux td button.btn {
             border-radius: 25px;
-            padding: 5px 14px;
+            padding: 6px 14px;
             font-size: 0.85rem;
+            transition: all 0.2s ease-in-out;
         }
 
-        /* Réparer les bandes "striped" pour suivre la hauteur réelle */
-        .table-striped tbody tr:nth-of-type(odd) {
-            background-color: rgba(0, 0, 0, 0.03) !important;
+        #table-bordereaux td a.btn:hover,
+        #table-bordereaux td button.btn:hover {
+            transform: scale(1.05);
         }
 
-
-
-
-        .small-text {
-            font-size: 0.875rem;
+        /* Bouton Aperçu un peu plus clair */
+        .btn-outline-secondary {
+            border-color: #6c757d;
+            color: #495057;
         }
 
+        .btn-outline-secondary:hover {
+            background-color: #6c757d;
+            color: #fff;
+        }
+
+        /* Bouton Voir plus visible */
+        .btn-outline-primary {
+            border-color: #0d6efd;
+            color: #0d6efd;
+        }
+
+        .btn-outline-primary:hover {
+            background-color: #0d6efd;
+            color: #fff;
+        }
+
+        /* Badges de statut */
         .badge-bg-envoye {
             background-color: #198754;
             color: #fff;
+            padding: 6px 10px;
+            border-radius: 12px;
         }
 
         .badge-bg-attente {
             background-color: #6c757d;
             color: #fff;
-        }
-
-        .btn-outline-primary {
-            font-size: 0.85rem;
-        }
-
-        h2 {
-            color: #182848;
-            font-weight: 600;
-        }
-
-        .table-responsive {
+            padding: 6px 10px;
             border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
         }
 
-        /* ---------- Animations de glissement ---------- */
+        /* Ajustement pour la dernière colonne (statut) */
+        #table-bordereaux td:last-child,
+        #table-bordereaux th:last-child {
+            min-width: 130px;
+            white-space: nowrap;
+        }
+
+        /* Alternance des lignes */
+        .table-striped tbody tr:nth-of-type(odd) {
+            background-color: rgba(0, 0, 0, 0.02) !important;
+        }
+
+        /* Animations d’apparition */
         @keyframes slide-in-left {
             0% {
                 transform: translateX(-50px);
@@ -166,13 +157,23 @@
         }
 
         tr.slide-left {
-            animation: slide-in-left 0.5s ease forwards;
+            animation: slide-in-left 0.4s ease forwards;
         }
 
         tr.slide-right {
-            animation: slide-in-right 0.5s ease forwards;
+            animation: slide-in-right 0.4s ease forwards;
+        }
+
+        /* Conteneur général */
+        .table-responsive {
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            background-color: #fff;
+            padding: 10px;
         }
     </style>
+
 </head>
 
 <body class="bg-light">
