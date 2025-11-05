@@ -44,7 +44,6 @@
             transition: background-color 0.2s ease-in-out;
         }
 
-        /* Largeur et espacement général */
         #table-bordereaux td,
         #table-bordereaux th {
             vertical-align: middle !important;
@@ -52,14 +51,10 @@
             text-align: center;
         }
 
-        /* Meilleure hauteur de ligne */
         #table-bordereaux tbody tr {
             min-height: 70px;
         }
 
-        /* Colonne pièce jointe bien espacée */
-        /* Colonne pièce jointe bien espacée */
-        /* Colonne pièce jointe bien espacée */
         #table-bordereaux td:nth-child(8) {
             min-width: 220px;
             padding: 10px;
@@ -73,15 +68,12 @@
             gap: 14px;
         }
 
-        /* Boutons uniformes */
         #table-bordereaux td a.btn,
         #table-bordereaux td button.btn {
             border-radius: 25px;
             padding: 6px 14px;
             font-size: 0.85rem;
             transition: all 0.2s ease-in-out;
-            /* margin: 0 5px;
-            ← CETTE LIGNE */
         }
 
         #table-bordereaux td a.btn:hover,
@@ -89,7 +81,6 @@
             transform: scale(1.05);
         }
 
-        /* Bouton Aperçu un peu plus clair */
         .btn-outline-secondary {
             border-color: #6c757d;
             color: #495057;
@@ -100,7 +91,6 @@
             color: #fff;
         }
 
-        /* Bouton Voir plus visible */
         .btn-outline-primary {
             border-color: #0d6efd;
             color: #0d6efd;
@@ -111,7 +101,6 @@
             color: #fff;
         }
 
-        /* Badges de statut */
         .badge-bg-envoye {
             background-color: #198754;
             color: #fff;
@@ -126,19 +115,16 @@
             border-radius: 12px;
         }
 
-        /* Ajustement pour la dernière colonne (statut) */
         #table-bordereaux td:last-child,
         #table-bordereaux th:last-child {
             min-width: 130px;
             white-space: nowrap;
         }
 
-        /* Alternance des lignes */
         .table-striped tbody tr:nth-of-type(odd) {
             background-color: rgba(0, 0, 0, 0.02) !important;
         }
 
-        /* Animations d’apparition */
         @keyframes slide-in-left {
             0% {
                 transform: translateX(-50px);
@@ -171,7 +157,6 @@
             animation: slide-in-right 0.4s ease forwards;
         }
 
-        /* Conteneur général */
         .table-responsive {
             border-radius: 12px;
             overflow: hidden;
@@ -179,8 +164,48 @@
             background-color: #fff;
             padding: 10px;
         }
-    </style>
 
+        /* ---------- Overlay d’aperçu ---------- */
+        #overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+
+        #overlay-content {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 900px;
+            height: 90%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #closeOverlay {
+            align-self: flex-end;
+            background: #0d6efd;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        #previewFrame {
+            flex-grow: 1;
+            width: 100%;
+            border: none;
+        }
+    </style>
 </head>
 
 <body class="bg-light">
@@ -188,7 +213,6 @@
     <div class="container py-5">
         <h2 class="text-center mb-4">Registre de transcription</h2>
 
-        <!-- Barre de recherche -->
         <div class="d-flex justify-content-between align-items-center mb-3">
             <input id="searchInput" type="search" class="form-control me-3" placeholder="Rechercher…" />
             <div id="loading" class="ms-3 d-none">
@@ -196,10 +220,8 @@
             </div>
         </div>
 
-        <!-- Alerte d'erreur -->
         <div id="alert" class="alert alert-danger d-none" role="alert"></div>
 
-        <!-- Tableau -->
         <div class="table-responsive shadow-sm rounded" style="overflow-x:auto;">
             <table class="table table-striped table-hover align-middle mb-0" id="table-bordereaux">
                 <thead class="text-center">
@@ -220,45 +242,65 @@
         </div>
     </div>
 
+    <!-- 🔍 Aperçu Overlay -->
+    <div id="overlay">
+        <div id="overlay-content">
+            <button id="closeOverlay">Fermer ✖</button>
+            <iframe id="previewFrame"></iframe>
+        </div>
+    </div>
+
     <script>
         const API_BASE = 'https://application-web-de-gestion-de-courrier.onrender.com';
-
-        /** Sélecteurs utilitaires */
         const $ = (sel, ctx = document) => ctx.querySelector(sel);
-
         const tbody = $('#table-bordereaux tbody');
         const alertBox = $('#alert');
         const loadingBox = $('#loading');
         const searchInp = $('#searchInput');
+        const overlay = $('#overlay');
+        const previewFrame = $('#previewFrame');
+        const closeOverlay = $('#closeOverlay');
 
-        /** Rendu d'une ligne */
+        closeOverlay.onclick = () => {
+            overlay.style.display = "none";
+            previewFrame.src = "";
+        };
+
+        function previewFile(url) {
+            if (!url) return alert("Aucun fichier à prévisualiser.");
+            console.log("👁️ Aperçu fichier :", url);
+            if (url.endsWith(".pdf")) {
+                previewFrame.src = url;
+            } else if (url.match(/\.(docx|pptx|xlsx)$/)) {
+                previewFrame.src = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(url)}`;
+            } else {
+                previewFrame.src = url;
+            }
+            overlay.style.display = "flex";
+        }
+
         function renderRow(b) {
             const dateCourrier = b.date_courrier ? new Date(b.date_courrier).toLocaleDateString('fr-FR') : '—';
             const dateArrivee = b.date_arrivee ? new Date(b.date_arrivee).toLocaleDateString('fr-FR') : '—';
             const heure = b.heure ?? '—';
             const statutClass = b.statut === 'envoye' ? 'badge-bg-envoye' : 'badge-bg-attente';
 
-            // ✅ Gestion robuste de fichier_scan
             let fichiersHTML = '—';
             if (b.fichier_scan) {
                 try {
                     let fichiers = b.fichier_scan;
-
                     if (typeof fichiers === 'string' && fichiers.trim().startsWith('[')) {
                         fichiers = JSON.parse(fichiers);
                     } else if (typeof fichiers === 'string') {
                         fichiers = [fichiers];
                     }
-
                     if (Array.isArray(fichiers) && fichiers.length > 0) {
-                        fichiersHTML = fichiers.map((url, i) => {
-                            const key = url.split('/CourrierBucket2/')[1] || '';
-                            return `
-                    <div class="d-flex align-items-center justify-content-center flex-wrap gap-2">
-                        <a href="${url}" target="_blank" class="btn btn-sm btn-outline-primary">📎 Voir ${i + 1}</a>
-                        <button class="btn btn-sm btn-outline-secondary" onclick="previewFile('${url}')">👁️ Aperçu</button>
-                    </div>`;
-                        }).join('');
+                        fichiersHTML = fichiers.map((url, i) => `
+                            <div class="d-flex align-items-center justify-content-center flex-wrap gap-2">
+                                <a href="${url}" target="_blank" class="btn btn-sm btn-outline-primary">📎 Voir ${i + 1}</a>
+                                <button class="btn btn-sm btn-outline-secondary" onclick="previewFile('${url}')">👁️ Aperçu</button>
+                            </div>
+                        `).join('');
                     }
                 } catch (err) {
                     console.warn('Erreur décodage fichier_scan', err, b.fichier_scan);
@@ -266,33 +308,31 @@
             }
 
             return `
-    <tr>
-        <td>${b.numero_reference ?? '—'}</td>
-        <td>${b.objet ?? '—'}</td>
-        <td>${b.expediteur ?? '—'}</td>
-        <td>${dateCourrier}</td>
-        <td>${dateArrivee}</td>
-        <td>${b.numero_enregistrement ?? '—'}</td>
-        <td>${heure}</td>
-        <td>${fichiersHTML}</td>
-        <td><span class="badge ${statutClass}">${b.statut ?? '—'}</span></td>
-    </tr>`;
+            <tr>
+                <td>${b.numero_reference ?? '—'}</td>
+                <td>${b.objet ?? '—'}</td>
+                <td>${b.expediteur ?? '—'}</td>
+                <td>${dateCourrier}</td>
+                <td>${dateArrivee}</td>
+                <td>${b.numero_enregistrement ?? '—'}</td>
+                <td>${heure}</td>
+                <td>${fichiersHTML}</td>
+                <td><span class="badge ${statutClass}">${b.statut ?? '—'}</span></td>
+            </tr>`;
         }
 
-        /** Animation du tableau */
         function afficherTableau(bordereaux) {
             if (!bordereaux.length) {
                 tbody.innerHTML = '<tr><td colspan="9" class="text-center fst-italic">Aucun bordereau trouvé.</td></tr>';
             } else {
-                tbody.innerHTML = bordereaux.map((b, i) => {
+                tbody.innerHTML = bordereaux.map((b, index) => {
                     const rowHTML = renderRow(b);
-                    const directionClass = i % 2 === 0 ? 'slide-left' : 'slide-right';
+                    const directionClass = index % 2 === 0 ? 'slide-left' : 'slide-right';
                     return rowHTML.replace('<tr>', `<tr class="${directionClass}">`);
                 }).join('');
             }
         }
 
-        /** Filtrage */
         function filtrer(bordereaux, terme) {
             const t = terme.toLowerCase();
             return bordereaux.filter(b =>
@@ -302,7 +342,6 @@
             );
         }
 
-        /** Chargement initial */
         async function chargerBordereaux() {
             alertBox.classList.add('d-none');
             loadingBox.classList.remove('d-none');
@@ -313,7 +352,6 @@
                 if (!res.ok) throw new Error(`HTTP ${res.status}`);
                 const { success, data, message } = await res.json();
                 if (!success) throw new Error(message ?? 'Réponse API incorrecte');
-
                 window._bordereaux = data;
                 afficherTableau(data);
             } catch (err) {
@@ -331,35 +369,8 @@
             afficherTableau(filtrer(data, terme));
         });
 
-        /** ✅ Aperçu intégré dans un modal */
-        function previewFile(url) {
-            const modal = document.getElementById('previewModal');
-            const iframe = document.getElementById('previewIframe');
-            iframe.src = url; // le lien du fichier
-            const bsModal = new bootstrap.Modal(modal);
-            bsModal.show();
-        }
-
-        // Initialisation
         document.addEventListener('DOMContentLoaded', chargerBordereaux);
     </script>
-
-    <!-- ✅ Modal d’aperçu -->
-    <div class="modal fade" id="previewModal" tabindex="-1" aria-labelledby="previewModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-xl modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header bg-primary text-white">
-                    <h5 class="modal-title" id="previewModalLabel">Aperçu du fichier</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body p-0" style="height: 80vh;">
-                    <iframe id="previewIframe" src="" frameborder="0"
-                        style="width:100%; height:100%; border:none;"></iframe>
-                </div>
-            </div>
-        </div>
-    </div>
-
 </body>
 
 </html>
