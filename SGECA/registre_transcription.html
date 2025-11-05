@@ -232,7 +232,6 @@
         const searchInp = $('#searchInput');
 
         /** Rendu d'une ligne */
-        /** Rendu d'une ligne */
         function renderRow(b) {
             const dateCourrier = b.date_courrier ? new Date(b.date_courrier).toLocaleDateString('fr-FR') : '—';
             const dateArrivee = b.date_arrivee ? new Date(b.date_arrivee).toLocaleDateString('fr-FR') : '—';
@@ -245,25 +244,20 @@
                 try {
                     let fichiers = b.fichier_scan;
 
-                    // Si c’est une chaîne JSON valide → on la parse
                     if (typeof fichiers === 'string' && fichiers.trim().startsWith('[')) {
                         fichiers = JSON.parse(fichiers);
-                    }
-                    // Si c’est une chaîne simple → on la met dans un tableau
-                    else if (typeof fichiers === 'string') {
+                    } else if (typeof fichiers === 'string') {
                         fichiers = [fichiers];
                     }
 
-                    // Générer les boutons "Voir" + "Aperçu"
                     if (Array.isArray(fichiers) && fichiers.length > 0) {
                         fichiersHTML = fichiers.map((url, i) => {
-                            // On récupère la clé relative (pour l’aperçu sécurisé si besoin)
                             const key = url.split('/CourrierBucket2/')[1] || '';
                             return `
-                        <div class="d-flex align-items-center justify-content-center flex-wrap gap-2">
-                            <a href="${url}" target="_blank" class="btn btn-sm btn-outline-primary">📎 Voir ${i + 1}</a>
-                            <button class="btn btn-sm btn-outline-secondary" onclick="previewFile('${key}')">👁️ Aperçu</button>
-                        </div>`;
+                    <div class="d-flex align-items-center justify-content-center flex-wrap gap-2">
+                        <a href="${url}" target="_blank" class="btn btn-sm btn-outline-primary">📎 Voir ${i + 1}</a>
+                        <button class="btn btn-sm btn-outline-secondary" onclick="previewFile('${url}')">👁️ Aperçu</button>
+                    </div>`;
                         }).join('');
                     }
                 } catch (err) {
@@ -272,34 +266,33 @@
             }
 
             return `
-            <tr>
-                <td>${b.numero_reference ?? '—'}</td>
-                <td>${b.objet ?? '—'}</td>
-                <td>${b.expediteur ?? '—'}</td>
-                <td class="small-text">${dateCourrier}</td>
-                <td class="small-text">${dateArrivee}</td>
-                <td>${b.numero_enregistrement ?? '—'}</td>
-                <td>${heure}</td>
-                <td>${fichiersHTML}</td>
-                <td><span class="badge ${statutClass}">${b.statut ?? '—'}</span></td>
-            </tr>`;
+    <tr>
+        <td>${b.numero_reference ?? '—'}</td>
+        <td>${b.objet ?? '—'}</td>
+        <td>${b.expediteur ?? '—'}</td>
+        <td>${dateCourrier}</td>
+        <td>${dateArrivee}</td>
+        <td>${b.numero_enregistrement ?? '—'}</td>
+        <td>${heure}</td>
+        <td>${fichiersHTML}</td>
+        <td><span class="badge ${statutClass}">${b.statut ?? '—'}</span></td>
+    </tr>`;
         }
 
-
-        /** Affiche le tableau avec animation de glissement */
+        /** Animation du tableau */
         function afficherTableau(bordereaux) {
             if (!bordereaux.length) {
                 tbody.innerHTML = '<tr><td colspan="9" class="text-center fst-italic">Aucun bordereau trouvé.</td></tr>';
             } else {
-                tbody.innerHTML = bordereaux.map((b, index) => {
+                tbody.innerHTML = bordereaux.map((b, i) => {
                     const rowHTML = renderRow(b);
-                    const directionClass = index % 2 === 0 ? 'slide-left' : 'slide-right';
+                    const directionClass = i % 2 === 0 ? 'slide-left' : 'slide-right';
                     return rowHTML.replace('<tr>', `<tr class="${directionClass}">`);
                 }).join('');
             }
         }
 
-        /** Filtre local instantané */
+        /** Filtrage */
         function filtrer(bordereaux, terme) {
             const t = terme.toLowerCase();
             return bordereaux.filter(b =>
@@ -321,9 +314,7 @@
                 const { success, data, message } = await res.json();
                 if (!success) throw new Error(message ?? 'Réponse API incorrecte');
 
-                // Stockage local pour le filtre
                 window._bordereaux = data;
-
                 afficherTableau(data);
             } catch (err) {
                 console.error(err);
@@ -334,24 +325,41 @@
             }
         }
 
-        // Écouteur filtre
         searchInp.addEventListener('input', e => {
             const terme = e.target.value.trim();
             const data = window._bordereaux ?? [];
             afficherTableau(filtrer(data, terme));
         });
 
-        /** Aperçu sécurisé d’un fichier */
-        function previewFile(key) {
-            if (!key) return alert("Aucun fichier à prévisualiser.");
-            const previewUrl = `https://application-web-de-gestion-de-courrier.onrender.com/api/bordereaux/preview/${key}`;
-            window.open(previewUrl, '_blank', 'noopener');
+        /** ✅ Aperçu intégré dans un modal */
+        function previewFile(url) {
+            const modal = document.getElementById('previewModal');
+            const iframe = document.getElementById('previewIframe');
+            iframe.src = url; // le lien du fichier
+            const bsModal = new bootstrap.Modal(modal);
+            bsModal.show();
         }
-
 
         // Initialisation
         document.addEventListener('DOMContentLoaded', chargerBordereaux);
     </script>
+
+    <!-- ✅ Modal d’aperçu -->
+    <div class="modal fade" id="previewModal" tabindex="-1" aria-labelledby="previewModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="previewModalLabel">Aperçu du fichier</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-0" style="height: 80vh;">
+                    <iframe id="previewIframe" src="" frameborder="0"
+                        style="width:100%; height:100%; border:none;"></iframe>
+                </div>
+            </div>
+        </div>
+    </div>
+
 </body>
 
 </html>
