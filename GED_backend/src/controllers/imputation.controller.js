@@ -229,6 +229,12 @@ exports.create = async (req, res) => {
         fichier_imputation
       ]
     );
+    // ✅ Marquer l’envoi comme imputé
+    await db.query(
+      `UPDATE envois SET impute = true WHERE bordereau_id = $1`,
+      [bordereau_id]
+    );
+
 
     res.status(201).json({ success: true, data: result.rows[0], message: "Imputation enregistrée avec PDF ✅" });
   } catch (err) {

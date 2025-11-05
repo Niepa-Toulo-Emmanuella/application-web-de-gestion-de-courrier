@@ -28,6 +28,7 @@ exports.getReceptions = async (req, res) => {
       JOIN courriers c ON e.courrier_id = c.id
       JOIN users u ON e.expediteur_id = u.id
       WHERE e.destinataire_id = $1
+      AND (e.impute = false OR e.impute IS NULL)
       ORDER BY e.date_envoi DESC`,
       [destinataireId]
     );
