@@ -144,13 +144,19 @@
 
     /* ✅ Ligne urgente */
     tr.urgent {
-      background-color: #be1c2c !important; /* rouge très clair */
-      border-left: 6px solid #be1c2c;
+      background-color: white !important; /* rouge très clair */
+      border-left: 6px solid #c4858c;
     }
 
     tr.urgent:hover {
-      background-color: #be1c2c !important; /* un peu plus foncé au survol */
+      background-color: #c4858c !important; /* un peu plus foncé au survol */
     }
+    /* ✅ Texte rouge vif pour la priorité urgente */
+    .priorite-urgente {
+      color: #d32f2f;
+      font-weight: bold;
+    }
+
 
   </style>
 </head>
@@ -233,7 +239,9 @@
               <td>${n.objet || ''}</td>
               <td>${n.first_name || ''} ${n.last_name || ''}</td>
               <td>${new Date(n.date_envoi).toLocaleString()}</td>
-              <td>${n.priorite || 'Normale'}</td> <!-- ✅ Priorité affichée -->
+              <td class="${isUrgente ? 'priorite-urgente' : ''}">
+                ${n.priorite || 'Normale'}
+              </td>
               <td>${bordereauLink}</td>
               <td>${courrierLink}</td>
               <td><button class="btn btn-imputer" onclick="imputer('${n.bordereau_id}')">Imputer</button></td>
