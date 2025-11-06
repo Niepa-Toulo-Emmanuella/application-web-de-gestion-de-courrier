@@ -109,6 +109,12 @@
       border-radius: 5px;
       cursor: pointer;
     }
+
+    tr.urgent {
+      background-color: #f8d7da; /* rouge clair */
+      font-weight: bold;
+    }
+
   </style>
 </head>
 
@@ -209,6 +215,9 @@
             courriersMap[courrier.id] = courrier;
             const option = document.createElement("option");
             option.value = courrier.id;
+             // Affichage de la priorité
+            const prioriteAffichee = courrier.priorite === "Urgente" ? "⚠️ Urgent" : "Normale";
+            option.textContent = `${courrier.reference || 'Réf. inconnue'} - ${courrier.objet || 'Sans objet'} (${prioriteAffichee})`;
             option.textContent = `${courrier.reference || 'Réf. inconnue'} - ${courrier.objet || 'Sans objet'}`;
             courrierSelect.appendChild(option);
           });
@@ -236,6 +245,16 @@
 
       const courrier = courriersMap[courrierId];
       if (courrier) {
+        // Avertissement visuel si urgent
+        const notif = document.getElementById("messageNotif");
+        if(courrier.priorite === "Urgente") {
+          notif.textContent = "⚠️ Ce bordereau sera urgent !";
+          notif.classList.add("error"); // ou "urgent"
+        } else {
+          notif.textContent = "";
+          notif.classList.remove("error");
+        }
+
         document.getElementById('expediteur').value = courrier.expediteur || "";
         document.getElementById('reference').value = courrier.reference || "";
         document.getElementById('date_reception').value = (courrier.date_reception || "").split("T")[0];
@@ -369,13 +388,24 @@
         tbody.innerHTML = "";
 
         if (result.success && Array.isArray(result.data)) {
-          const enAttente = result.data.filter(b => b.statut === "en_attente");
+          const enAttente = result.data
+          .filter(b => b.statut === "en_attente")
+          .sort((a, b) => {
+            const prio = { "Urgente": 1, "Normale": 2 };
+            return prio[a.priorite] - prio[b.priorite]; // Urgentes en haut
+          });
+
           enAttente.forEach(b => {
             const tr = document.createElement("tr");
+            
+            // Ajout d'une classe CSS pour les urgents
+            tr.className = b.priorite === "Urgente" ? "urgent" : "";
+            
             tr.innerHTML = `
               <td>${b.numero_reference}</td>
               <td>${b.objet}</td>
               <td>${b.date_arrivee.split("T")[0]}</td>
+              <td>${b.priorite}</td> <!-- Nouvelle colonne Priorité -->
             `;
             tbody.appendChild(tr);
           });

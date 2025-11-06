@@ -15,6 +15,15 @@
     <h1>Créer un courrier</h1>
     <form id="courrier-form" enctype="multipart/form-data">
       <div class="form-group">
+        <label for="priorite">Priorité</label>
+        <select id="priorite" name="priorite">
+          <option value="Normale" selected>Normale</option>
+          <option value="Urgente">Urgente ⚠️</option>
+        </select>
+      </div>
+
+
+      <div class="form-group">
         <label for="reference">Référence</label>
         <input type="text" id="reference" name="reference" required />
       </div>

@@ -25,14 +25,15 @@ class Courrier {
       numero_enregistrement,
       annee_generation,   // ✅ AJOUTE ICI
       heure,
-      fichier_scan
+      fichier_scan,
+      priorite
     } = data;
 
     const { rows } = await pool.query(
       `INSERT INTO courriers
        (reference, objet, expediteur, destinataire,
-        date_reception, date_arrivee, numero_enregistrement, annee_generation, heure, fichier_scan)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
+        date_reception, date_arrivee, numero_enregistrement, annee_generation, heure, fichier_scan, priorite)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
        RETURNING *`,
       [
         reference,
@@ -44,7 +45,8 @@ class Courrier {
         numero_enregistrement,
         annee_generation,
         heure,
-        fichier_scan
+        fichier_scan,
+        priorite
       ]
     );
     return rows[0];
@@ -62,7 +64,8 @@ class Courrier {
       numero_enregistrement,
       annee_generation,   // ✅ AJOUTE ICI
       heure,
-      fichier_scan
+      fichier_scan,
+      priorite
     } = data;
 
     const { rows } = await pool.query(
@@ -76,7 +79,8 @@ class Courrier {
          numero_enregistrement= COALESCE($8, numero_enregistrement),
          annee_generation     = COALESCE($9, annee_generation),
          heure                = COALESCE($10, heure),
-         fichier_scan         = COALESCE($11, fichier_scan)
+         fichier_scan         = COALESCE($11, fichier_scan),
+         priorite             = COALESCE($11, priorite)
        WHERE id = $1
        RETURNING *`,
       [
@@ -90,7 +94,8 @@ class Courrier {
         numero_enregistrement,
         annee_generation,
         heure,
-        fichier_scan
+        fichier_scan,
+        priorite
       ]
     );
     return rows[0];

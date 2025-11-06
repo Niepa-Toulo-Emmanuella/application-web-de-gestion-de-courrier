@@ -72,8 +72,11 @@ const create = async (req, res) => {
     console.log('✅ Données reçues :', req.body);
     console.log('📂 Fichiers reçus :', req.files?.length || 0);
 
-    const { reference, objet, expediteur, destinataire, date_reception, date_arrivee } = req.body;
+    const { reference, objet, expediteur, destinataire, date_reception, date_arrivee, priorite } = req.body;
 
+    // Si priorite n'est pas fournie, mettre par défaut 'Normale'
+    const prioriteFinale = priorite || 'Normale';
+    
     // 🔢 Génération du numéro d’enregistrement
     const { numero, annee } = await genererNumeroEnregistrement();
 
@@ -102,7 +105,8 @@ const create = async (req, res) => {
       destinataire,
       fichiersUploads,
       numero,
-      annee
+      annee,
+      priorite
     });
 
     // 🧾 Insertion du courrier
@@ -117,6 +121,7 @@ const create = async (req, res) => {
       annee_generation: annee,
       heure,
       fichier_scan: JSON.stringify(fichiersUploads),
+      priorite: prioriteFinale,
     });
 
     console.log('📦 Courrier inséré avec numéro :', numero);
@@ -490,7 +495,8 @@ const getCourriersDisponibles = async (req, res) => {
         c.date_arrivee,
         c.numero_enregistrement,
         c.heure,
-        c.fichier_scan
+        c.fichier_scan,
+        c.priorite,
       FROM courriers c
       LEFT JOIN bordereaux b ON b.courrier_id = c.id
       WHERE b.courrier_id IS NULL
