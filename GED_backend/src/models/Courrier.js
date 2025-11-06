@@ -30,8 +30,8 @@ class Courrier {
     const { rows } = await pool.query(
       `INSERT INTO courriers
        (reference, objet, expediteur, destinataire,
-        date_reception, date_arrivee, numero_enregistrement, heure, fichier_scan)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
+        date_reception, date_arrivee, numero_enregistrement, annee_generation, heure, fichier_scan)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
        RETURNING *`,
       [
         reference,
@@ -41,6 +41,7 @@ class Courrier {
         date_reception,
         date_arrivee,
         numero_enregistrement,
+        annee_generation,
         heure,
         fichier_scan
       ]
