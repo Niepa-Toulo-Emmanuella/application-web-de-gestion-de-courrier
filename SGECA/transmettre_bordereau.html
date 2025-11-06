@@ -118,6 +118,7 @@
                     <th>Objet</th>
                     <th>Date du courrier</th>
                     <th>Date d’arrivée</th>
+                    <th>Priorité</th>
                 </tr>
             </thead>
             <tbody></tbody>
@@ -133,6 +134,8 @@
                     <th>Objet</th>
                     <th>Date du courrier</th>
                     <th>Date d’arrivée</th>
+                    <th>Priorité</th>
+
                 </tr>
             </thead>
             <tbody id="bordereauBody"></tbody>
@@ -185,6 +188,9 @@
 
                     const formatDate = (d) => d ? new Date(d).toLocaleDateString("fr-FR") : "-";
 
+                    // 🔥 Tri pour mettre les urgents en haut
+                    enAttente.sort((a, b) => (b.priorite === "Urgente") - (a.priorite === "Urgente"));
+
                     enAttente.forEach(b => {
                         const tr = document.createElement("tr");
                         tr.innerHTML = `
@@ -193,13 +199,21 @@
               <td>${b.objet || "-"}</td>
               <td>${formatDate(b.date_courrier)}</td>
               <td>${formatDate(b.date_arrivee)}</td>
+              <td class="${b.priorite === 'Urgente' ? 'urgent' : ''}">
+                ${b.priorite || 'Normale'}
+              </td>
             `;
                         tbody.appendChild(tr);
 
                         const option = document.createElement("option");
                         option.value = b.id;
                         option.dataset.courrierId = b.courrier_id;
-                        option.textContent = `${b.numero_reference} - ${b.objet}`;
+                        // 🆕 Indication visuelle dans la liste
+                        if (b.priorite === "Urgente") {
+                            option.textContent = `⚠️ [URGENT] ${b.numero_reference || ''} - ${b.objet || ''}`;
+                        } else {
+                            option.textContent = `${b.numero_reference || ''} - ${b.objet || ''}`;
+                        }
                         bordereauSelect.appendChild(option);
                     });
                 }
@@ -310,6 +324,9 @@
             <td>${b.objet || "-"}</td>
             <td>${formatDate(b.date_courrier)}</td>
             <td>${formatDate(b.date_arrivee)}</td>
+            <td class="${b.priorite === 'Urgente' ? 'urgent' : ''}">
+              ${b.priorite || 'Normale'}
+            </td>
           `;
                     tbody.appendChild(tr);
                 });

@@ -8,7 +8,9 @@ class Bordereau {
       `SELECT b.*, c.reference
        FROM bordereaux b
        JOIN courriers c ON c.id = b.courrier_id
-       ORDER BY b.created_at DESC`
+       ORDER BY 
+        CASE WHEN b.priorite = 'Urgente' THEN 0 ELSE 1 END,
+        b.created_at DESC`
     );
     return rows;
   }
@@ -36,6 +38,7 @@ class Bordereau {
       numero_enregistrement,
       heure,
       objet,
+      priorite = 'Normale',
       statut = ''
     } = data;
 
@@ -62,8 +65,8 @@ class Bordereau {
       `INSERT INTO bordereaux (
         courrier_id, expediteur, numero_reference,
         date_courrier, date_arrivee, numero_enregistrement,
-        heure, objet, statut, numero
-      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9'en_attente',$10)
+        heure, objet, priorite, statut, numero
+      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10'en_attente',$11)
       RETURNING *`,
       [
         courrier_id,
@@ -74,6 +77,7 @@ class Bordereau {
         numero_enregistrement,
         heure,
         objet,
+        priorite,
         statut,
         numero
       ]

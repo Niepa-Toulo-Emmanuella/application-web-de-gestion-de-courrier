@@ -14,6 +14,7 @@ exports.getReceptions = async (req, res) => {
     const result = await db.query(
       `SELECT 
         e.id,
+        e.priorite,           -- ✅ On récupère seulement la priorité ajoutée
         b.id AS bordereau_id,
         b.fichier_bordereau,
         c.id AS courrier_id,

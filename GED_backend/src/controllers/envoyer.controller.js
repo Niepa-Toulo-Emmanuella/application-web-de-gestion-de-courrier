@@ -6,12 +6,14 @@ const getEnvoisPourDestinataire = async (req, res) => {
   const userId = req.user.id;
   try {
     const result = await pool.query(
-        `SELECT e.*, c.objet, b.numero_reference, b.numero
+        `SELECT e.*, c.objet, b.numero_reference, b.numero, e.priorite
         FROM envois e
         LEFT JOIN courriers c ON e.courrier_id = c.id
         LEFT JOIN bordereaux b ON e.bordereau_id = b.id
         WHERE e.destinataire_id = $1
-        ORDER BY e.date_envoi DESC`,
+        ORDER BY 
+          CASE WHEN e.priorite = 'Urgente' THEN 0 ELSE 1 END,  -- ⚠️ urgents en haut
+          e.date_envoi DESC`,
     [userId]
     );
 

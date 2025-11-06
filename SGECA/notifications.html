@@ -154,12 +154,14 @@
         <th>Objet</th>
         <th>Expéditeur</th>
         <th>Date</th>
+        <th>Priorité</th>  <!-- ✅ Nouvelle colonne -->
         <th>Bordereau</th>
         <th>Courrier</th>
         <th>Action</th>
       </tr>
     </thead>
-    <tbody></tbody>
+    <tbody><tr><td colspan='8' style='text-align:center;color:#999;'>Aucune notification reçue</td></tr></tbody>
+
   </table>
 
   <!-- ✅ Fenêtre d’aperçu -->
@@ -214,6 +216,7 @@
               <td>${n.objet || ''}</td>
               <td>${n.first_name || ''} ${n.last_name || ''}</td>
               <td>${new Date(n.date_envoi).toLocaleString()}</td>
+              <td>${n.priorite || 'Normale'}</td> <!-- ✅ Priorité affichée -->
               <td>${bordereauLink}</td>
               <td>${courrierLink}</td>
               <td><button class="btn btn-imputer" onclick="imputer('${n.bordereau_id}')">Imputer</button></td>
@@ -221,7 +224,7 @@
             tbody.appendChild(tr);
           });
         } else {
-          tbody.innerHTML = "<tr><td colspan='7' style='text-align:center;color:#999;'>Aucune notification reçue</td></tr>";
+          tbody.innerHTML = "<tr><td colspan='8' style='text-align:center;color:#999;'>Aucune notification reçue</td></tr>";
         }
       } catch (err) {
         console.error("❌ Erreur lors du chargement des notifications :", err);

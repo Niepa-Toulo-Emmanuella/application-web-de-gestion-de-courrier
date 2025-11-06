@@ -69,11 +69,14 @@ exports.list = async (_req, res) => {
         b.heure,
         b.numero_enregistrement,
         b.statut,
+        b.priorite,
         c.expediteur,
         c.fichier_scan
       FROM bordereaux b
       LEFT JOIN courriers c ON b.courrier_id = c.id
-      ORDER BY b.id DESC;
+      ORDER 
+        CASE WHEN b.priorite = 'Urgente' THEN 0 ELSE 1 END,  -- urgents d’abord
+        BY b.id DESC;
     `;
     const { rows } = await db.query(query);
 
@@ -228,6 +231,10 @@ exports.transmettreBordereau = async (req, res) => {
       return res.status(400).json({ message: "⚠️ Tous les champs sont obligatoires" });
     }
 
+    // 📨 Récupère la priorité pour la notification (optionnel)
+    const { rows } = await db.query(`SELECT priorite FROM bordereaux WHERE id = $1`, [bordereau_id]);
+    const priorite = rows.length ? rows[0].priorite : "Normale";
+
     const result = await db.query(
       `INSERT INTO envois (courrier_id, bordereau_id, destinataire_id, expediteur_id)
        VALUES ($1, $2, $3, $4)
@@ -242,7 +249,7 @@ exports.transmettreBordereau = async (req, res) => {
 
     res.status(201).json({
       success: true,
-      message: "Transmission réussie ✅",
+      message: "Transmission réussie ✅${priorite === 'Urgente' ? ' (⚠️ URGENT)' : ''}",
       data: result.rows[0]
     });
   } catch (error) {
@@ -273,6 +280,7 @@ exports.registreTransmission = async (req, res) => {
         b.numero_enregistrement,
         b.numero_reference,
         b.objet,
+        b.priorite,
         i.imputations AS destinataire,
         ti.observations,
         c.fichier_scan,
@@ -282,7 +290,9 @@ exports.registreTransmission = async (req, res) => {
       JOIN imputations i ON ti.imputation_id = i.id
       JOIN bordereaux b ON i.bordereau_id = b.id
       JOIN courriers c ON i.courrier_id = c.id
-      ORDER BY ti.date_depart DESC;
+      ORDER BY 
+        CASE WHEN b.priorite = 'Urgente' THEN 0 ELSE 1 END,
+        ti.date_depart DESC;
     `;
 
     const result = await pool.query(query);
