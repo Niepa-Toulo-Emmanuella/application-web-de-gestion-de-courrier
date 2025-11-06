@@ -23,6 +23,7 @@ class Courrier {
       date_reception,
       date_arrivee,
       numero_enregistrement,
+      annee_generation,   // ✅ AJOUTE ICI
       heure,
       fichier_scan
     } = data;
@@ -59,6 +60,7 @@ class Courrier {
       date_reception,
       date_arrivee,
       numero_enregistrement,
+      annee_generation,   // ✅ AJOUTE ICI
       heure,
       fichier_scan
     } = data;
@@ -72,8 +74,9 @@ class Courrier {
          date_reception       = COALESCE($6, date_reception),
          date_arrivee         = COALESCE($7, date_arrivee),
          numero_enregistrement= COALESCE($8, numero_enregistrement),
-         heure                = COALESCE($9, heure),
-         fichier_scan         = COALESCE($10, fichier_scan)
+         annee_generation     = COALESCE($9, annee_generation),
+         heure                = COALESCE($10, heure),
+         fichier_scan         = COALESCE($11, fichier_scan)
        WHERE id = $1
        RETURNING *`,
       [
@@ -85,6 +88,7 @@ class Courrier {
         date_reception,
         date_arrivee,
         numero_enregistrement,
+        annee_generation,
         heure,
         fichier_scan
       ]
