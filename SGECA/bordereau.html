@@ -159,11 +159,6 @@
         </div>
       </div>
 
-      <div class="row">
-        <label>Observations :</label>
-        <textarea name="observations" rows="4" class="full"></textarea>
-      </div>
-
       <button type="submit" id="envoyerBtn">Enregistrer</button>
 
       <div id="messageNotif"></div>
@@ -342,8 +337,7 @@
             date_arrivee: document.getElementById("date_arrivee").value,
             numero_enregistrement: document.getElementById("numero_enregistrement").value,
             heure: document.getElementById("heure").value,
-            objet: document.getElementById("objet").value,
-            observations: document.querySelector("textarea[name='observations']").value
+            objet: document.getElementById("objet").value
           })
         });
 

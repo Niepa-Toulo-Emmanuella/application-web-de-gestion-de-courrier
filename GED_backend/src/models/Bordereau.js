@@ -36,7 +36,6 @@ class Bordereau {
       numero_enregistrement,
       heure,
       objet,
-      observations,
       statut = ''
     } = data;
 
@@ -63,8 +62,8 @@ class Bordereau {
       `INSERT INTO bordereaux (
         courrier_id, expediteur, numero_reference,
         date_courrier, date_arrivee, numero_enregistrement,
-        heure, objet, observations, statut, numero
-      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10'en_attente',$11)
+        heure, objet, statut, numero
+      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9'en_attente',$10)
       RETURNING *`,
       [
         courrier_id,
@@ -75,7 +74,6 @@ class Bordereau {
         numero_enregistrement,
         heure,
         objet,
-        observations,
         statut,
         numero
       ]
@@ -92,7 +90,6 @@ class Bordereau {
       date_depart,
       duree_traitement,
       date_retour,
-      observations,
       statut
     } = data;
 
@@ -103,8 +100,7 @@ class Bordereau {
         instructions          = COALESCE($4, instructions),
         date_depart           = COALESCE($5, date_depart),
         duree_traitement      = COALESCE($6, duree_traitement),
-        date_retour           = COALESCE($7, date_retour),
-        observations          = COALESCE($8, observations)
+        date_retour           = COALESCE($7, date_retour)
        WHERE id = $1
        RETURNING *`,
       [
@@ -115,7 +111,6 @@ class Bordereau {
         date_depart,
         duree_traitement,
         date_retour,
-        observations
       ]
     );
     return rows[0];

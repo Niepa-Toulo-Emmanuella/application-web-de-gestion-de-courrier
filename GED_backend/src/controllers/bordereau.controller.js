@@ -34,8 +34,7 @@ async function generateBordereauPDF(data) {
              .replace(/{{DATE_ARRIVEE}}/g, data.date_arrivee || '')
              .replace(/{{NUMERO_ENREGISTREMENT}}/g, data.numero_enregistrement || '')
              .replace(/{{HEURE}}/g, data.heure || '')
-             .replace(/{{OBJET}}/g, data.objet || '')
-             .replace(/{{OBSERVATIONS}}/g, data.observations || '');
+             .replace(/{{OBJET}}/g, data.objet || '');
 
   const filePath = `temp_bordereau_${Date.now()}.pdf`;
 
@@ -167,8 +166,7 @@ exports.create = async (req, res) => {
       date_arrivee,
       numero_enregistrement,
       heure,
-      objet,
-      observations
+      objet
     });
 
     const fileContent = fs.readFileSync(pdfPath);
@@ -186,9 +184,9 @@ exports.create = async (req, res) => {
     const result = await db.query(`
       INSERT INTO bordereaux (
         courrier_id, expediteur_id, destinataire_id, numero_reference, date_courrier,
-        date_arrivee, numero_enregistrement, heure, objet, observations,
+        date_arrivee, numero_enregistrement, heure, objet,
         statut, numero, fichier_bordereau
-      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,'en_attente',$11,$12)
+      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,'en_attente',$11)
       RETURNING *;
     `, [
       courrier_id,
@@ -200,7 +198,6 @@ exports.create = async (req, res) => {
       numero_enregistrement,
       heure,
       objet,
-      observations,
       numero,
       fichier_bordereau
     ]);
