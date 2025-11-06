@@ -109,6 +109,20 @@ class Courrier {
     const result = await pool.query(query, [annee, mois, jour]);
     return result.rows[0] || null;
   }
+
+  /* -------------------- Récupère le dernier courrier créé ------------------- */
+  static async findLast() {
+    const { rows } = await pool.query(`
+      SELECT numero_enregistrement, annee_generation
+      FROM courriers
+      ORDER BY id DESC
+      LIMIT 1
+    `);
+    return rows[0] || null;
+  }
+
 }
+
+
 
 module.exports = Courrier;

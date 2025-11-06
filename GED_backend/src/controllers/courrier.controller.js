@@ -29,38 +29,34 @@ async function genererNumeroEnregistrement() {
   const maintenant = new Date();
   const anneeActuelle = maintenant.getFullYear();
 
-  // Récupérer le dernier courrier créé (le plus récent)
-  const dernierCourrier = await Courrier.findOne({
-    order: [['createdAt', 'DESC']],
-  });
+  // 🔍 Récupérer le dernier courrier enregistré
+  const result = await db.query(
+    'SELECT numero_enregistrement, annee_generation, created_at FROM courriers ORDER BY created_at DESC LIMIT 1'
+  );
+  const dernierCourrier = result.rows[0];
 
-  // Default start
+  // Valeur de départ
   let numeroBigInt = 4975n;
 
   if (!dernierCourrier) {
-    // base vide -> commencer à 4975
     return { numero: numeroBigInt.toString(), annee: anneeActuelle };
   }
 
-  // On récupère l'année associée au dernier numéro si présente, sinon on se rabat sur createdAt
   const derniereAnnee = dernierCourrier.annee_generation
     ? Number(dernierCourrier.annee_generation)
-    : new Date(dernierCourrier.createdAt).getFullYear();
+    : new Date(dernierCourrier.created_at).getFullYear();
 
   if (anneeActuelle > derniereAnnee) {
-    // Nouvelle année -> recommencer à 1
+    // 🆕 Nouvelle année → on recommence à 1
     return { numero: '1', annee: anneeActuelle };
   }
 
-  // Même année -> incrémenter
-  // On lit le dernier numéro (peut être null/undefined si ancienne DB) -> fallback à 4974 pour obtenir 4975
+  // Même année → on incrémente
   const dernierNumeroRaw = dernierCourrier.numero_enregistrement ?? '4974';
-  // convert to BigInt safely (si c'est string numeric)
   let dernierNumeroBigInt;
   try {
     dernierNumeroBigInt = BigInt(dernierNumeroRaw);
-  } catch (err) {
-    // si parsing échoue, fallback
+  } catch {
     dernierNumeroBigInt = 4974n;
   }
 
@@ -69,67 +65,33 @@ async function genererNumeroEnregistrement() {
 }
 
 
+
 /* ------------------------------ POST ------------------------------ */
 const create = async (req, res) => {
   try {
-    console.log("✅ Données reçues :", req.body);
-    console.log("📂 Fichiers reçus :", req.files?.length || 0);
+    console.log('✅ Données reçues :', req.body);
+    console.log('📂 Fichiers reçus :', req.files?.length || 0);
 
-    const {
-      reference,
-      objet,
-      expediteur,
-      destinataire,
-      date_reception,
-      date_arrivee
-    } = req.body;
+    const { reference, objet, expediteur, destinataire, date_reception, date_arrivee } = req.body;
 
-    // 🧩 Générer le numéro d’enregistrement (maintenant retourne { numero, annee })
+    // 🔢 Génération du numéro d’enregistrement
     const { numero, annee } = await genererNumeroEnregistrement();
 
-    // 🕒 Heure actuelle (serveur)
     const maintenant = new Date();
-    const heure = `${String(maintenant.getHours()).padStart(2, "0")}:${String(maintenant.getMinutes()).padStart(2, "0")}`;
+    const heure = `${String(maintenant.getHours()).padStart(2, '0')}:${String(
+      maintenant.getMinutes()
+    ).padStart(2, '0')}`;
 
-    // 🗂️ Upload de tous les fichiers vers Backblaze B2
+    // 🗂️ Upload vers Backblaze
     const fichiersUploads = [];
 
     if (req.files && req.files.length > 0) {
-      console.log("🔍 Détails des fichiers avant upload :");
-      req.files.forEach((file, i) => {
-        console.log(`   → Fichier [${i}]: originalname="${file.originalname}", path="${file.path}", mimetype="${file.mimetype}"`);
-      });
-
-      // ✅ Boucle principale avec correction d'encodage
       for (const file of req.files) {
-        console.log("🧩 Nom original reçu :", file.originalname);
-
-        // 🧠 Corriger le nom (reconvertir depuis Latin1 → UTF8)
-        let safeName = Buffer.from(file.originalname, "latin1").toString("utf8");
-        safeName = safeName.normalize("NFC"); // ✅ normalisation UTF-8
-        console.log("✅ Nom corrigé UTF-8 :", safeName);
-
-        // 🆙 Upload vers Backblaze
-        const fileUrl = await uploadToB2(
-          file.path,
-          safeName,
-          file.mimetype
-        );
-
-        console.log("🌐 URL renvoyée par B2 :", fileUrl);
-
-        // ✅ Vérifier si le nom dans l’URL est propre
-        if (/Ã|Â|�/.test(fileUrl)) {
-          console.warn("⚠️ URL retournée mal encodée :", fileUrl);
-        } else {
-          console.log("✅ URL propre :", fileUrl);
-        }
-
+        let safeName = Buffer.from(file.originalname, 'latin1').toString('utf8').normalize('NFC');
+        const fileUrl = await uploadToB2(file.path, safeName, file.mimetype);
         fichiersUploads.push(fileUrl);
-        fs.unlink(file.path, () => {}); // suppression du fichier temporaire
+        fs.unlink(file.path, () => {});
       }
-    } else {
-      console.warn("⚠️ Aucun fichier à uploader !");
     }
 
     // 🧾 Création du courrier dans la DB
@@ -143,7 +105,7 @@ const create = async (req, res) => {
       annee
     });
 
-    // On stocke numero_enregistrement en string (sécurise les très grands nombres)
+    // 🧾 Insertion du courrier
     const courrier = await Courrier.create({
       reference,
       objet,
@@ -154,23 +116,21 @@ const create = async (req, res) => {
       numero_enregistrement: numero,
       annee_generation: annee,
       heure,
-      fichier_scan: JSON.stringify(fichiersUploads), // ✅ tableau de liens
+      fichier_scan: JSON.stringify(fichiersUploads),
     });
 
-    console.log("📦 Courrier inséré avec fichier_scan :", courrier.fichier_scan);
-
+    console.log('📦 Courrier inséré avec numéro :', numero);
     res.status(201).json({
       success: true,
-      message: "Courrier créé avec plusieurs fichiers",
-      data: courrier
+      message: 'Courrier créé avec succès',
+      data: courrier,
     });
-
   } catch (err) {
-    console.error("❌ Erreur création courrier :", err);
+    console.error('❌ Erreur création courrier :', err);
     res.status(500).json({
       success: false,
-      message: "Erreur interne lors de la création du courrier",
-      error: err.message
+      message: 'Erreur interne lors de la création du courrier',
+      error: err.message,
     });
   }
 };
