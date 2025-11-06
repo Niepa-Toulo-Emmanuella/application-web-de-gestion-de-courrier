@@ -13,8 +13,8 @@ exports.create = async (req, res) => {
   try {
     // 📨 Récupération de la priorité du courrier concerné
     const courrierRes = await pool.query(
-      `SELECT priorite FROM courriers WHERE id = $1`,
-      [courrier_id]
+      `SELECT priorite FROM bordereaux WHERE id = $1`,
+      [bordereau_id]
     );
     const priorite = courrierRes.rows[0]?.priorite || 'Normale';
 
