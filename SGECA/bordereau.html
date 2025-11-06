@@ -119,6 +119,12 @@
       color: red;
       font-weight: bold;
     }
+    /* 🔴 Style uniquement pour le texte de la priorité */
+    .priorite-urgente {
+      color: red;
+      font-weight: bold;
+    }
+
 
 
   </style>
@@ -419,7 +425,9 @@
               <td>${b.numero_reference}</td>
               <td>${b.objet}</td>
               <td>${b.date_arrivee.split("T")[0]}</td>
-              <td>${b.priorite}</td> <!-- Nouvelle colonne Priorité -->
+              <td class="${b.priorite === 'Urgente' ? 'priorite-urgente' : ''}">
+                ${b.priorite}
+              </td>
             `;
             tbody.appendChild(tr);
           });
