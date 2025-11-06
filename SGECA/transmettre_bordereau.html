@@ -305,7 +305,7 @@
                 const result = await res.json();
 
                 if (res.ok && (result.success || result.message)) {
-                    showNotif(result.message || "✅ Transmission réussie", "success");
+                    showNotif("✅ Transmission réussie", "success");
                     loadBordereaux();
                     chargerBordereaux();
                 } else {
