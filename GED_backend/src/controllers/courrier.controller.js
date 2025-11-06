@@ -1,4 +1,3 @@
-// courrier.controller.js
 require('dotenv').config(); // <--- AJOUTE CECI TOUT EN HAUT
 const fs = require('fs');
 const Courrier = require('../models/Courrier');
@@ -11,11 +10,6 @@ const jwt = require("jsonwebtoken");
 const db = require('../models/db'); // <-- si ton fichier db.js exporte la connexion PostgreSQL
 const FormData = require("form-data");
 
-
-
-
-
-
 const s3 = new AWS.S3({
   endpoint: process.env.B2_ENDPOINT,
   accessKeyId: process.env.B2_KEY_ID,
@@ -25,27 +19,53 @@ const s3 = new AWS.S3({
 });
 
 // -------------------- Fonction pour générer le numéro d'enregistrement -------------------- //
+/**
+ * Retourne : { numero: string, annee: number }
+ * - commence à 4975 si la table est vide,
+ * - incrémente tant que la dernière création est dans la même année,
+ * - si la dernière création appartient à une année antérieure => reset à 1
+ */
 async function genererNumeroEnregistrement() {
-  const prefix = "MJ"; // ✏️ Ton code service
   const maintenant = new Date();
+  const anneeActuelle = maintenant.getFullYear();
 
-  const annee = maintenant.getFullYear();
-  const mois = String(maintenant.getMonth() + 1).padStart(2, "0"); // 01 à 12
-  const jour = String(maintenant.getDate()).padStart(2, "0"); // 01 à 31
+  // Récupérer le dernier courrier créé (le plus récent)
+  const dernierCourrier = await Courrier.findOne({
+    order: [['createdAt', 'DESC']],
+  });
 
-  // 🕵️ Chercher le dernier courrier créé aujourd’hui
-  const result = await Courrier.findLastByDate(annee, mois, jour);
+  // Default start
+  let numeroBigInt = 4975n;
 
-  // Si aucun courrier aujourd'hui, on commence à 1
-  let numero = 1;
-  if (result) {
-    const parts = result.numero_enregistrement.split("-");
-    numero = parseInt(parts[4]) + 1; // La 5e partie contient le numéro du jour
+  if (!dernierCourrier) {
+    // base vide -> commencer à 4975
+    return { numero: numeroBigInt.toString(), annee: anneeActuelle };
   }
 
-  const numeroFormatte = numero.toString().padStart(3, "0");
+  // On récupère l'année associée au dernier numéro si présente, sinon on se rabat sur createdAt
+  const derniereAnnee = dernierCourrier.annee_generation
+    ? Number(dernierCourrier.annee_generation)
+    : new Date(dernierCourrier.createdAt).getFullYear();
 
-  return `${prefix}-${annee}-${mois}-${jour}-${numeroFormatte}`;
+  if (anneeActuelle > derniereAnnee) {
+    // Nouvelle année -> recommencer à 1
+    return { numero: '1', annee: anneeActuelle };
+  }
+
+  // Même année -> incrémenter
+  // On lit le dernier numéro (peut être null/undefined si ancienne DB) -> fallback à 4974 pour obtenir 4975
+  const dernierNumeroRaw = dernierCourrier.numero_enregistrement ?? '4974';
+  // convert to BigInt safely (si c'est string numeric)
+  let dernierNumeroBigInt;
+  try {
+    dernierNumeroBigInt = BigInt(dernierNumeroRaw);
+  } catch (err) {
+    // si parsing échoue, fallback
+    dernierNumeroBigInt = 4974n;
+  }
+
+  numeroBigInt = dernierNumeroBigInt + 1n;
+  return { numero: numeroBigInt.toString(), annee: anneeActuelle };
 }
 
 
@@ -64,8 +84,8 @@ const create = async (req, res) => {
       date_arrivee
     } = req.body;
 
-    // 🧩 Générer le numéro d’enregistrement
-    const numero_enregistrement = await genererNumeroEnregistrement();
+    // 🧩 Générer le numéro d’enregistrement (maintenant retourne { numero, annee })
+    const { numero, annee } = await genererNumeroEnregistrement();
 
     // 🕒 Heure actuelle (serveur)
     const maintenant = new Date();
@@ -118,9 +138,12 @@ const create = async (req, res) => {
       objet,
       expediteur,
       destinataire,
-      fichiersUploads
+      fichiersUploads,
+      numero,
+      annee
     });
 
+    // On stocke numero_enregistrement en string (sécurise les très grands nombres)
     const courrier = await Courrier.create({
       reference,
       objet,
@@ -128,7 +151,8 @@ const create = async (req, res) => {
       destinataire,
       date_reception,
       date_arrivee,
-      numero_enregistrement,
+      numero_enregistrement: numero,
+      annee_generation: annee,
       heure,
       fichier_scan: JSON.stringify(fichiersUploads), // ✅ tableau de liens
     });
@@ -217,10 +241,7 @@ const update = async (req, res) => {
   }
 };
 
-// Téléchargement via URL signée
-// Téléchargement direct du fichier depuis Backblaze B2
 // ----------------------------- TÉLÉCHARGEMENT ----------------------------- //
-// place ceci dans ton fichier de contrôleur (assure-toi des require en haut : path, AWS, Courrier, etc.)
 const download = async (req, res) => {
   try {
     console.log("📌 download appelé avec params :", req.params);
@@ -240,9 +261,9 @@ const download = async (req, res) => {
     // 🔹 Gestion du champ JSON.stringify(fichiersUploads)
     let fichiers = [];
     try {
-      fichiers = JSON.parse(courrier.fichier_scan);
+      fichiers = Array.isArray(courrier.fichier_scan) ? courrier.fichier_scan : JSON.parse(courrier.fichier_scan);
     } catch (err) {
-      console.warn("⚠️ fichier_scan n'est pas un JSON, on le met dans un tableau :", err.message);
+      console.warn("⚠️ fichier_scan n'est pas un JSON valide, on le met dans un tableau :", err.message);
       fichiers = [courrier.fichier_scan];
     }
 
@@ -263,20 +284,20 @@ const download = async (req, res) => {
     console.log("✅ Clé pour getObject :", key);
 
     const params = { Bucket: process.env.B2_BUCKET_NAME, Key: key };
-    const data = await s3.getObject(params).promise();
+    const s3data = await s3.getObject(params).promise();
 
     const fileName = path.basename(key);
-    const contentType = data.ContentType || mime.lookup(fileName) || "application/octet-stream";
+    const contentType = s3data.ContentType || mime.lookup(fileName) || "application/octet-stream";
 
     console.log("Nom du fichier :", fileName);
     console.log("Content-Type :", contentType);
-    console.log("Taille du fichier :", data.ContentLength);
+    console.log("Taille du fichier :", s3data.ContentLength);
 
     res.setHeader("Content-Type", contentType);
     res.setHeader("Content-Disposition", `attachment; filename="${fileName}"`);
-    res.setHeader("Content-Length", data.ContentLength || data.Body.length);
+    res.setHeader("Content-Length", s3data.ContentLength || s3data.Body.length);
 
-    return res.send(data.Body);
+    return res.send(s3data.Body);
 
   } catch (err) {
     console.error("❌ Erreur téléchargement :", err);
@@ -296,12 +317,7 @@ const detailForDownload = async (id) => {
   return courrier;
 };
 
-
-// ----------------------------- TÉLÉCHARGEMENT SÉCURISÉ ----------------------------- //
-// Télécharger un courrier depuis Backblaze B2 via fetch() sécurisé
-// ----------------------------- TÉLÉCHARGEMENT SÉCURISÉ -----------------------------
-// ✅ Fonction sécurisée de téléchargement Backblaze B2
-/* ------------------------------ DOWNLOAD SÉCURISÉ ------------------------------ */
+// ----------------------------- DOWNLOAD SÉCURISÉ ----------------------------- //
 const secureDownload = async (req, res) => {
   try {
     const courrierId = req.params.id;
@@ -326,15 +342,11 @@ const secureDownload = async (req, res) => {
 
     // ✅ Convertir la colonne en tableau si elle est en JSON ou déjà un tableau
     let fichiers = [];
-    if (Array.isArray(courrier.fichier_scan)) {
-      fichiers = courrier.fichier_scan;
-    } else {
-      try {
-        fichiers = JSON.parse(courrier.fichier_scan);
-      } catch (err) {
-        console.error("❌ Erreur parsing fichier_scan :", err);
-        return res.status(500).json({ success: false, message: "Format fichier invalide" });
-      }
+    try {
+      fichiers = Array.isArray(courrier.fichier_scan) ? courrier.fichier_scan : JSON.parse(courrier.fichier_scan);
+    } catch (err) {
+      console.error("❌ Erreur parsing fichier_scan :", err);
+      return res.status(500).json({ success: false, message: "Format fichier invalide" });
     }
 
     // ✅ Vérifier si l’index demandé existe
@@ -380,9 +392,7 @@ const secureDownload = async (req, res) => {
   }
 };
 
-// ✅ Version "prévisualisation"
-
-
+// ----------------------------- PREVIEW SÉCURISÉ ----------------------------- //
 const securePreview = async (req, res) => {
   try {
     const courrierId = req.params.id;
@@ -397,9 +407,12 @@ const securePreview = async (req, res) => {
     }
 
     // 🔹 Liste des fichiers
-    let fichiers = Array.isArray(courrier.fichier_scan)
-      ? courrier.fichier_scan
-      : JSON.parse(courrier.fichier_scan);
+    let fichiers = [];
+    try {
+      fichiers = Array.isArray(courrier.fichier_scan) ? courrier.fichier_scan : JSON.parse(courrier.fichier_scan);
+    } catch (err) {
+      return res.status(500).json({ success: false, message: "Format fichier invalide" });
+    }
 
     if (index < 0 || index >= fichiers.length) {
       return res.status(404).json({ success: false, message: "Index de fichier invalide" });
@@ -452,8 +465,8 @@ const securePreview = async (req, res) => {
 
       // ⚙️ Étape 2 : uploader le fichier vers CloudConvert
       const uploadForm = new FormData();
-      for (const [key, value] of Object.entries(uploadParams)) {
-        uploadForm.append(key, value);
+      for (const [k, v] of Object.entries(uploadParams)) {
+        uploadForm.append(k, v);
       }
       uploadForm.append("file", fileBuffer, path.basename(fileUrl));
 
@@ -470,7 +483,7 @@ const securePreview = async (req, res) => {
           t => t.name === "export-my-file" && t.status === "finished"
         );
 
-        if (exportTask && exportTask.result && exportTask.result.files[0]) {
+        if (exportTask && exportTask.result && exportTask.result.files && exportTask.result.files[0]) {
           exportUrl = exportTask.result.files[0].url;
           break;
         }
@@ -503,31 +516,7 @@ const securePreview = async (req, res) => {
   }
 };
 
-
-
-
-
-
 // ===================== COURRIERS SANS BORDEREAU =====================
-
-// const getCourriersDisponibles = async (req, res) => {
-//   try {
-//     const result = await db.query(`
-//       SELECT c.id, c.reference, c.objet
-//       FROM courriers c
-//       LEFT JOIN bordereaux b ON b.courrier_id = c.id
-//       WHERE b.courrier_id IS NULL
-//       ORDER BY c.created_at DESC;
-
-//     `);
-//     console.log("Courriers disponibles :", result.rows); // <-- ADD THIS
-
-//     res.json({ success: true, data: result.rows }); // <-- ajouter success + data
-//   } catch (err) {
-//     console.error("❌ Erreur getCourriersDisponibles :", err);
-//     res.status(500).json({ message: "Erreur lors de la récupération des courriers disponibles" });
-//   }
-// };
 
 const getCourriersDisponibles = async (req, res) => {
   try {
@@ -557,14 +546,6 @@ const getCourriersDisponibles = async (req, res) => {
     });
   }
 };
-
-
-
-
-
-
-
-
 
 module.exports = {
   create,
