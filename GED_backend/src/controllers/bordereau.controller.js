@@ -140,13 +140,14 @@ exports.create = async (req, res) => {
     }
 
     const courrierRes = await db.query(
-      `SELECT id, fichier_scan, objet FROM courriers WHERE id = $1`,
+      `SELECT id, fichier_scan, objet, priorite FROM courriers WHERE id = $1`,
       [courrier_id]
     );
     if (courrierRes.rows.length === 0) {
       return res.status(404).json({ success: false, message: "Courrier introuvable" });
     }
     const courrier = courrierRes.rows[0];
+    const priorite = courrier.priorite || "Normale"; // valeur par défaut
 
     const numero = generateNumero();
 
@@ -185,9 +186,9 @@ exports.create = async (req, res) => {
     const result = await db.query(`
       INSERT INTO bordereaux (
         courrier_id, expediteur_id, destinataire_id, numero_reference, date_courrier,
-        date_arrivee, numero_enregistrement, heure, objet,
+        date_arrivee, numero_enregistrement, heure, objet, priorite,
         statut, numero, fichier_bordereau
-      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,'en_attente',$11)
+      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,'en_attente',$11,$12)
       RETURNING *;
     `, [
       courrier_id,
@@ -199,6 +200,7 @@ exports.create = async (req, res) => {
       numero_enregistrement,
       heure,
       objet,
+      priorite, // 🟡 inséré ici
       numero,
       fichier_bordereau
     ]);
