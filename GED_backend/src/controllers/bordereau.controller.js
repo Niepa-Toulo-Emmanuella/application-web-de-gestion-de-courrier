@@ -236,10 +236,10 @@ exports.transmettreBordereau = async (req, res) => {
     const priorite = rows.length ? rows[0].priorite : "Normale";
 
     const result = await db.query(
-      `INSERT INTO envois (courrier_id, bordereau_id, destinataire_id, expediteur_id)
-       VALUES ($1, $2, $3, $4)
+      `INSERT INTO envois (courrier_id, bordereau_id, destinataire_id, expediteur_id, priorite)
+       VALUES ($1, $2, $3, $4, $5)
        RETURNING *`,
-      [courrier_id || null, bordereau_id, destinataire_id, expediteur_id]
+      [courrier_id || null, bordereau_id, destinataire_id, expediteur_id, priorite]
     );
 
     await db.query(
