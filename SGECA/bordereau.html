@@ -115,6 +115,12 @@
       font-weight: bold;
     }
 
+    option.urgent {
+      color: red;
+      font-weight: bold;
+    }
+
+
   </style>
 </head>
 
@@ -215,13 +221,19 @@
             courriersMap[courrier.id] = courrier;
             const option = document.createElement("option");
             option.value = courrier.id;
-             // Affichage de la priorité
-            const prioriteAffichee = courrier.priorite === "Urgente" ? "⚠️ Urgent" : "Normale";
-            option.textContent = `${courrier.reference || 'Réf. inconnue'} - ${courrier.objet || 'Sans objet'} (${prioriteAffichee})`;
-            option.textContent = `${courrier.reference || 'Réf. inconnue'} - ${courrier.objet || 'Sans objet'}`;
+
+            // 🔥 Si le courrier est urgent, afficher clairement le symbole et la couleur
+            if (courrier.priorite === "Urgente") {
+              option.textContent = `⚠️ [URGENT] ${courrier.reference || 'Réf. inconnue'} - ${courrier.objet || 'Sans objet'}`;
+              option.classList.add("urgent"); // pour couleur rouge via CSS
+            } else {
+              option.textContent = `${courrier.reference || 'Réf. inconnue'} - ${courrier.objet || 'Sans objet'}`;
+            }
+
             courrierSelect.appendChild(option);
           });
         }
+
 
         loadBordereauxEnAttente();
       } catch (err) {
