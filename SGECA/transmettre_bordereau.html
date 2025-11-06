@@ -82,6 +82,25 @@
         th {
             background-color: #f0f0f0;
         }
+        /* 🔴 Style global des urgents */
+        .urgent {
+            color: red !important;
+            font-weight: bold !important;
+        }
+
+        /* 🔴 Style pour lignes urgentes des tableaux */
+        tr.urgent {
+            background-color: #ffe6e6; /* fond rouge clair */
+            color: red;
+            font-weight: bold;
+        }
+
+        /* 🔴 Style pour les options urgentes du select */
+        option.urgent {
+            color: red;
+            font-weight: bold;
+        }
+
     </style>
 </head>
 
@@ -211,6 +230,7 @@
                         // 🆕 Indication visuelle dans la liste
                         if (b.priorite === "Urgente") {
                             option.textContent = `⚠️ [URGENT] ${b.numero_reference || ''} - ${b.objet || ''}`;
+                            option.classList.add("urgent"); // ✅ texte rouge et gras
                         } else {
                             option.textContent = `${b.numero_reference || ''} - ${b.objet || ''}`;
                         }
