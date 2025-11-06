@@ -496,7 +496,7 @@ const getCourriersDisponibles = async (req, res) => {
         c.numero_enregistrement,
         c.heure,
         c.fichier_scan,
-        c.priorite,
+        c.priorite
       FROM courriers c
       LEFT JOIN bordereaux b ON b.courrier_id = c.id
       WHERE b.courrier_id IS NULL
