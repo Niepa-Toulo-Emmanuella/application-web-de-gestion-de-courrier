@@ -74,9 +74,9 @@ exports.list = async (_req, res) => {
         c.fichier_scan
       FROM bordereaux b
       LEFT JOIN courriers c ON b.courrier_id = c.id
-      ORDER 
+      ORDER BY
         CASE WHEN b.priorite = 'Urgente' THEN 0 ELSE 1 END,  -- urgents d’abord
-        BY b.id DESC;
+        b.id DESC;
     `;
     const { rows } = await db.query(query);
 
