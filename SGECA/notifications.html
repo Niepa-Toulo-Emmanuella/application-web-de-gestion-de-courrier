@@ -141,6 +141,17 @@
     .file-block {
       margin-bottom: 8px;
     }
+
+    /* ✅ Ligne urgente */
+    tr.urgent {
+      background-color: #ffebee !important; /* rouge très clair */
+      border-left: 6px solid #d32f2f;
+    }
+
+    tr.urgent:hover {
+      background-color: #ffcdd2 !important; /* un peu plus foncé au survol */
+    }
+
   </style>
 </head>
 
@@ -188,6 +199,11 @@
 
         if (data.success && data.data.length > 0) {
           data.data.forEach(n => {
+            // Déterminer la classe CSS selon la priorité
+            const isUrgente = n.priorite && n.priorite.toLowerCase() === 'urgente';
+            const rowClass = isUrgente ? 'urgent' : '';
+
+
             // Bordereau
             const bordereauLink = n.fichier_bordereau
               ? `<div class="file-block">
@@ -211,6 +227,7 @@
             }
 
             const tr = document.createElement("tr");
+            tr.className = rowClass; // ✅ applique la couleur selon la priorité
             tr.innerHTML = `
               <td>${n.numero}</td>
               <td>${n.objet || ''}</td>
