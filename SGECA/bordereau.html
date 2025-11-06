@@ -385,7 +385,7 @@
           notif.textContent = result.message;
           notif.classList.remove("error");
           notif.classList.add("success");
-          numeroBordereauInput.value = result.data.numero;
+          numeroBordereauInput.value = result.data.bordereau.numero;
           loadBordereauxEnAttente();
         } else {
           notif.textContent = result.message || "Erreur lors de l'enregistrement";
