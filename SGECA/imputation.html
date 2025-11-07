@@ -76,6 +76,31 @@
     button[type="submit"]:hover {
       background-color: #3949ab;
     }
+
+    /* Canvas signature */
+    #signature-container {
+      margin-top: 15px;
+      border: 1px solid #ccc;
+      height: 150px;
+      position: relative;
+    }
+
+    #signature-canvas {
+      width: 100%;
+      height: 100%;
+    }
+
+    #clear-signature {
+      margin-top: 5px;
+      background-color: #e53935;
+    }
+
+    /* Upload cachet */
+    #cachet-preview {
+      margin-top: 10px;
+      max-height: 150px;
+      display: block;
+    }
   </style>
 </head>
 
@@ -152,6 +177,18 @@
     <h3>Observations</h3>
     <textarea name="observations" rows="4"></textarea>
 
+    <!-- Signature -->
+    <h3>Signature</h3>
+    <div id="signature-container">
+      <canvas id="signature-canvas"></canvas>
+    </div>
+    <button type="button" id="clear-signature">Effacer la signature</button>
+
+    <!-- Cachet -->
+    <h3>Cachet</h3>
+    <input type="file" id="cachet-file" name="cachet_file" accept="image/png, image/jpeg" />
+    <img id="cachet-preview" src="#" alt="Prévisualisation cachet" style="display:none;" />
+
     <!-- Bordereau concerné -->
     <input type="hidden" id="bordereau_id" name="bordereau_id" />
 
@@ -159,6 +196,54 @@
   </form>
 
   <script>
+    // Canvas signature
+    const canvas = document.getElementById('signature-canvas');
+    const ctx = canvas.getContext('2d');
+    let drawing = false;
+
+    function resizeCanvas() {
+      canvas.width = canvas.offsetWidth;
+      canvas.height = canvas.offsetHeight;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+    
+
+    let lastX = 0, lastY = 0;
+    function draw(e) {
+      if (!drawing) return;
+      ctx.lineWidth = 2;
+      ctx.lineCap = 'round';
+      ctx.strokeStyle = '#000';
+      ctx.beginPath();
+      ctx.moveTo(lastX, lastY);
+      ctx.lineTo(e.offsetX, e.offsetY);
+      ctx.stroke();
+      lastX = e.offsetX;
+      lastY = e.offsetY;
+    }
+
+    canvas.addEventListener('mousedown', (e) => { drawing = true; lastX = e.offsetX; lastY = e.offsetY; });
+    canvas.addEventListener('mouseup', () => drawing = false);
+    canvas.addEventListener('mouseout', () => drawing = false);
+    canvas.addEventListener('mousemove', draw);
+
+    document.getElementById('clear-signature').addEventListener('click', () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    });
+
+    // Prévisualisation cachet
+    const cachetInput = document.getElementById('cachet-file');
+    const cachetPreview = document.getElementById('cachet-preview');
+    cachetInput.addEventListener('change', () => {
+      const file = cachetInput.files[0];
+      if (file) {
+        cachetPreview.src = URL.createObjectURL(file);
+        cachetPreview.style.display = 'block';
+      }
+    });
+
+
     document.getElementById('form-imputation').addEventListener('submit', async (e) => {
       e.preventDefault();
 
@@ -176,6 +261,19 @@
       const getCheckedValues = (name) =>
         Array.from(document.querySelectorAll(`input[name="${name}"]:checked`)).map(e => e.value);
 
+      // Récupération signature en base64
+      const signatureBase64 = canvas.toDataURL("image/png");
+
+      // Récupération cachet
+      let cachetBase64 = null;
+      if (cachetInput.files[0]) {
+        cachetBase64 = await new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result);
+          reader.readAsDataURL(cachetInput.files[0]);
+        });
+      }
+
       const data = {
         bordereau_id: document.querySelector('input[name="bordereau_id"]').value,
         premiere_transmission: getCheckedValues("premiere_transmission"),
@@ -186,7 +284,9 @@
         date_retour: document.querySelector('input[name="date_retour"]').value || null,
         traitement_actions: getCheckedValues("traitement_actions"),
         observations: document.querySelector('textarea[name="observations"]').value,
-        priorite: sessionStorage.getItem("priorite") || "Normale"  // ✅ ajouter la priorité ici
+        priorite: sessionStorage.getItem("priorite") || "Normale",  // ✅ ajouter la priorité ici
+        signature: signatureBase64,
+        cachet: cachetBase64
       };
 
       try {
@@ -203,6 +303,8 @@
         if (result.success) {
           alert("✅ Imputation enregistrée avec succès !");
           console.log(result.data);
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          cachetPreview.style.display = 'none';
 
           // 🔹 Vider le formulaire
           document.getElementById('form-imputation').reset();

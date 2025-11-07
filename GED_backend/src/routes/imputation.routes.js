@@ -3,6 +3,7 @@ const express = require('express');
 const router = express.Router();
 const imputationController = require('../controllers/imputation.controller');
 const { authenticate } = require('../middlewares/auth.middleware');
+const upload = require('../middlewares/upload.middleware');
 
 // Assurez-vous d'avoir dans votre .env :
 // B2_BUCKET_NAME, B2_ENDPOINT (optionnel si S3 API), B2_KEY_ID, B2_APP_KEY
@@ -15,7 +16,7 @@ function getB2Url(key) {
 }
 
 // POST /api/imputations
-router.post('/', authenticate, imputationController.create);
+router.post('/', authenticate, upload.single('cachet_file'), imputationController.create);
 
 // Transmettre un bordereau d’imputation
 router.post("/transmettre", authenticate, imputationController.createTransmission);

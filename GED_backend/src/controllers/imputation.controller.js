@@ -6,6 +6,9 @@ const fs = require('fs');
 const AWS = require('aws-sdk');
 const chromium = require('@sparticuz/chromium');
 const puppeteer = require('puppeteer-core');
+const multer = require('multer');
+const upload = multer({ dest: 'uploads/' }); // dossier temporaire pour cachets
+
 
 // S3 B2
 const s3 = new AWS.S3({
@@ -30,6 +33,10 @@ async function generateImputationPDF(data) {
              .replace(/{{DATE_RETOUR}}/g, data.date_retour || '')
              .replace(/{{TRAITEMENT_ACTIONS_TEXT}}/g, (data.traitement_actions || []).join(', '))
              .replace(/{{OBSERVATIONS}}/g, data.observations || '');
+
+  // ✅ Ajouter signature et cachet
+  if (data.signaturePath) html = html.replace(/{{SIGNATURE}}/g, `file://${data.signaturePath}`);
+  if (data.cachetFile) html = html.replace(/{{CACHET}}/g, `file://${data.cachetFile.path}`);
 
   // 🧩 Helper : normalise les textes pour comparer sans accent / casse
   function normalizeText(s) {
@@ -164,9 +171,20 @@ exports.create = async (req, res) => {
       date_retour,
       traitement_actions,
       observations,
+      signature,
       destinataire_id, // on suppose que le frontend l’envoie
       priorite
     } = req.body;
+
+    const cachetFile = req.file; // multer stocke le fichier temporairement
+
+    // Convertir signature base64 en fichier PNG
+    let signaturePath = null;
+    if(signature){
+      const base64Data = signature.replace(/^data:image\/png;base64,/, "");
+      signaturePath = `uploads/signature_${Date.now()}.png`;
+      fs.writeFileSync(signaturePath, base64Data, 'base64');
+    }
 
     // ✅ Expéditeur : utilisateur connecté
     const expediteur_id = req.user?.id || req.user?.userId;
@@ -183,7 +201,9 @@ exports.create = async (req, res) => {
       duree_traitement,
       date_retour,
       traitement_actions,
-      observations
+      observations,
+      signaturePath,   // <-- ajouté
+      cachetFile       // <-- ajouté
     });
 
     // 2️⃣ Upload sur B2
