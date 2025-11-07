@@ -233,6 +233,7 @@
                         <th>Date d'arrivée</th>
                         <th>Numéro d'enregistrement</th>
                         <th>Heure</th>
+                        <th>Priorité</th> <!-- Nouvelle colonne -->
                         <th>Pièce jointe</th>
                         <th>Statut</th>
                     </tr>
@@ -285,6 +286,10 @@
             const heure = b.heure ?? '—';
             const statutClass = b.statut === 'envoye' ? 'badge-bg-envoye' : 'badge-bg-attente';
 
+            let prioriteHTML = b.priorite 
+                ? `<span class="badge bg-danger">${b.priorite}</span>` 
+                : "—";
+
             let fichiersHTML = '—';
             if (b.fichier_scan) {
                 try {
@@ -315,6 +320,7 @@
                 <td>${dateCourrier}</td>
                 <td>${dateArrivee}</td>
                 <td>${b.numero_enregistrement ?? '—'}</td>
+                <td>${prioriteHTML}</td> <!-- ← Nouvelle cellule -->
                 <td>${heure}</td>
                 <td>${fichiersHTML}</td>
                 <td><span class="badge ${statutClass}">${b.statut ?? '—'}</span></td>
