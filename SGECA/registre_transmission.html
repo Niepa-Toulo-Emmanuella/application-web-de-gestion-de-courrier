@@ -116,6 +116,7 @@
             <th>Objet</th>
             <th>Destinataire</th>
             <th>Observations</th>
+            <th>Priorité</th> <!-- ← Nouvelle colonne -->
             <th>Pièce jointe</th>
             <th>Bordereau d’imputation</th>
             <th>Bordereau</th>
@@ -215,6 +216,12 @@
 
       const date = b.date_depart ? new Date(b.date_depart).toLocaleDateString("fr-FR") : "—";
 
+      // 🔸 Priorité
+      let prioriteHTML = b.priorite 
+          ? `<span class="badge bg-danger">${b.priorite}</span>` 
+          : "—";
+
+
       // 🔸 Pièces jointes (courriers)
       let fichiersHTML = '—';
       if (b.fichier_scan) {
@@ -264,17 +271,18 @@
 
 
       return `
-    <tr>
-      <td>${date}</td>
-      <td>${b.numero_reference ?? "—"}</td>
-      <td>${b.numero_enregistrement ?? "—"}</td>
-      <td>${b.objet ?? "—"}</td>
-      <td>${Array.isArray(b.destinataire) ? b.destinataire.join(', ') : (b.destinataire ?? "—")}</td>
-      <td>${b.observations ?? "—"}</td>
-      <td>${fichiersHTML}</td>
-      <td>${fichierImputation}</td>
-      <td>${fichierBordereau}</td>
-    </tr>`;
+      <tr>
+        <td>${date}</td>
+        <td>${b.numero_reference ?? "—"}</td>
+        <td>${b.numero_enregistrement ?? "—"}</td>
+        <td>${b.objet ?? "—"}</td>
+        <td>${Array.isArray(b.destinataire) ? b.destinataire.join(', ') : (b.destinataire ?? "—")}</td>
+        <td>${b.observations ?? "—"}</td>
+        <td>${prioriteHTML}</td> <!-- ← Nouvelle cellule -->
+        <td>${fichiersHTML}</td>
+        <td>${fichierImputation}</td>
+        <td>${fichierBordereau}</td>
+      </tr>`;
     }
 
     function afficherTableau(data) {
