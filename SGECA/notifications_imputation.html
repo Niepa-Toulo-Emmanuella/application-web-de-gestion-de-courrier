@@ -128,6 +128,7 @@
         <th>Durée (jours)</th>
         <th>Observations</th>
         <th>Date d’envoi</th>
+        <th>Priorité</th>
       </tr>
     </thead>
     <tbody>
@@ -339,6 +340,9 @@
               <td>${t.duree_traitement || ''}</td>
               <td>${t.observations || ''}</td>
               <td>${t.date_depart ? new Date(t.date_depart).toLocaleString() : ''}</td>
+              <td style="color:${t.priorite === 'Urgente' ? 'red' : t.priorite === 'Haute' ? 'orange' : 'green'};">
+                ${t.priorite || 'Normale'}
+              </td>
             `;
             tbody.appendChild(tr);
           });
@@ -420,11 +424,6 @@
           alert(err.message);
         });
     }
-
-
-
-
-
 
     window.addEventListener("DOMContentLoaded", loadTransmissions);
   </script>
