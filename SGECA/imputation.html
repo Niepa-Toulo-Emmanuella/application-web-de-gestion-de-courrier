@@ -185,7 +185,8 @@
         duree_traitement: document.querySelector('input[name="duree_traitement"]').value || null,
         date_retour: document.querySelector('input[name="date_retour"]').value || null,
         traitement_actions: getCheckedValues("traitement_actions"),
-        observations: document.querySelector('textarea[name="observations"]').value
+        observations: document.querySelector('textarea[name="observations"]').value,
+        priorite: sessionStorage.getItem("priorite") || "Normale"  // ✅ ajouter la priorité ici
       };
 
       try {
