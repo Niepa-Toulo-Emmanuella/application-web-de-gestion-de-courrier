@@ -243,10 +243,16 @@
         if (res.ok) {
           alert("✅ Transmission enregistrée !");
           document.getElementById("transmissionForm").reset();
+
+          // 1️⃣ Recharge la liste des transmissions du bordereau actuel
           loadTransmissions(imputation_id);
+
+          // 2️⃣ Optionnel : prévenir la page notifications si ouverte
+          localStorage.setItem('newTransmission', JSON.stringify(data.data));
         } else {
           alert("❌ Erreur: " + (data.message || "Impossible d’enregistrer"));
         }
+
       } catch (err) {
         console.error(err);
         alert("❌ Erreur réseau");

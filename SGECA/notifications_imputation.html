@@ -426,6 +426,14 @@
     }
 
     window.addEventListener("DOMContentLoaded", loadTransmissions);
+
+    // 🔔 Réagir aux nouvelles transmissions depuis une autre page
+    window.addEventListener('storage', (e) => {
+      if (e.key === 'newTransmission') {
+        loadTransmissions(); // recharge la liste
+        localStorage.removeItem('newTransmission');
+      }
+    });
   </script>
 </body>
 
