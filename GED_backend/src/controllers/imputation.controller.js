@@ -257,13 +257,20 @@ exports.createTransmission = async (req, res) => {
 
     const { imputation_id, destinataire_id, instructions, duree_traitement, observations } = req.body;
 
+    // 1️⃣ Récupérer la priorité depuis la table imputations
+    const imputationRes = await db.query(
+      `SELECT priorite FROM imputations WHERE id = $1`,
+      [imputation_id]
+    );
+    const priorite = imputationRes.rows[0]?.priorite || 'Normale';
+
     console.log("📤 Transmission :", { expediteur_id, imputation_id, destinataire_id });
 
     const result = await db.query(
       `INSERT INTO transmissions_imputation
-        (imputation_id, destinataire_id, expediteur_id, instructions, duree_traitement, observations)
-       VALUES ($1,$2,$3,$4,$5,$6) RETURNING *`,
-      [imputation_id, destinataire_id, expediteur_id, instructions, duree_traitement, observations]
+        (imputation_id, destinataire_id, expediteur_id, instructions, duree_traitement, observations, priorite)
+       VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *`,
+      [imputation_id, destinataire_id, expediteur_id, instructions, duree_traitement, observations, priorite]
     );
     await db.query(
       `UPDATE imputations SET statut = 'envoye' WHERE id = $1`,
