@@ -1,3 +1,4 @@
+<!-- imputation.html -->
 <!DOCTYPE html>
 <html lang="fr">
 
@@ -219,6 +220,7 @@
 
     document.addEventListener("DOMContentLoaded", () => {
       const bordereauId = sessionStorage.getItem("bordereau_id");
+      const priorite = sessionStorage.getItem("priorite") || "Normale";
       if (bordereauId) {
         document.getElementById("bordereau_id").value = bordereauId;
         console.log("✅ ID récupéré et injecté :", bordereauId);

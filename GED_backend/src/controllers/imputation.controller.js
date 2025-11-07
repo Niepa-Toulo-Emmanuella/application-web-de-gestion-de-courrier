@@ -164,7 +164,8 @@ exports.create = async (req, res) => {
       date_retour,
       traitement_actions,
       observations,
-      destinataire_id // on suppose que le frontend l’envoie
+      destinataire_id, // on suppose que le frontend l’envoie
+      priorite
     } = req.body;
 
     // ✅ Expéditeur : utilisateur connecté
@@ -210,8 +211,8 @@ exports.create = async (req, res) => {
     // 4️⃣ Insertion en DB
     const result = await db.query(
       `INSERT INTO imputations 
-        (bordereau_id, premiere_transmission, imputations, courrier_id, expediteur_id, destinataire_id, instructions, date_depart, duree_traitement, date_retour, traitement_actions, observations, fichier_imputation)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
+        (bordereau_id, premiere_transmission, imputations, courrier_id, expediteur_id, destinataire_id, instructions, date_depart, duree_traitement, date_retour, traitement_actions, observations, fichier_imputation, priorite)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
        RETURNING *`,
       [
         bordereau_id,
@@ -226,7 +227,8 @@ exports.create = async (req, res) => {
         date_retour,
         traitement_actions,
         observations,
-        fichier_imputation
+        fichier_imputation,
+        priorite
       ]
     );
     // ✅ Marquer l’envoi comme imputé

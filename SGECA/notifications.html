@@ -244,7 +244,7 @@
               </td>
               <td>${bordereauLink}</td>
               <td>${courrierLink}</td>
-              <td><button class="btn btn-imputer" onclick="imputer('${n.bordereau_id}')">Imputer</button></td>
+              <td><button class="btn btn-imputer" onclick="imputer('${n.bordereau_id}', '${n.priorite || 'Normale'}')">Imputer</button></td>
             `;
             tbody.appendChild(tr);
           });
@@ -303,8 +303,9 @@
       document.getElementById("previewFrame").src = "";
     }
 
-    function imputer(bordereauId) {
+    function imputer(bordereauId, priorite) {
       sessionStorage.setItem("bordereau_id", bordereauId);
+      sessionStorage.setItem("priorite", priorite || 'Normale');
       window.location.href = "imputation.html";
     }
 
