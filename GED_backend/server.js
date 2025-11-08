@@ -213,8 +213,11 @@ app.use((err, req, res, next) => {
 const PORT = process.env.PORT || 3000;
 
 // 🚀 Lancement du serveur
-app.listen(PORT, () => {
+// Démarrage correct du serveur avec timeout désactivé
+const server = app.listen(PORT, () => {
   console.log(`🚀 Serveur démarré sur le port ${PORT}`);
   console.log(`📍 URL: http://localhost:${PORT}`);
 });
-server.timeout = 0; // désactive le timeout HTTP
+
+// Désactive le timeout HTTP (utile pour gros fichiers ZIP)
+server.timeout = 0;
