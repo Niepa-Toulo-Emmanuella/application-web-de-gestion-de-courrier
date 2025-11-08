@@ -62,6 +62,7 @@ const notificationRoutes = require('./src/routes/notification.routes');
 const userRoutes = require('./src/routes/user.routes');
 const envoyerRoutes = require('./src/routes/envoyer.routes');
 const imputationRoutes = require('./src/routes/imputation.routes');
+const archiveRoutes = require('./src/routes/archive.routes');
 
 // 🔐 Sécurité
 app.use(helmet());
@@ -88,7 +89,7 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/envoyer', envoyerRoutes);
 app.use('/api/imputations', imputationRoutes);
-
+app.use('/api/archives', archiveRoutes);
 
 
 // === ROUTES DE TÉLÉCHARGEMENT === //
@@ -121,7 +122,6 @@ router.get("/api/courriers/download", async (req, res) => {
     res.status(500).json({ success: false, message: "Fichier introuvable" });
   }
 });
-
 
 
 // 📄 2️⃣ Fichier d’imputation
@@ -171,11 +171,8 @@ router.get("/api/bordereaux/download/:fileName", async (req, res) => {
   }
 });
 
-
 app.use(router);
 // === FIN DES ROUTES DE TÉLÉCHARGEMENT === //
-
-
 
 // 🔍 Route de test
 app.get('/api/health', (req, res) => {
@@ -220,3 +217,4 @@ app.listen(PORT, () => {
   console.log(`🚀 Serveur démarré sur le port ${PORT}`);
   console.log(`📍 URL: http://localhost:${PORT}`);
 });
+server.timeout = 0; // désactive le timeout HTTP

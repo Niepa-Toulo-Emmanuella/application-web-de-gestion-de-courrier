@@ -56,9 +56,18 @@ const isAdmin = (req, res, next) => {
   next();
 };
 
+const isAdminOrAgent = (req, res, next) => {
+  if (req.user.role === 'agent') {
+    return next();
+  }
+  return res.status(403).json({ success: false, message: 'Accès refusé.' });
+};
+
+
 
 module.exports = {
   verifyToken,
   authenticate,
-  isAdmin
+  isAdmin,
+  isAdminOrAgent
 };
