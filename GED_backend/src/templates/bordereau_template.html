@@ -1,72 +1,193 @@
-<!-- 📄 views/bordereau_template.html -->
 <!DOCTYPE html>
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
   <title>Bordereau de Transmission</title>
   <style>
-    body { font-family: Arial, sans-serif; margin: 20px; }
-    .container { max-width: 900px; margin: auto; }
-    .row { margin-bottom: 10px; }
-    .row label { display: inline-block; width: 180px; font-weight: bold; }
-    textarea.full { width: 100%; }
-    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-    table, th, td { border: 1px solid #ccc; }
-    th, td { padding: 8px; text-align: left; }
-    th { background-color: #f0f0f0; }
+    body {
+      font-family: "Segoe UI", Arial, sans-serif;
+      background-color: #f9f9f9;
+      margin: 0;
+      padding: 20px;
+      color: #333;
+    }
+
+    .container {
+      max-width: 900px;
+      background: #fff;
+      margin: auto;
+      padding: 30px 40px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    h1 {
+      text-align: center;
+      color: #004085;
+      font-size: 1.8em;
+      text-transform: uppercase;
+      border-bottom: 3px solid #004085;
+      padding-bottom: 10px;
+      margin-bottom: 30px;
+    }
+
+    .row {
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      margin-bottom: 10px;
+    }
+
+    .field {
+      flex: 1 1 45%;
+      margin-bottom: 8px;
+    }
+
+    label {
+      display: block;
+      font-weight: bold;
+      color: #555;
+      margin-bottom: 3px;
+      font-size: 0.95em;
+    }
+
+    span {
+      display: block;
+      background: #f6f8fa;
+      border: 1px solid #dcdcdc;
+      border-radius: 5px;
+      padding: 6px 10px;
+      font-size: 0.95em;
+      min-height: 25px;
+      word-break: break-word;
+    }
+
+    .section {
+      margin-top: 20px;
+      padding: 15px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      background: #fcfcfc;
+    }
+
+    .section h2 {
+      font-size: 1.1em;
+      color: #004085;
+      margin-bottom: 10px;
+      border-left: 4px solid #004085;
+      padding-left: 8px;
+      text-transform: uppercase;
+    }
+
+    .urgent {
+      color: red;
+      font-weight: bold;
+      font-size: 1.1em;
+    }
+
+    .footer {
+      text-align: right;
+      font-size: 0.9em;
+      margin-top: 30px;
+      color: #555;
+    }
+
+    /* Table de résumé (si besoin plus tard) */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+      font-size: 0.95em;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 8px 10px;
+    }
+    th {
+      background: #f0f0f0;
+      font-weight: bold;
+      text-align: left;
+    }
+
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>ENREGISTREMENT DE BORDEREAU DE COURRIER</h1>
+    <h1>Bordereau de Transmission</h1>
 
-    <div class="row">
-      <label>Numéro de bordereau :</label>
-      <span>{{NUMERO}}</span>
-    </div>
+    <div class="section">
+      <h2>Informations générales</h2>
+      <div class="row">
+        <div class="field">
+          <label>Numéro de bordereau</label>
+          <span>{{NUMERO}}</span>
+        </div>
+        <div class="field">
+          <label>Courrier sélectionné</label>
+          <span>{{COURRIER}}</span>
+        </div>
+      </div>
 
-    <div class="row">
-      <label>Courrier sélectionné :</label>
-      <span>{{COURRIER}}</span>
-    </div>
-
-    <div class="row">
-      <label>Pièce jointe du courrier :</label>
-      <span>{{FICHIER_SCAN}}</span>
+      <div class="field">
+        <label>Pièce jointe du courrier</label>
+        <span>{{FICHIER_SCAN}}</span>
+      </div>
     </div>
 
     <div class="section">
+      <h2>Détails du courrier</h2>
       <div class="row">
-        <label>Expéditeur :</label>
-        <span>{{EXPEDITEUR}}</span>
+        <div class="field">
+          <label>Expéditeur</label>
+          <span>{{EXPEDITEUR}}</span>
+        </div>
+        <div class="field">
+          <label>Référence N°</label>
+          <span>{{REFERENCE}}</span>
+        </div>
       </div>
+
       <div class="row">
-        <label>Référence N° :</label>
-        <span>{{REFERENCE}}</span>
-        <label>Date du courrier :</label>
-        <span>{{DATE_COURRIER}}</span>
+        <div class="field">
+          <label>Date du courrier</label>
+          <span>{{DATE_COURRIER}}</span>
+        </div>
+        <div class="field">
+          <label>Date d'arrivée</label>
+          <span>{{DATE_ARRIVEE}}</span>
+        </div>
       </div>
+
       <div class="row">
-        <label>Priorité :</label>
-        <span class="{{PRIORITE === 'Urgente' ? 'urgent' : ''}}">{{PRIORITE}}</span>
+        <div class="field">
+          <label>Enregistrement N°</label>
+          <span>{{NUMERO_ENREGISTREMENT}}</span>
+        </div>
+        <div class="field">
+          <label>Heure</label>
+          <span>{{HEURE}}</span>
+        </div>
       </div>
+
       <div class="row">
-        <label>Date d'arrivée :</label>
-        <span>{{DATE_ARRIVEE}}</span>
-        <label>Enregistrement N° :</label>
-        <span>{{NUMERO_ENREGISTREMENT}}</span>
-        <label>Heure :</label>
-        <span>{{HEURE}}</span>
-      </div>
-      <div class="row">
-        <label>Objet :</label>
-        <span>{{OBJET}}</span>
+        <div class="field">
+          <label>Objet</label>
+          <span>{{OBJET}}</span>
+        </div>
+        <div class="field">
+          <label>Priorité</label>
+          <span class="{{PRIORITE === 'Urgente' ? 'urgent' : ''}}">{{PRIORITE}}</span>
+        </div>
       </div>
     </div>
 
-    <div class="row">
-      <label>Observations :</label>
+    <div class="section">
+      <h2>Observations</h2>
       <span>{{OBSERVATIONS}}</span>
+    </div>
+
+    <div class="footer">
+      <p>Document généré automatiquement - Ministère de la Justice</p>
     </div>
   </div>
 </body>
