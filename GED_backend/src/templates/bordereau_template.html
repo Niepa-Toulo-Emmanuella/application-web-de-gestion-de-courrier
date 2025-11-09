@@ -130,7 +130,11 @@
 
       <div class="field">
         <label>Pièce jointe du courrier</label>
-        <span>{{FICHIER_SCAN}}</span>
+        <div>
+          {{#each FICHIERS_SCAN}}
+            <div><a href="{{this}}" target="_blank">{{this}}</a></div>
+          {{/each}}
+        </div>
       </div>
     </div>
 
@@ -179,11 +183,6 @@
           <span class="{{PRIORITE === 'Urgente' ? 'urgent' : ''}}">{{PRIORITE}}</span>
         </div>
       </div>
-    </div>
-
-    <div class="section">
-      <h2>Observations</h2>
-      <span>{{OBSERVATIONS}}</span>
     </div>
 
     <div class="footer">

@@ -28,14 +28,25 @@ async function generateBordereauPDF(data) {
 
   html = html.replace(/{{NUMERO}}/g, data.numero || '')
              .replace(/{{COURRIER}}/g, data.courrier || '')
-             .replace(/{{FICHIER_SCAN}}/g, data.fichier_scan || '')
              .replace(/{{EXPEDITEUR}}/g, data.expediteur || '')
              .replace(/{{REFERENCE}}/g, data.numero_reference || '')
              .replace(/{{DATE_COURRIER}}/g, data.date_courrier || '')
              .replace(/{{DATE_ARRIVEE}}/g, data.date_arrivee || '')
              .replace(/{{NUMERO_ENREGISTREMENT}}/g, data.numero_enregistrement || '')
              .replace(/{{HEURE}}/g, data.heure || '')
-             .replace(/{{OBJET}}/g, data.objet || '');
+             .replace(/{{OBJET}}/g, data.objet || '')
+             .replace(/{{PRIORITE}}/g, data.priorite || 'Non précisée');
+
+  let fichiersHTML = '';
+  if (Array.isArray(data.fichier_scan)) {
+    fichiersHTML = data.fichier_scan.map(f => `<div><a href="${f}" target="_blank">${f}</a></div>`).join('');
+  } else if (data.fichier_scan) {
+    fichiersHTML = `<div><a href="${data.fichier_scan}" target="_blank">${data.fichier_scan}</a></div>`;
+  }
+
+  html = html.replace(/{{FICHIER_SCAN}}/g, fichiersHTML);
+
+
 
   const filePath = `temp_bordereau_${Date.now()}.pdf`;
 
@@ -156,7 +167,7 @@ exports.create = async (req, res) => {
 
     const pdfPath = await generateBordereauPDF({
       numero,
-      courrier: `Courrier #${courrier.id}`,
+      courrier: courrier.objet,
       fichier_scan: (() => {
         try {
           const fichiers = courrier.fichier_scan ? JSON.parse(courrier.fichier_scan) : [];
@@ -171,7 +182,8 @@ exports.create = async (req, res) => {
       date_arrivee,
       numero_enregistrement,
       heure,
-      objet
+      objet,
+      priorite
     });
 
     const fileContent = fs.readFileSync(pdfPath);
