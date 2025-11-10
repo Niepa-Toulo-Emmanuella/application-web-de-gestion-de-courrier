@@ -193,7 +193,8 @@
     <table id="bordereaux-en-attente">
       <thead>
         <tr>
-          <th>Numéro</th>
+          <th>Numéro de référence</th>
+          <th>Numéro d'enregistrement</th>
           <th>Objet</th>
           <th>Date arrivée</th>
           <th>Priorité</th> <!-- ✅ ajout visible -->
@@ -428,6 +429,7 @@
             
             tr.innerHTML = `
               <td>${b.numero_reference}</td>
+              <td>${b.numero_enregistrement}</td>
               <td>${b.objet}</td>
               <td>${b.date_arrivee.split("T")[0]}</td>
               <td class="${
