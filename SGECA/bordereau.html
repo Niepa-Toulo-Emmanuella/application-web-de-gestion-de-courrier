@@ -115,6 +115,11 @@
       font-weight: bold;
     }
 
+    tr.normale {
+      background-color: white; /* white */
+      font-weight: bold;
+    }
+
     option.urgent {
       color: red;
       font-weight: bold;
@@ -436,7 +441,8 @@
             const tr = document.createElement("tr");
             
             // Ajout d'une classe CSS pour les urgents
-            tr.className = b.priorite === "Urgente" ? "urgent" : "";
+            // tr.className = b.priorite === "Urgente" ? "urgent" : "";
+            tr.className = b.priorite === "Urgente" ? "urgent" : "normale";
             
             tr.innerHTML = `
               <td>${b.numero_reference}</td>
