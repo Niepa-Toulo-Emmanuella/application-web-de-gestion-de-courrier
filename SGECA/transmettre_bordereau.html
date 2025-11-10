@@ -218,15 +218,15 @@
                     enAttente.forEach(b => {
                         const tr = document.createElement("tr");
                         tr.innerHTML = `
-              <td>${b.numero_reference || "-"}</td>
-              <td>${b.numero_enregistrement || "-"}</td>
-              <td>${b.objet || "-"}</td>
-              <td>${formatDate(b.date_courrier)}</td>
-              <td>${formatDate(b.date_arrivee)}</td>
-              <td class="${b.priorite === 'Urgente' ? 'urgent' : 'priorite-normale'}">
-                ${b.priorite || 'Normale'}
-              </td>
-            `;
+                            <td>${b.numero_reference || "-"}</td>
+                            <td>${b.numero_enregistrement || "-"}</td>
+                            <td>${b.objet || "-"}</td>
+                            <td>${formatDate(b.date_courrier)}</td>
+                            <td>${formatDate(b.date_arrivee)}</td>
+                            <td class="${b.priorite === 'Urgente' ? 'urgent' : 'priorite-normale'}">
+                                ${b.priorite || 'Normale'}
+                            </td>
+                        `;
                         tbody.appendChild(tr);
 
                         const option = document.createElement("option");
@@ -345,15 +345,15 @@
                 result.data.forEach(b => {
                     const tr = document.createElement("tr");
                     tr.innerHTML = `
-            <td>${b.numero_reference || "-"}</td>
-            <td>${b.numero_enregistrement || "-"}</td>
-            <td>${b.objet || "-"}</td>
-            <td>${formatDate(b.date_courrier)}</td>
-            <td>${formatDate(b.date_arrivee)}</td>
-            <td class="${b.priorite === 'Urgente' ? 'urgent' : ''}">
-              ${b.priorite || 'Normale'}
-            </td>
-          `;
+                        <td>${b.numero_reference || "-"}</td>
+                        <td>${b.numero_enregistrement || "-"}</td>
+                        <td>${b.objet || "-"}</td>
+                        <td>${formatDate(b.date_courrier)}</td>
+                        <td>${formatDate(b.date_arrivee)}</td>
+                        <td class="${b.priorite === 'Urgente' ? 'urgent' : 'priorite-normale'}">
+                            ${b.priorite || 'Normale'}
+                        </td>
+                    `;
                     tbody.appendChild(tr);
                 });
 
