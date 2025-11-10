@@ -258,12 +258,13 @@
 
                 if (result.success) {
                     result.data.forEach(u => {
-                        if (u.is_active) {
+                        // ✅ Filtrer les utilisateurs dont le rôle n'est pas admin ni agent et qui sont actifs
+                        if (u.is_active && u.role && u.role.toLowerCase() !== 'admin' && u.role.toLowerCase() !== 'agent') {
                             const option = document.createElement("option");
                             option.value = u.id;
                             const fullName = `${u.first_name || ''} ${u.last_name || ''}`.trim();
                             const displayName = fullName || u.email;
-                            const role = u.role ? u.role.charAt(0).toUpperCase() + u.role.slice(1) : 'Sans rôle';
+                            const role = u.role.charAt(0).toUpperCase() + u.role.slice(1);
                             option.textContent = `${displayName} — ${role}`;
                             destinataireSelect.appendChild(option);
                         }
