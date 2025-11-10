@@ -1,7 +1,7 @@
 require('dotenv').config(); // <--- AJOUTE CECI TOUT EN HAUT
 const fs = require('fs');
 const Courrier = require('../models/Courrier');
-const uploadToB2 = require('../helpers/b2upload'); // version S3-compatible
+const { uploadToB2 } = require('../helpers/b2upload');
 const AWS = require('aws-sdk');
 const axios = require('axios');
 const path = require("path");
