@@ -156,6 +156,11 @@
       color: #d32f2f;
       font-weight: bold;
     }
+    /* ✅ Pour les priorités normales */
+    .priorite-normale {
+      color: green;
+      font-weight: bold;
+    }
 
 
   </style>
@@ -239,8 +244,8 @@
               <td>${n.objet || ''}</td>
               <td>${n.first_name || ''} ${n.last_name || ''}</td>
               <td>${new Date(n.date_envoi).toLocaleString()}</td>
-              <td class="${isUrgente ? 'priorite-urgente' : ''}">
-                ${n.priorite || 'Normale'}
+              <td class="${b.priorite === 'Urgente' ? 'urgent' : 'priorite-normale'}">
+                ${b.priorite || 'Normale'}
               </td>
               <td>${bordereauLink}</td>
               <td>${courrierLink}</td>
