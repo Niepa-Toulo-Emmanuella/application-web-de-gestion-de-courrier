@@ -100,6 +100,11 @@
             color: red;
             font-weight: bold;
         }
+        /* ✅ Pour les priorités normales */
+        .priorite-normale {
+            color: green;
+            font-weight: bold;
+        }
 
     </style>
 </head>
@@ -218,7 +223,7 @@
               <td>${b.objet || "-"}</td>
               <td>${formatDate(b.date_courrier)}</td>
               <td>${formatDate(b.date_arrivee)}</td>
-              <td class="${b.priorite === 'Urgente' ? 'urgent' : ''}">
+              <td class="${b.priorite === 'Urgente' ? 'urgent' : 'priorite-normale'}">
                 ${b.priorite || 'Normale'}
               </td>
             `;
