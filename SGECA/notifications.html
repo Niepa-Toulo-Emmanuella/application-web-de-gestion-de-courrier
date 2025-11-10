@@ -244,8 +244,8 @@
               <td>${n.objet || ''}</td>
               <td>${n.first_name || ''} ${n.last_name || ''}</td>
               <td>${new Date(n.date_envoi).toLocaleString()}</td>
-              <td class="${b.priorite === 'Urgente' ? 'urgent' : 'priorite-normale'}">
-                ${b.priorite || 'Normale'}
+              <td class="${n.priorite === 'Urgente' ? 'urgent' : 'priorite-normale'}">
+                ${n.priorite || 'Normale'}
               </td>
               <td>${bordereauLink}</td>
               <td>${courrierLink}</td>
