@@ -23,7 +23,7 @@ async function genererNumeroBordereau() {
 
   // 🔍 Récupérer le dernier bordereau enregistré
   const result = await db.query(
-    'SELECT numero_bordereau, annee_generation, created_at FROM bordereaux ORDER BY created_at DESC LIMIT 1'
+    'SELECT numero, created_at FROM bordereaux ORDER BY created_at DESC LIMIT 1'
   );
   const dernier = result.rows[0];
 
@@ -34,17 +34,16 @@ async function genererNumeroBordereau() {
     return { numero: `BDR-${numeroBigInt.toString()}`, annee: anneeActuelle };
   }
 
-  const derniereAnnee = dernier.annee_generation
-    ? Number(dernier.annee_generation)
-    : new Date(dernier.created_at).getFullYear();
+  // On prend l'année du dernier bordereau pour vérifier si elle est différente
+  const derniereAnnee = new Date(dernier.created_at).getFullYear();
 
   if (anneeActuelle > derniereAnnee) {
-    // 🆕 Nouvelle année → reset à 1
+    // Nouvelle année → reset à 1
     return { numero: `BDR-1`, annee: anneeActuelle };
   }
 
   // Même année → on incrémente
-  const dernierNumeroRaw = dernier.numero_bordereau?.replace(/^BDR-/, '') ?? '4974';
+  const dernierNumeroRaw = dernier.numero?.replace(/^BDR-/, '') ?? '4974';
   let dernierNumeroBigInt;
   try {
     dernierNumeroBigInt = BigInt(dernierNumeroRaw);
@@ -55,6 +54,7 @@ async function genererNumeroBordereau() {
   numeroBigInt = dernierNumeroBigInt + 1n;
   return { numero: `BDR-${numeroBigInt.toString()}`, annee: anneeActuelle };
 }
+
 
 
 // -------- Générateur automatique de numéro --------
