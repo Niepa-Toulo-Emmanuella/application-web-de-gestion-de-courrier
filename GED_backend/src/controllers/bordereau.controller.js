@@ -15,6 +15,47 @@ const s3 = new AWS.S3({
   secretAccessKey: process.env.B2_APP_KEY,
 });
 
+// -------------------- Fonction pour générer le numéro de bordereau -------------------- //
+async function genererNumeroBordereau() {
+  const maintenant = new Date();
+  const anneeActuelle = maintenant.getFullYear();
+
+  // 🔍 Récupérer le dernier bordereau enregistré
+  const result = await db.query(
+    'SELECT numero_bordereau, annee_generation, created_at FROM bordereaux ORDER BY created_at DESC LIMIT 1'
+  );
+  const dernier = result.rows[0];
+
+  // Valeur de départ
+  let numeroBigInt = 4975n;
+
+  if (!dernier) {
+    return { numero: numeroBigInt.toString(), annee: anneeActuelle };
+  }
+
+  const derniereAnnee = dernier.annee_generation
+    ? Number(dernier.annee_generation)
+    : new Date(dernier.created_at).getFullYear();
+
+  if (anneeActuelle > derniereAnnee) {
+    // 🆕 Nouvelle année → reset à 1
+    return { numero: '1', annee: anneeActuelle };
+  }
+
+  // Même année → on incrémente
+  const dernierNumeroRaw = dernier.numero_bordereau ?? '4974';
+  let dernierNumeroBigInt;
+  try {
+    dernierNumeroBigInt = BigInt(dernierNumeroRaw);
+  } catch {
+    dernierNumeroBigInt = 4974n;
+  }
+
+  numeroBigInt = dernierNumeroBigInt + 1n;
+  return { numero: numeroBigInt.toString(), annee: anneeActuelle };
+}
+
+
 // -------- Générateur automatique de numéro --------
 function generateNumero() {
   const date = new Date();
@@ -39,10 +80,15 @@ async function generateBordereauPDF(data) {
 
   let fichiersHTML = '';
   if (Array.isArray(data.fichier_scan)) {
-    fichiersHTML = data.fichier_scan.map(f => `<div><a href="${f}" target="_blank">${f}</a></div>`).join('');
+  fichiersHTML = data.fichier_scan.map(f => {
+    const fileName = f.split('/').pop(); // extrait juste le nom du fichier
+    return `<div>📎 ${fileName}</div>`;
+  }).join('');
   } else if (data.fichier_scan) {
-    fichiersHTML = `<div><a href="${data.fichier_scan}" target="_blank">${data.fichier_scan}</a></div>`;
+    const fileName = data.fichier_scan.split('/').pop();
+    fichiersHTML = `<div>📎 ${fileName}</div>`;
   }
+
 
   html = html.replace(/{{FICHIER_SCAN}}/g, fichiersHTML);
 
@@ -142,11 +188,12 @@ exports.detail = async (req, res) => {
 };
 
 // ---------------- CREATE -------------------------------------
+// ---------------- CREATE -------------------------------------
 exports.create = async (req, res) => {
   try {
     const {
       courrier_id, expediteur_id, destinataire_id, numero_reference, date_courrier,
-      date_arrivee, numero_enregistrement, heure, objet, observations
+      date_arrivee, heure, objet
     } = req.body;
 
     if (!courrier_id) {
@@ -161,12 +208,32 @@ exports.create = async (req, res) => {
       return res.status(404).json({ success: false, message: "Courrier introuvable" });
     }
     const courrier = courrierRes.rows[0];
-    const priorite = courrier.priorite || "Normale"; // valeur par défaut
+    const priorite = courrier.priorite || "Normale";
 
-    const numero = generateNumero();
+    // 🔢 Utilisation de ta fonction existante pour générer le numéro de bordereau
+    const { numero: numeroBordereau } = await genererNumeroBordereau();
+
+    // On peut créer le numero_enregistrement en ajoutant le préfixe ENR-YYYY-
+    const year = new Date().getFullYear();
+    const numero_enregistrement = `ENR-${year}-${numeroBordereau}`;
+
+    // 🔍 Récupération du nom et rôle de l’expéditeur
+    let expediteurNomComplet = "Inconnu";
+    try {
+      const userRes = await db.query(
+        `SELECT first_name, last_name, role FROM users WHERE id = $1`,
+        [expediteur_id]
+      );
+      if (userRes.rows.length > 0) {
+        const u = userRes.rows[0];
+        expediteurNomComplet = `${u.nom} ${u.prenom} (${u.role})`;
+      }
+    } catch (err) {
+      console.error("Erreur récupération expéditeur :", err);
+    }
 
     const pdfPath = await generateBordereauPDF({
-      numero,
+      numero_enregistrement,
       courrier: courrier.objet,
       fichier_scan: (() => {
         try {
@@ -176,11 +243,10 @@ exports.create = async (req, res) => {
           return courrier.fichier_scan ? [courrier.fichier_scan][0] : null;
         }
       })(),
-      expediteur: expediteur_id,
+      expediteur: expediteurNomComplet,
       numero_reference,
       date_courrier,
       date_arrivee,
-      numero_enregistrement,
       heure,
       objet,
       priorite
@@ -195,15 +261,14 @@ exports.create = async (req, res) => {
     };
     const uploaded = await s3.upload(s3Params).promise();
     fs.unlinkSync(pdfPath);
-
     const fichier_bordereau = s3Params.Key;
 
     const result = await db.query(`
       INSERT INTO bordereaux (
         courrier_id, expediteur_id, destinataire_id, numero_reference, date_courrier,
         date_arrivee, numero_enregistrement, heure, objet, priorite,
-        statut, numero, fichier_bordereau
-      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,'en_attente',$11,$12)
+        statut, fichier_bordereau
+      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,'en_attente',$11)
       RETURNING *;
     `, [
       courrier_id,
@@ -215,8 +280,7 @@ exports.create = async (req, res) => {
       numero_enregistrement,
       heure,
       objet,
-      priorite, // 🟡 inséré ici
-      numero,
+      priorite,
       fichier_bordereau
     ]);
 
@@ -233,6 +297,7 @@ exports.create = async (req, res) => {
     res.status(500).json({ success: false, message: "Erreur lors de la création du bordereau" });
   }
 };
+
 
 // ---------------- ENVOI --------------------------------------
 exports.transmettreBordereau = async (req, res) => {
