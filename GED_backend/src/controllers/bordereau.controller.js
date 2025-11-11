@@ -16,6 +16,7 @@ const s3 = new AWS.S3({
 });
 
 // -------------------- Fonction pour générer le numéro de bordereau -------------------- //
+// -------------------- Fonction pour générer le numéro de bordereau -------------------- //
 async function genererNumeroBordereau() {
   const maintenant = new Date();
   const anneeActuelle = maintenant.getFullYear();
@@ -30,7 +31,7 @@ async function genererNumeroBordereau() {
   let numeroBigInt = 4975n;
 
   if (!dernier) {
-    return { numero: numeroBigInt.toString(), annee: anneeActuelle };
+    return { numero: `BDR-${numeroBigInt.toString()}`, annee: anneeActuelle };
   }
 
   const derniereAnnee = dernier.annee_generation
@@ -39,11 +40,11 @@ async function genererNumeroBordereau() {
 
   if (anneeActuelle > derniereAnnee) {
     // 🆕 Nouvelle année → reset à 1
-    return { numero: '1', annee: anneeActuelle };
+    return { numero: `BDR-1`, annee: anneeActuelle };
   }
 
   // Même année → on incrémente
-  const dernierNumeroRaw = dernier.numero_bordereau ?? '4974';
+  const dernierNumeroRaw = dernier.numero_bordereau?.replace(/^BDR-/, '') ?? '4974';
   let dernierNumeroBigInt;
   try {
     dernierNumeroBigInt = BigInt(dernierNumeroRaw);
@@ -52,7 +53,7 @@ async function genererNumeroBordereau() {
   }
 
   numeroBigInt = dernierNumeroBigInt + 1n;
-  return { numero: numeroBigInt.toString(), annee: anneeActuelle };
+  return { numero: `BDR-${numeroBigInt.toString()}`, annee: anneeActuelle };
 }
 
 
@@ -213,9 +214,8 @@ exports.create = async (req, res) => {
     // 🔢 Utilisation de ta fonction existante pour générer le numéro de bordereau
     const { numero: numeroBordereau } = await genererNumeroBordereau();
 
-    // On peut créer le numero_enregistrement en ajoutant le préfixe ENR-YYYY-
-    const year = new Date().getFullYear();
-    const numero_enregistrement = `ENR-${year}-${numeroBordereau}`;
+    // Exemple : numeroBordereau = 'BDR-4987'
+    const numero_enregistrement = `ENR-${year}-${numeroBordereau.replace('BDR-', '')}`;
 
     // 🔍 Récupération du nom et rôle de l’expéditeur
     let expediteurNomComplet = "Inconnu";
