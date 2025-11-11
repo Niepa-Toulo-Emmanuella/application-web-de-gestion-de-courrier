@@ -201,27 +201,26 @@ exports.create = async (req, res) => {
       return res.status(400).json({ success: false, message: "courrier_id est requis" });
     }
 
+    // Récupération du courrier
     const courrierRes = await db.query(
-      `SELECT id, fichier_scan, objet, priorite FROM courriers WHERE id = $1`,
+      `SELECT id, fichier_scan, objet, priorite, expediteur FROM courriers WHERE id = $1`,
       [courrier_id]
     );
     if (courrierRes.rows.length === 0) {
       return res.status(404).json({ success: false, message: "Courrier introuvable" });
     }
+
     const courrier = courrierRes.rows[0];
     const priorite = courrier.priorite || "Normale";
 
-    // 🔢 Génération du numéro de bordereau
+    // Génération du numéro de bordereau
     const { numero: numeroBordereau } = await genererNumeroBordereau();
 
-    // 🔹 Utilisation de l'année actuelle directement
-    const maintenant = new Date();
-    const annee = maintenant.getFullYear();
+    // ⚙️ Le numéro d’enregistrement doit être identique au numéro du bordereau
+    const numero_enregistrement = numeroBordereau;
 
-    const numero_enregistrement = `ENR-${annee}-${numeroBordereau.replace('BDR-', '')}`;
-
-    // 🔍 Récupération du nom et rôle de l’expéditeur
-    let expediteurNomComplet = "Inconnu";
+    // 🔍 Récupération du nom et rôle de l’expéditeur (optionnel)
+    let expediteurNomComplet = courrier.expediteur || "Inconnu";
     try {
       const userRes = await db.query(
         `SELECT first_name, last_name, role FROM users WHERE id = $1`,
@@ -235,15 +234,16 @@ exports.create = async (req, res) => {
       console.error("Erreur récupération expéditeur :", err);
     }
 
+    // 🧾 Génération du PDF avec toutes les données correctes
     const pdfPath = await generateBordereauPDF({
+      numero: numeroBordereau,
       numero_enregistrement,
       courrier: courrier.objet,
       fichier_scan: (() => {
         try {
-          const fichiers = courrier.fichier_scan ? JSON.parse(courrier.fichier_scan) : [];
-          return fichiers[0] || null;
+          return courrier.fichier_scan ? JSON.parse(courrier.fichier_scan) : [];
         } catch {
-          return courrier.fichier_scan ? [courrier.fichier_scan][0] : null;
+          return courrier.fichier_scan ? [courrier.fichier_scan] : [];
         }
       })(),
       expediteur: expediteurNomComplet,
@@ -255,6 +255,7 @@ exports.create = async (req, res) => {
       priorite
     });
 
+    // Upload du fichier généré
     const fileContent = fs.readFileSync(pdfPath);
     const s3Params = {
       Bucket: process.env.B2_BUCKET_NAME,
@@ -264,35 +265,26 @@ exports.create = async (req, res) => {
     };
     await s3.upload(s3Params).promise();
     fs.unlinkSync(pdfPath);
+
     const fichier_bordereau = s3Params.Key;
 
     const result = await db.query(`
       INSERT INTO bordereaux (
-        courrier_id, expediteur_id, destinataire_id, numero_reference, date_courrier,
-        date_arrivee, numero_enregistrement, heure, objet, priorite,
-        statut, fichier_bordereau
-      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,'en_attente',$11)
+        courrier_id, expediteur_id, destinataire_id, numero_reference,
+        date_courrier, date_arrivee, numero_enregistrement, heure,
+        objet, priorite, statut, fichier_bordereau, numero
+      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,'en_attente',$11,$12)
       RETURNING *;
     `, [
-      courrier_id,
-      expediteur_id,
-      destinataire_id || null,
-      numero_reference,
-      date_courrier,
-      date_arrivee,
-      numero_enregistrement,
-      heure,
-      objet,
-      priorite,
-      fichier_bordereau
+      courrier_id, expediteur_id, destinataire_id || null, numero_reference,
+      date_courrier, date_arrivee, numero_enregistrement, heure,
+      objet, priorite, fichier_bordereau, numeroBordereau
     ]);
-
-    const bordereau = result.rows[0];
 
     res.status(201).json({
       success: true,
-      message: "Bordereau enregistré et PDF généré avec succès ✅",
-      data: { bordereau, courrier }
+      message: "Bordereau enregistré et PDF généré avec succès",
+      data: result.rows[0]
     });
 
   } catch (err) {
@@ -300,6 +292,7 @@ exports.create = async (req, res) => {
     res.status(500).json({ success: false, message: "Erreur lors de la création du bordereau" });
   }
 };
+
 
 
 
