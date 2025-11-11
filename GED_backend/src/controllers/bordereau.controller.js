@@ -211,11 +211,14 @@ exports.create = async (req, res) => {
     const courrier = courrierRes.rows[0];
     const priorite = courrier.priorite || "Normale";
 
-    // 🔢 Utilisation de ta fonction existante pour générer le numéro de bordereau
+    // 🔢 Génération du numéro de bordereau
     const { numero: numeroBordereau } = await genererNumeroBordereau();
 
-    // Exemple : numeroBordereau = 'BDR-4987'
-    const numero_enregistrement = `ENR-${year}-${numeroBordereau.replace('BDR-', '')}`;
+    // 🔹 Utilisation de l'année actuelle directement
+    const maintenant = new Date();
+    const annee = maintenant.getFullYear();
+
+    const numero_enregistrement = `ENR-${annee}-${numeroBordereau.replace('BDR-', '')}`;
 
     // 🔍 Récupération du nom et rôle de l’expéditeur
     let expediteurNomComplet = "Inconnu";
@@ -226,7 +229,7 @@ exports.create = async (req, res) => {
       );
       if (userRes.rows.length > 0) {
         const u = userRes.rows[0];
-        expediteurNomComplet = `${u.nom} ${u.prenom} (${u.role})`;
+        expediteurNomComplet = `${u.first_name} ${u.last_name} (${u.role})`;
       }
     } catch (err) {
       console.error("Erreur récupération expéditeur :", err);
@@ -259,7 +262,7 @@ exports.create = async (req, res) => {
       Body: fileContent,
       ContentType: 'application/pdf',
     };
-    const uploaded = await s3.upload(s3Params).promise();
+    await s3.upload(s3Params).promise();
     fs.unlinkSync(pdfPath);
     const fichier_bordereau = s3Params.Key;
 
@@ -297,6 +300,7 @@ exports.create = async (req, res) => {
     res.status(500).json({ success: false, message: "Erreur lors de la création du bordereau" });
   }
 };
+
 
 
 // ---------------- ENVOI --------------------------------------
