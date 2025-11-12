@@ -82,6 +82,7 @@ async function generateBordereauPDF(data) {
   let fichiersHTML = '';
   if (Array.isArray(data.fichier_scan)) {
   fichiersHTML = data.fichier_scan.map(f => {
+    console.log("🧩 Valeur de f :", f, "Type :", typeof f);
     const fileName = f.split('/').pop(); // extrait juste le nom du fichier
     return `<div>📎 ${fileName}</div>`;
   }).join('');
