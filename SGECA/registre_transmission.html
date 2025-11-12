@@ -1,3 +1,4 @@
+<!-- registre_transmission.html -->
 <!DOCTYPE html>
 <html lang="fr">
 
@@ -9,21 +10,14 @@
   <style>
     body {
       background-color: #f8f9fa;
-      font-family: "Segoe UI", Roboto, sans-serif;
-      margin: 0;
     }
 
     h2 {
       color: #0d6efd;
-      font-weight: 600;
-      letter-spacing: 0.5px;
     }
 
     #searchInput {
-      max-width: 400px;
-      border-radius: 50px;
-      border: 1px solid #ced4da;
-      padding: 8px 18px;
+      max-width: 300px;
     }
 
     table th {
@@ -94,118 +88,11 @@
       width: 100%;
       border: none;
     }
-
-    /* Badges statut */
-    .badge-bg-envoye {
-      background-color: #198754;
-      color: #fff;
-      padding: 4px 8px;
-      border-radius: 12px;
-    }
-
-    .badge-bg-attente {
-      background-color: #6c757d;
-      color: #fff;
-      padding: 4px 8px;
-      border-radius: 12px;
-    }
-
-    /* Animations d’apparition par ligne */
-    @keyframes slide-in-left {
-      0% {
-        transform: translateX(-50px);
-        opacity: 0;
-      }
-
-      100% {
-        transform: translateX(0);
-        opacity: 1;
-      }
-    }
-
-    @keyframes slide-in-right {
-      0% {
-        transform: translateX(50px);
-        opacity: 0;
-      }
-
-      100% {
-        transform: translateX(0);
-        opacity: 1;
-      }
-    }
-
-    tr.slide-left {
-      animation: slide-in-left 0.4s ease forwards;
-    }
-
-    tr.slide-right {
-      animation: slide-in-right 0.4s ease forwards;
-    }
-
-    .table-responsive {
-      border-radius: 12px;
-      overflow: hidden;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-      background-color: #fff;
-      padding: 10px;
-    }
-
-    /* Barre de navigation */
-    nav.sidebar {
-      width: 220px;
-      background: #182848;
-      color: #fff;
-      padding: 20px;
-      flex-shrink: 0;
-      height: 100vh;
-      position: fixed;
-      overflow-y: auto;
-    }
-
-    nav.sidebar h4 {
-      margin-bottom: 20px;
-    }
-
-    nav.sidebar ul {
-      list-style: none;
-      padding: 0;
-    }
-
-    nav.sidebar ul li a {
-      display: block;
-      color: #fff;
-      padding: 10px 15px;
-      text-decoration: none;
-      border-radius: 5px;
-      margin-bottom: 5px;
-    }
-
-    nav.sidebar ul li a:hover {
-      background: #0d6efd;
-    }
-
-    /* Contenu principal */
-    .main-content {
-      margin-left: 220px;
-      padding: 20px;
-    }
   </style>
 </head>
 
 <body>
-  <!-- Barre de navigation -->
-  <nav class="sidebar">
-    <h4>Menu</h4>
-    <ul>
-      <li><a href="registre_transcription.html">📄 Registre transcription</a></li>
-      <li><a href="registre_transmission.html">📘 Registre transmission</a></li>
-      <!-- ajouter d’autres liens si nécessaire -->
-    </ul>
-  </nav>
-
-  <!-- Contenu principal -->
-  <div class="main-content">
+  <div class="container py-4">
     <h2 class="text-center mb-4">📘 Registre de transmission</h2>
 
     <!-- Barre de recherche -->
@@ -220,7 +107,7 @@
     <div id="alert" class="alert alert-danger d-none" role="alert"></div>
 
     <!-- Tableau -->
-    <div class="table-responsive">
+    <div class="table-responsive shadow-sm rounded bg-white">
       <table class="table table-striped align-middle text-center" id="table-bordereaux">
         <thead class="table-primary">
           <tr>
@@ -230,11 +117,10 @@
             <th>Objet</th>
             <th>Destinataire</th>
             <th>Observations</th>
-            <th>Priorité</th>
+            <th>Priorité</th> <!-- ← Nouvelle colonne -->
             <th>Pièce jointe</th>
             <th>Bordereau d’imputation</th>
             <th>Bordereau</th>
-            <th>Statut</th>
           </tr>
         </thead>
         <tbody></tbody>
@@ -261,90 +147,119 @@
     document.getElementById("closeOverlay").onclick = () => {
       document.getElementById("overlay").style.display = "none";
       document.getElementById("previewFrame").src = "";
+      console.log("🔒 Overlay fermé");
     };
 
     function afficherApercuDepuisBlob(blob) {
       const url = URL.createObjectURL(blob);
       const iframe = document.getElementById("previewFrame");
+      console.log("🔍 Blob reçu pour aperçu :", blob);
       if (blob.type.includes("pdf")) iframe.src = url;
       else iframe.src = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(url)}`;
       document.getElementById("overlay").style.display = "flex";
+      console.log("👁️ Aperçu affiché dans l'iframe");
     }
 
     async function previewBordereauSecure(key) {
+      console.log("📂 Aperçu bordereau demandé pour key:", key);
       try {
         const res = await fetch(`${API_BASE}/api/bordereaux/secure-preview-by-key`, {
           method: "POST",
           headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
           body: JSON.stringify({ key })
         });
+        console.log("✅ Réponse API bordereau :", res);
         if (!res.ok) throw new Error("Erreur lors du chargement du bordereau");
         const blob = await res.blob();
         afficherApercuDepuisBlob(blob);
-      } catch (err) { alert(err.message); }
+      } catch (err) {
+        console.error("❌ Erreur aperçu bordereau :", err);
+        alert(err.message);
+      }
     }
 
     async function previewImputationSecure(key) {
+      console.log("📂 Aperçu imputation demandé pour key:", key);
       try {
         const res = await fetch(`${API_BASE}/api/imputations/secure-preview-by-key`, {
           method: "POST",
           headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
           body: JSON.stringify({ key })
         });
+        console.log("✅ Réponse API imputation :", res);
         if (!res.ok) throw new Error("Erreur lors du chargement de l’imputation");
         const blob = await res.blob();
         afficherApercuDepuisBlob(blob);
-      } catch (err) { alert(err.message); }
+      } catch (err) {
+        console.error("❌ Erreur aperçu imputation :", err);
+        alert(err.message);
+      }
     }
 
     function previewCourrier(url) {
+      console.log("👁️ Aperçu fichier :", url);
       if (!url) return alert("Aucun fichier à afficher");
+
       const iframe = document.getElementById("previewFrame");
-      if (url.endsWith(".pdf")) iframe.src = url;
-      else if (url.match(/\.(docx|pptx|xlsx)$/)) iframe.src = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(url)}`;
-      else iframe.src = url;
+      if (url.endsWith(".pdf")) {
+        iframe.src = url;
+      } else if (url.match(/\.(docx|pptx|xlsx)$/)) {
+        iframe.src = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(url)}`;
+      } else {
+        iframe.src = url;
+      }
       document.getElementById("overlay").style.display = "flex";
     }
 
-    function renderRow(b, index) {
+
+    function renderRow(b) {
+      console.log("🔹 Ligne reçue :", b); // Vérifier tout l'objet
+
       const date = b.date_depart ? new Date(b.date_depart).toLocaleDateString("fr-FR") : "—";
 
-      // Priorité
-      const prioriteHTML = b.priorite ? `<span class="badge bg-danger">${b.priorite}</span>` : "—";
+      // 🔸 Priorité
+      let prioriteHTML = b.priorite 
+          ? `<span class="badge bg-danger">${b.priorite}</span>` 
+          : "—";
 
-      // Statut
-      const statutClass = b.statut === "envoye" ? "badge-bg-envoye" : "badge-bg-attente";
-      const statutHTML = `<span class="${statutClass}">${b.statut ?? "—"}</span>`;
 
-      // Pièces jointes
+      // 🔸 Pièces jointes (courriers)
       let fichiersHTML = '—';
       if (b.fichier_scan) {
         try {
-          let fichiers = typeof b.fichier_scan === 'string' && b.fichier_scan.trim().startsWith('[')
-            ? JSON.parse(b.fichier_scan)
-            : (typeof b.fichier_scan === 'string' ? [b.fichier_scan] : b.fichier_scan);
+          let fichiers = b.fichier_scan;
+          if (typeof fichiers === 'string' && fichiers.trim().startsWith('[')) fichiers = JSON.parse(fichiers);
+          else if (typeof fichiers === 'string') fichiers = [fichiers];
 
           if (Array.isArray(fichiers) && fichiers.length > 0) {
             fichiersHTML = fichiers.map((url) =>
               `<div>
                 <a href="${url}" target="_blank" class="text-decoration-none">📎 ${url.split('/').pop()}</a>
                 <button class="btn-preview" onclick="previewCourrier('${url}')">👁️ Aperçu</button>
-              </div>`).join('');
+              </div>`
+            ).join('');
           }
-        } catch { fichiersHTML = '—'; }
+        } catch (err) {
+          console.warn('Erreur décodage fichier_scan', err, b.fichier_scan);
+        }
       }
 
-      // Imputation
+      // 🔸 Imputation
+      // 🔸 Imputation (clé relative extraite)
       const fichierImputation = b.fichier_imputation
         ? (() => {
+          // On récupère seulement la clé relative dans le bucket
           const key = b.fichier_imputation.split('/CourrierBucket2/')[1];
           return `<div>
             <a href="${b.fichier_imputation}" target="_blank" class="text-decoration-none">Ouvrir</a>
             <button class="btn-preview" onclick="previewImputationSecure('${key}')">Aperçu</button>
           </div>`;
-        })() : "—";
+        })()
+        : "—";
 
-      // Bordereau
+
+      // 🔸 Bordereau
+      // 🔸 Bordereau (clé relative extraite)
       const fichierBordereau = b.fichier_bordereau
         ? (() => {
           const key = b.fichier_bordereau.split('/CourrierBucket2/')[1];
@@ -352,37 +267,39 @@
             <a href="${b.fichier_bordereau}" target="_blank" class="text-decoration-none">Ouvrir</a>
             <button class="btn-preview" onclick="previewBordereauSecure('${key}')">Aperçu</button>
           </div>`;
-        })() : "—";
+        })()
+        : "—";
 
-      const directionClass = index % 2 === 0 ? 'slide-left' : 'slide-right';
 
-      return `<tr class="${directionClass}">
+      return `
+      <tr>
         <td>${date}</td>
         <td>${b.numero_reference ?? "—"}</td>
         <td>${b.numero_enregistrement ?? "—"}</td>
         <td>${b.objet ?? "—"}</td>
         <td>${Array.isArray(b.destinataire) ? b.destinataire.join(', ') : (b.destinataire ?? "—")}</td>
         <td>${b.observations ?? "—"}</td>
-        <td>${prioriteHTML}</td>
+        <td>${prioriteHTML}</td> <!-- ← Nouvelle cellule -->
         <td>${fichiersHTML}</td>
         <td>${fichierImputation}</td>
         <td>${fichierBordereau}</td>
-        <td>${statutHTML}</td>
       </tr>`;
     }
 
     function afficherTableau(data) {
+      console.log("📊 Données pour affichage :", data);
       if (!data || data.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="11" class="text-center text-muted fst-italic">Aucun enregistrement trouvé.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="9" class="text-center text-muted fst-italic">Aucun enregistrement trouvé.</td></tr>`;
       } else {
-        tbody.innerHTML = data.map((b, index) => renderRow(b, index)).join("");
+        tbody.innerHTML = data.map(renderRow).join("");
       }
     }
 
     function filtrer(data, terme) {
       const t = terme.toLowerCase();
       return data.filter(
-        b => (b.numero_reference ?? "").toLowerCase().includes(t) ||
+        (b) =>
+          (b.numero_reference ?? "").toLowerCase().includes(t) ||
           (b.numero_enregistrement ?? "").toLowerCase().includes(t) ||
           (b.objet ?? "").toLowerCase().includes(t) ||
           (b.destinataire ?? "").toLowerCase().includes(t) ||
@@ -393,16 +310,19 @@
     async function chargerBordereaux() {
       alertBox.classList.add("d-none");
       loadingBox.classList.remove("d-none");
+      console.log("⏳ Chargement des bordereaux...");
       try {
         const res = await fetch(`${API_BASE}/api/bordereaux/registre-transmission`, {
           headers: { Authorization: `Bearer ${token}` },
         });
+        console.log("✅ Réponse API registre-transmission :", res);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const { success, data, message } = await res.json();
         if (!success) throw new Error(message ?? "Erreur de chargement");
         window._bordereaux = data;
         afficherTableau(data);
       } catch (err) {
+        console.error("❌ Erreur chargement bordereaux :", err);
         alertBox.textContent = err.message ?? "Erreur serveur";
         alertBox.classList.remove("d-none");
       } finally {
@@ -410,7 +330,7 @@
       }
     }
 
-    searchInput.addEventListener("input", e => {
+    searchInput.addEventListener("input", (e) => {
       const terme = e.target.value.trim();
       const data = window._bordereaux ?? [];
       afficherTableau(filtrer(data, terme));
