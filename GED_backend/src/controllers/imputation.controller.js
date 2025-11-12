@@ -25,9 +25,7 @@ async function generateImputationPDF(data) {
   let html = fs.readFileSync(templatePath, 'utf-8');
 
  // Remplacer les champs simples
-  html = html.replace(/{{IMPUTATION_ID}}/g, data.imputation_id || '')
-             .replace(/{{BORDEREAU_ID}}/g, data.bordereau_id || '')
-             .replace(/{{INSTRUCTIONS_TEXT}}/g, (data.instructions || []).join(', '))
+  html = html.replace(/{{INSTRUCTIONS_TEXT}}/g, (data.instructions || []).join(', '))
              .replace(/{{DATE_DEPART}}/g, data.date_depart || '')
              .replace(/{{DUREE_TRAITEMENT}}/g, data.duree_traitement || '')
              .replace(/{{DATE_RETOUR}}/g, data.date_retour || '')
@@ -37,6 +35,8 @@ async function generateImputationPDF(data) {
   // ✅ Ajouter signature et cachet
   if (data.signaturePath) html = html.replace(/{{SIGNATURE}}/g, `file://${data.signaturePath}`);
   if (data.cachetFile) html = html.replace(/{{CACHET}}/g, `file://${data.cachetFile.path}`);
+
+  
 
   // 🧩 Helper : normalise les textes pour comparer sans accent / casse
   function normalizeText(s) {
