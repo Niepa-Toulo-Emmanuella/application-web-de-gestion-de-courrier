@@ -202,11 +202,26 @@ exports.detail = async (req, res) => {
 // ---------------- CREATE -------------------------------------
 // ---------------- CREATE -------------------------------------
 exports.create = async (req, res) => {
+  console.log("📩 [BORDEREAU] Requête reçue :", req.body);
   try {
     const {
       courrier_id, destinataire_id, numero_reference, date_courrier,
       date_arrivee, heure, objet
     } = req.body;
+
+     // Vérifions les valeurs reçues
+    console.log("✅ Données reçues :");
+    console.log("   courrier_id :", courrier_id);
+    console.log("   expediteurBordereau :", expediteurBordereau);
+    console.log("   numero_reference :", numero_reference);
+    console.log("   date_courrier :", date_courrier);
+    console.log("   date_arrivee :", date_arrivee);
+    console.log("   numero_enregistrement :", numero_enregistrement);
+    console.log("   heure :", heure);
+    console.log("   objet :", objet);
+    console.log("   priorite :", priorite);
+    console.log("   fichier_bordereau :", fichier_bordereau);
+    console.log("   numeroBordereau :", numeroBordereau);
 
     if (!courrier_id) {
       return res.status(400).json({ success: false, message: "courrier_id est requis" });
@@ -288,12 +303,17 @@ exports.create = async (req, res) => {
       numeroBordereau
     ]);
 
+    console.log("🧠 [SQL] Requête préparée :", query);
+    console.log("🧩 [SQL] Valeurs :", values);
+
 
     res.status(201).json({
       success: true,
       message: "Bordereau enregistré et PDF généré avec succès",
       data: {bordereau : result.rows[0]}
     });
+
+    console.log("✅ [SQL] Bordereau inséré avec succès :", result.rows[0]);
 
   } catch (err) {
     console.error("Erreur création bordereau :", err);
