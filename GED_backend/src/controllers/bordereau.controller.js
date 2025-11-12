@@ -204,7 +204,7 @@ exports.detail = async (req, res) => {
 exports.create = async (req, res) => {
   try {
     const {
-      courrier_id, expediteur, destinataire_id, numero_reference, date_courrier,
+      courrier_id, destinataire_id, numero_reference, date_courrier,
       date_arrivee, heure, objet
     } = req.body;
 
@@ -268,13 +268,13 @@ exports.create = async (req, res) => {
 
     const result = await db.query(`
       INSERT INTO bordereaux (
-        courrier_id, expediteur, destinataire_id, numero_reference,
+        courrier_id, expediteur, numero_reference,
         date_courrier, date_arrivee, numero_enregistrement, heure,
         objet, priorite, statut, fichier_bordereau, numero
       ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,'en_attente',$11,$12)
       RETURNING *;
     `, [
-      courrier_id, expediteurBordereau, destinataire_id || null, numero_reference,
+      courrier_id, expediteurBordereau, numero_reference,
       date_courrier, date_arrivee, numero_enregistrement, heure,
       objet, priorite, fichier_bordereau, numeroBordereau
     ]);
