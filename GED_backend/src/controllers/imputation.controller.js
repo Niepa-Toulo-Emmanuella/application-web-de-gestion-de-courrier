@@ -32,10 +32,31 @@ async function generateImputationPDF(data) {
              .replace(/{{TRAITEMENT_ACTIONS_TEXT}}/g, (data.traitement_actions || []).join(', '))
              .replace(/{{OBSERVATIONS}}/g, data.observations || '');
 
-  // ✅ Ajouter signature et cachet
-  if (data.signaturePath) html = html.replace(/{{SIGNATURE}}/g, `file://${data.signaturePath}`);
-  if (data.cachetFile) html = html.replace(/{{CACHET}}/g, `file://${data.cachetFile.path}`);
+  // ---------- SIGNATURE et CACHET : utiliser data URLs ----------
+  // data.signature attendu sous la forme "data:image/png;base64,...." ou seulement base64 (on normalise)
+  function normalizeToDataUrl(maybeData) {
+    if (!maybeData) return null;
+    if (maybeData.startsWith('data:image')) return maybeData; // déjà data url
+    // sinon on suppose que c'est du base64 pur (début "iVBORw0..." ou " /9j/4AAQ...")
+    return 'data:image/png;base64,' + maybeData.replace(/^data:image\/\w+;base64,/, '');
+  }
 
+  const signatureDataUrl = normalizeToDataUrl(data.signature);
+  const cachetDataUrl = normalizeToDataUrl(data.cachet);
+
+  // Remplacer placeholders par <img> avec data URLs ou par une image vide si absent
+  if (signatureDataUrl) {
+    html = html.replace(/{{SIGNATURE}}/g, signatureDataUrl);
+  } else {
+    // si tu veux une image de fallback, remplace par un petit transparent 1x1
+    html = html.replace(/{{SIGNATURE}}/g, '');
+  }
+
+  if (cachetDataUrl) {
+    html = html.replace(/{{CACHET}}/g, cachetDataUrl);
+  } else {
+    html = html.replace(/{{CACHET}}/g, '');
+  }
   
 
   // 🧩 Helper : normalise les textes pour comparer sans accent / casse
@@ -172,24 +193,32 @@ exports.create = async (req, res) => {
       traitement_actions,
       observations,
       signature,
+      cachet,
       destinataire_id, // on suppose que le frontend l’envoie
       priorite
     } = req.body;
 
-    const cachetFile = req.file; // multer stocke le fichier temporairement
+    // Récupération signature (base64 venant du front) — front envoie data.signature = canvas.toDataURL(...)
+    const signatureBase64 = signature || null; // peut être "data:image/png;base64,...." ou base64 pur
+    const cachetBase64 = cachet || null;       // si le front envoie le cachet en base64
 
-    // Convertir signature base64 en fichier PNG
-    let signaturePath = null;
-    if(signature){
-      const base64Data = signature.replace(/^data:image\/png;base64,/, "");
-      signaturePath = `uploads/signature_${Date.now()}.png`;
-      fs.writeFileSync(signaturePath, base64Data, 'base64');
+    // Si tu utilises multer upload (fichier), tu peux aussi convertir le fichier uploadé en base64 ici
+    let cachetFromMulterBase64 = null;
+    if (!cachetBase64 && req.file) {
+      const raw = fs.readFileSync(req.file.path);
+      cachetFromMulterBase64 = raw.toString('base64');
+      // si tu veux, supprime le fichier temporaire après lecture :
+      try { fs.unlinkSync(req.file.path); } catch(e){ /* ignore */ }
     }
 
     // ✅ Expéditeur : utilisateur connecté
     const expediteur_id = req.user?.id || req.user?.userId;
 
     console.log("🧾 Corps reçu :", req.body);
+
+    console.log('signature (prefix) =', (req.body.signature || '' || signature).slice(0,40));
+    console.log('cachet present?', !!(req.body.cachet || req.file || cachet));
+
 
     // 1️⃣ Génération du PDF
     const pdfPath = await generateImputationPDF({
@@ -202,8 +231,8 @@ exports.create = async (req, res) => {
       date_retour,
       traitement_actions,
       observations,
-      signaturePath,   // <-- ajouté
-      cachetFile       // <-- ajouté
+      signature: signatureBase64,            // <-- base64 / data url
+      cachet: cachetBase64 || cachetFromMulterBase64  // <-- base64
     });
 
     // 2️⃣ Upload sur B2
