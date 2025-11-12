@@ -10,6 +10,7 @@
     body {
       background-color: #f8f9fa;
       font-family: "Segoe UI", Roboto, sans-serif;
+      margin: 0;
     }
 
     h2 {
@@ -149,11 +150,62 @@
       background-color: #fff;
       padding: 10px;
     }
+
+    /* Barre de navigation */
+    nav.sidebar {
+      width: 220px;
+      background: #182848;
+      color: #fff;
+      padding: 20px;
+      flex-shrink: 0;
+      height: 100vh;
+      position: fixed;
+      overflow-y: auto;
+    }
+
+    nav.sidebar h4 {
+      margin-bottom: 20px;
+    }
+
+    nav.sidebar ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    nav.sidebar ul li a {
+      display: block;
+      color: #fff;
+      padding: 10px 15px;
+      text-decoration: none;
+      border-radius: 5px;
+      margin-bottom: 5px;
+    }
+
+    nav.sidebar ul li a:hover {
+      background: #0d6efd;
+    }
+
+    /* Contenu principal */
+    .main-content {
+      margin-left: 220px;
+      padding: 20px;
+    }
   </style>
 </head>
 
 <body>
-  <div class="container py-5">
+  <!-- Barre de navigation -->
+  <nav class="sidebar">
+    <h4>Menu</h4>
+    <ul>
+      <li><a href="registre_transcription.html">📄 Registre transcription</a></li>
+      <li><a href="registre_transmission.html">📘 Registre transmission</a></li>
+      <!-- ajouter d’autres liens si nécessaire -->
+    </ul>
+  </nav>
+
+  <!-- Contenu principal -->
+  <div class="main-content">
     <h2 class="text-center mb-4">📘 Registre de transmission</h2>
 
     <!-- Barre de recherche -->
@@ -331,10 +383,10 @@
       const t = terme.toLowerCase();
       return data.filter(
         b => (b.numero_reference ?? "").toLowerCase().includes(t) ||
-             (b.numero_enregistrement ?? "").toLowerCase().includes(t) ||
-             (b.objet ?? "").toLowerCase().includes(t) ||
-             (b.destinataire ?? "").toLowerCase().includes(t) ||
-             (b.observations ?? "").toLowerCase().includes(t)
+          (b.numero_enregistrement ?? "").toLowerCase().includes(t) ||
+          (b.objet ?? "").toLowerCase().includes(t) ||
+          (b.destinataire ?? "").toLowerCase().includes(t) ||
+          (b.observations ?? "").toLowerCase().includes(t)
       );
     }
 
