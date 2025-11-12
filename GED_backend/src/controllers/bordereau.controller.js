@@ -295,7 +295,7 @@ exports.create = async (req, res) => {
     res.status(201).json({
       success: true,
       message: "Bordereau enregistré et PDF généré avec succès",
-      data: result.rows[0]
+      data: {bordereau : result.rows[0]}
     });
 
   } catch (err) {
