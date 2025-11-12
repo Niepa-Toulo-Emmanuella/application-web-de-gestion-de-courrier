@@ -202,52 +202,52 @@ exports.detail = async (req, res) => {
 // ---------------- CREATE -------------------------------------
 // ---------------- CREATE -------------------------------------
 exports.create = async (req, res) => {
+  console.log("📥 Entrée dans bordereau.controller.js -> create()");
   console.log("📩 [BORDEREAU] Requête reçue :", req.body);
+  console.log("🔑 Token décodé :", req.user);
+
   try {
     const {
-      courrier_id, destinataire_id, numero_reference, date_courrier,
-      date_arrivee, heure, objet
+      courrier_id,
+      numero_reference,
+      date_courrier,
+      date_arrivee,
+      heure,
+      objet
     } = req.body;
 
-     // Vérifions les valeurs reçues
-    console.log("✅ Données reçues :");
-    console.log("   courrier_id :", courrier_id);
-    console.log("   expediteurBordereau :", expediteurBordereau);
-    console.log("   numero_reference :", numero_reference);
-    console.log("   date_courrier :", date_courrier);
-    console.log("   date_arrivee :", date_arrivee);
-    console.log("   numero_enregistrement :", numero_enregistrement);
-    console.log("   heure :", heure);
-    console.log("   objet :", objet);
-    console.log("   priorite :", priorite);
-    console.log("   fichier_bordereau :", fichier_bordereau);
-    console.log("   numeroBordereau :", numeroBordereau);
-
     if (!courrier_id) {
-      return res.status(400).json({ success: false, message: "courrier_id est requis" });
+      return res.status(400).json({
+        success: false,
+        message: "⚠️ Le champ 'courrier_id' est requis."
+      });
     }
 
-    // Récupération du courrier
+    // 🔎 Récupération du courrier associé
     const courrierRes = await db.query(
-      `SELECT id, fichier_scan, expediteur, objet, priorite, numero_enregistrement FROM courriers WHERE id = $1`,
+      `SELECT id, fichier_scan, expediteur, objet, priorite, numero_enregistrement
+       FROM courriers WHERE id = $1`,
       [courrier_id]
     );
+
     if (courrierRes.rows.length === 0) {
-      return res.status(404).json({ success: false, message: "Courrier introuvable" });
+      return res.status(404).json({
+        success: false,
+        message: "❌ Courrier introuvable"
+      });
     }
 
     const courrier = courrierRes.rows[0];
     const priorite = courrier.priorite || "Normale";
-
-    // Génération du numéro de bordereau
-    const { numero: numeroBordereau } = await genererNumeroBordereau();
-
     const numero_enregistrement = courrier.numero_enregistrement;
 
+    // ✅ L'expéditeur du bordereau est celui du courrier
     const expediteurBordereau = courrier.expediteur;
 
+    // 🔢 Génération du numéro de bordereau
+    const { numero: numeroBordereau } = await genererNumeroBordereau();
 
-    // 🧾 Génération du PDF avec toutes les données correctes
+    // 🧾 Génération du PDF du bordereau
     const pdfPath = await generateBordereauPDF({
       numero: numeroBordereau,
       numero_enregistrement,
@@ -259,7 +259,7 @@ exports.create = async (req, res) => {
           return courrier.fichier_scan ? [courrier.fichier_scan] : [];
         }
       })(),
-      expediteur: expediteurBordereau, // <-- prend l'expéditeur du courrier
+      expediteur: expediteurBordereau,
       numero_reference,
       date_courrier,
       date_arrivee,
@@ -268,27 +268,35 @@ exports.create = async (req, res) => {
       priorite
     });
 
-    // Upload du fichier généré
+    // ☁️ Upload du fichier PDF généré vers Backblaze B2
     const fileContent = fs.readFileSync(pdfPath);
     const s3Params = {
       Bucket: process.env.B2_BUCKET_NAME,
       Key: `bordereaux/${Date.now()}_bordereau.pdf`,
       Body: fileContent,
-      ContentType: 'application/pdf',
+      ContentType: "application/pdf",
     };
+
     await s3.upload(s3Params).promise();
     fs.unlinkSync(pdfPath);
 
     const fichier_bordereau = s3Params.Key;
+    const statut = "en_attente";
 
-    const result = await db.query(`
+    // 🧠 Requête SQL
+    const query = `
       INSERT INTO bordereaux (
         courrier_id, expediteur, numero_reference,
         date_courrier, date_arrivee, numero_enregistrement, heure,
         objet, priorite, statut, fichier_bordereau, numero
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10'en_attente', $11, $12)
+      ) VALUES (
+        $1, $2, $3, $4, $5, $6, $7,
+        $8, $9, $10, $11, $12
+      )
       RETURNING *;
-    `, [
+    `;
+
+    const values = [
       courrier_id,
       expediteurBordereau,
       numero_reference,
@@ -296,30 +304,35 @@ exports.create = async (req, res) => {
       date_arrivee,
       numero_enregistrement,
       heure,
-      objet, 
+      objet,
       priorite,
       statut,
       fichier_bordereau,
       numeroBordereau
-    ]);
+    ];
 
     console.log("🧠 [SQL] Requête préparée :", query);
     console.log("🧩 [SQL] Valeurs :", values);
 
-
-    res.status(201).json({
-      success: true,
-      message: "Bordereau enregistré et PDF généré avec succès",
-      data: {bordereau : result.rows[0]}
-    });
+    const result = await db.query(query, values);
 
     console.log("✅ [SQL] Bordereau inséré avec succès :", result.rows[0]);
 
+    res.status(201).json({
+      success: true,
+      message: "✅ Bordereau enregistré et PDF généré avec succès",
+      data: { bordereau: result.rows[0] }
+    });
+
   } catch (err) {
-    console.error("Erreur création bordereau :", err);
-    res.status(500).json({ success: false, message: "Erreur lors de la création du bordereau" });
+    console.error("❌ Erreur création bordereau :", err);
+    res.status(500).json({
+      success: false,
+      message: "Erreur lors de la création du bordereau"
+    });
   }
 };
+
 
 
 
