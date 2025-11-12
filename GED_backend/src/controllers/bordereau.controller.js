@@ -58,10 +58,10 @@ async function genererNumeroBordereau() {
 
 
 // -------- Générateur automatique de numéro --------
-function generateNumero() {
-  const date = new Date();
-  return `BDR-${date.getFullYear()}${String(date.getMonth() + 1).padStart(2, '0')}${String(date.getDate()).padStart(2, '0')}-${Date.now()}`;
-}
+// function generateNumero() {
+//   const date = new Date();
+//   return `BDR-${date.getFullYear()}${String(date.getMonth() + 1).padStart(2, '0')}${String(date.getDate()).padStart(2, '0')}-${Date.now()}`;
+// }
 
 // -------- Générer le PDF depuis template HTML (Render compatible) --------
 async function generateBordereauPDF(data) {
@@ -214,7 +214,7 @@ exports.create = async (req, res) => {
 
     // Récupération du courrier
     const courrierRes = await db.query(
-      `SELECT id, fichier_scan, objet, priorite, expediteur FROM courriers WHERE id = $1`,
+      `SELECT id, fichier_scan, objet, priorite, numero_enregistrement FROM courriers WHERE id = $1`,
       [courrier_id]
     );
     if (courrierRes.rows.length === 0) {
@@ -227,23 +227,19 @@ exports.create = async (req, res) => {
     // Génération du numéro de bordereau
     const { numero: numeroBordereau } = await genererNumeroBordereau();
 
-    // ⚙️ Le numéro d’enregistrement doit être identique au numéro du bordereau
-    const numero_enregistrement = numeroBordereau;
+    const numero_enregistrement = courrier.numero_enregistrement;
 
     // 🔍 Récupération du nom et rôle de l’expéditeur (optionnel)
-    let expediteurNomComplet = courrier.expediteur || "Inconnu";
-    try {
-      const userRes = await db.query(
-        `SELECT first_name, last_name, role FROM users WHERE id = $1`,
-        [expediteur_id]
-      );
-      if (userRes.rows.length > 0) {
-        const u = userRes.rows[0];
-        expediteurNomComplet = `${u.first_name} ${u.last_name} (${u.role})`;
-      }
-    } catch (err) {
-      console.error("Erreur récupération expéditeur :", err);
-    }
+    const expediteurIdFinal = expediteur_id || req.user.id;
+
+    const userRes = await db.query(
+      `SELECT first_name, last_name, role FROM users WHERE id = $1`,
+      [expediteurIdFinal]
+    );
+    const u = userRes.rows[0];
+    const expediteurNomComplet = `${u.first_name} ${u.last_name} (${u.role})`;
+
+
 
     // 🧾 Génération du PDF avec toutes les données correctes
     const pdfPath = await generateBordereauPDF({
