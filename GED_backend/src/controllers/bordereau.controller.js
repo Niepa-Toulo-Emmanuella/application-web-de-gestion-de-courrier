@@ -271,7 +271,7 @@ exports.create = async (req, res) => {
         courrier_id, expediteur, numero_reference,
         date_courrier, date_arrivee, numero_enregistrement, heure,
         objet, priorite, statut, fichier_bordereau, numero
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'en_attente', $10, $11)
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10'en_attente', $11, $12)
       RETURNING *;
     `, [
       courrier_id,
@@ -281,8 +281,9 @@ exports.create = async (req, res) => {
       date_arrivee,
       numero_enregistrement,
       heure,
-      objet,
+      objet, 
       priorite,
+      statut,
       fichier_bordereau,
       numeroBordereau
     ]);
