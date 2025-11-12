@@ -230,7 +230,7 @@ exports.create = async (req, res) => {
     const numero_enregistrement = courrier.numero_enregistrement;
 
     // 🔍 Récupération du nom et rôle de l’expéditeur (optionnel)
-    const expediteurIdFinal = expediteur_id || req.user.id;
+    const expediteurIdFinal = req.user.id;
 
     const userRes = await db.query(
       `SELECT first_name, last_name, role FROM users WHERE id = $1`,
@@ -283,7 +283,7 @@ exports.create = async (req, res) => {
       ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,'en_attente',$11,$12)
       RETURNING *;
     `, [
-      courrier_id, expediteur_id, destinataire_id || null, numero_reference,
+      courrier_id, expediteurIdFinal, destinataire_id || null, numero_reference,
       date_courrier, date_arrivee, numero_enregistrement, heure,
       objet, priorite, fichier_bordereau, numeroBordereau
     ]);
