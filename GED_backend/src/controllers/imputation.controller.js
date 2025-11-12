@@ -260,8 +260,8 @@ exports.create = async (req, res) => {
     // 4️⃣ Insertion en DB
     const result = await db.query(
       `INSERT INTO imputations 
-        (bordereau_id, premiere_transmission, imputations, courrier_id, expediteur_id, destinataire_id, instructions, date_depart, duree_traitement, date_retour, traitement_actions, observations, fichier_imputation, priorite)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
+        (bordereau_id, premiere_transmission, imputations, courrier_id, expediteur_id, instructions, date_depart, duree_traitement, date_retour, traitement_actions, observations, fichier_imputation, priorite)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
        RETURNING *`,
       [
         bordereau_id,
@@ -269,7 +269,6 @@ exports.create = async (req, res) => {
         imputations,
         courrier_id,
         expediteur_id,
-        destinataire_id,
         instructions,
         date_depart,
         duree_traitement,
