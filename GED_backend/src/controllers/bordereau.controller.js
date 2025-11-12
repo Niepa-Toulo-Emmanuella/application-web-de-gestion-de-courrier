@@ -204,7 +204,7 @@ exports.detail = async (req, res) => {
 exports.create = async (req, res) => {
   try {
     const {
-      courrier_id, expediteur_id, destinataire_id, numero_reference, date_courrier,
+      courrier_id, expediteur, destinataire_id, numero_reference, date_courrier,
       date_arrivee, heure, objet
     } = req.body;
 
@@ -214,7 +214,7 @@ exports.create = async (req, res) => {
 
     // Récupération du courrier
     const courrierRes = await db.query(
-      `SELECT id, fichier_scan, objet, priorite, numero_enregistrement FROM courriers WHERE id = $1`,
+      `SELECT id, fichier_scan, expediteur, objet, priorite, numero_enregistrement FROM courriers WHERE id = $1`,
       [courrier_id]
     );
     if (courrierRes.rows.length === 0) {
@@ -229,16 +229,7 @@ exports.create = async (req, res) => {
 
     const numero_enregistrement = courrier.numero_enregistrement;
 
-    // 🔍 Récupération du nom et rôle de l’expéditeur (optionnel)
-    const expediteurIdFinal = req.user.id;
-
-    const userRes = await db.query(
-      `SELECT first_name, last_name, role FROM users WHERE id = $1`,
-      [expediteurIdFinal]
-    );
-    const u = userRes.rows[0];
-    const expediteurNomComplet = `${u.first_name} ${u.last_name} (${u.role})`;
-
+    const expediteurBordereau = courrier.expediteur;
 
 
     // 🧾 Génération du PDF avec toutes les données correctes
@@ -253,7 +244,7 @@ exports.create = async (req, res) => {
           return courrier.fichier_scan ? [courrier.fichier_scan] : [];
         }
       })(),
-      expediteur: expediteurNomComplet,
+      expediteur: expediteurBordereau, // <-- prend l'expéditeur du courrier
       numero_reference,
       date_courrier,
       date_arrivee,
@@ -277,13 +268,13 @@ exports.create = async (req, res) => {
 
     const result = await db.query(`
       INSERT INTO bordereaux (
-        courrier_id, expediteur_id, destinataire_id, numero_reference,
+        courrier_id, expediteur, destinataire_id, numero_reference,
         date_courrier, date_arrivee, numero_enregistrement, heure,
         objet, priorite, statut, fichier_bordereau, numero
       ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,'en_attente',$11,$12)
       RETURNING *;
     `, [
-      courrier_id, expediteurIdFinal, destinataire_id || null, numero_reference,
+      courrier_id, expediteurBordereau, destinataire_id || null, numero_reference,
       date_courrier, date_arrivee, numero_enregistrement, heure,
       objet, priorite, fichier_bordereau, numeroBordereau
     ]);

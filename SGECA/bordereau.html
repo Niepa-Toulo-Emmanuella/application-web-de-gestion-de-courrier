@@ -297,7 +297,7 @@
           notif.classList.remove("error");
         }
 
-        document.getElementById('expediteur').value = "Moi (agent connecté)";
+        document.getElementById('expediteur').value = courrier.expediteur || "";
         document.getElementById('reference').value = courrier.reference || "";
         document.getElementById('date_reception').value = (courrier.date_reception || "").split("T")[0];
         document.getElementById('date_arrivee').value = (courrier.date_arrivee || "").split("T")[0];
