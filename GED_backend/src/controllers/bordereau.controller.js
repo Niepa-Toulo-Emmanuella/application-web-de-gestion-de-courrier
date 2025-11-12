@@ -80,19 +80,29 @@ async function generateBordereauPDF(data) {
              .replace(/{{PRIORITE}}/g, data.priorite || 'Non précisée');
 
   let fichiersHTML = '';
+
   if (Array.isArray(data.fichier_scan)) {
-  fichiersHTML = data.fichier_scan.map(f => {
-    console.log("🧩 Valeur de f :", f, "Type :", typeof f);
-    const fileName = f.split('/').pop(); // extrait juste le nom du fichier
-    return `<div>📎 ${fileName}</div>`;
-  }).join('');
+    // 🔹 Aplatis le tableau s'il contient des sous-tableaux
+    const fichiers = data.fichier_scan.flat();
+
+    fichiersHTML = fichiers.map(f => {
+      if (typeof f === 'string') {
+        const fileName = f.split('/').pop(); // extrait juste le nom du fichier
+        return `<div>📎 ${fileName}</div>`;
+      } else {
+        console.warn('⚠️ Élément inattendu dans fichier_scan :', f);
+        return '';
+      }
+    }).join('');
+    
   } else if (data.fichier_scan) {
+    // 🔹 Cas où il n’y a qu’un seul fichier (chaîne simple)
     const fileName = data.fichier_scan.split('/').pop();
     fichiersHTML = `<div>📎 ${fileName}</div>`;
   }
 
-
   html = html.replace(/{{FICHIER_SCAN}}/g, fichiersHTML);
+
 
 
 
