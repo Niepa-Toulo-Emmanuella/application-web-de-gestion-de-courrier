@@ -107,10 +107,9 @@ exports.launchArchive = async (req, res) => {
     );
     const runId = rows[0].id;
 
-    // Lancer le job en arrière-plan
     setImmediate(async () => {
       try {
-        console.log(`🚀 Archivage de l’année ${year} lancé...`);
+        console.log(`🚀 Archivage de l’année ${year} lancé (run_id=${runId})`);
         await archiveYearProcess(year, runId);
         await db.query(
           `UPDATE archives_runs SET status='done', finished_at=NOW() WHERE id=$1`,
@@ -126,15 +125,18 @@ exports.launchArchive = async (req, res) => {
       }
     });
 
-    res.status(202).json({
+    // ✅ Réponse HTTP correcte et complète
+    return res.status(202).json({
       message: `Archivage de l’année ${year} lancé.`,
       run_id: runId,
+      status: 'in_progress'
     });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Erreur de lancement d’archivage" });
+    console.error("❌ Erreur SQL launchArchive :", error);
+    return res.status(500).json({ error: "Erreur de lancement d’archivage", details: error.message });
   }
 };
+
 
 /* ===========================================================
    🔍 5️⃣ Vérifier le statut d’un archivage
@@ -146,14 +148,25 @@ exports.getArchiveStatus = async (req, res) => {
       `SELECT * FROM archives_runs WHERE year = $1 ORDER BY created_at DESC LIMIT 1`,
       [year]
     );
-    if (rows.length === 0)
-      return res.status(404).json({ message: "Aucune archive pour cette année" });
-    res.json(rows[0]);
+
+    if (!rows || rows.length === 0) {
+      return res.status(200).json({
+        status: 'not_started',
+        message: `Aucune archive trouvée pour ${year}`
+      });
+    }
+
+    return res.status(200).json(rows[0]);
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Erreur lors de la récupération du statut" });
+    console.error("❌ Erreur getArchiveStatus :", error);
+    return res.status(500).json({
+      status: 'error',
+      message: "Erreur lors de la récupération du statut",
+      error: error.message
+    });
   }
 };
+
 
 /* ===========================================================
    🧩 6️⃣ Processus principal d’archivage (tâche asynchrone)

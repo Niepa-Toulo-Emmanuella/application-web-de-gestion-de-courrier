@@ -102,14 +102,34 @@
       try {
         // 🚀 Lancer le job asynchrone
         const launchResponse = await fetch(`/api/archive/${year}`, { method: 'POST' });
-        const launchData = await launchResponse.json();
-        logMessage(`Job lancé : ID ${launchData.run_id}`, 'info');
+        const text = await launchResponse.text();
+        let launchData = {};
+
+        try {
+          launchData = JSON.parse(text);
+          logMessage(`Job lancé : ID ${launchData.run_id}`, 'info');
+        } catch {
+          logMessage("⚠️ Réponse du serveur vide ou non JSON", "error");
+          console.error("Réponse brute :", text);
+        }
 
         // 🔄 Surveiller le statut toutes les 5 secondes
         const interval = setInterval(async () => {
           const statusRes = await fetch(`/api/archive/status/${year}`);
-          const status = await statusRes.json();
-          logMessage(`Statut : ${status.status}, erreurs : ${status.errors_count}`, 'info');
+          const statusText = await statusRes.text();
+          let status = {};
+
+          try {
+            status = JSON.parse(statusText);
+          } catch {
+            logMessage("⚠️ Réponse du serveur non JSON (statut)", "error");
+            console.error("Réponse brute :", statusText);
+          }
+
+          if (status.status) {
+            logMessage(`Statut : ${status.status}, erreurs : ${status.errors_count ?? 0}`, 'info');
+          }
+
           if (status.status === 'done' || status.status === 'error') {
             clearInterval(interval);
             if (status.status === 'done') {
@@ -151,7 +171,15 @@
 
       try {
         const resUrl = await fetch(`/api/archive/signed-url/${year}`);
-        const data = await resUrl.json();
+        const text = await resUrl.text();
+        let data = {};
+
+        try {
+          data = JSON.parse(text);
+        } catch {
+          logMessage("⚠️ Réponse du serveur vide ou non JSON (signed-url)", "error");
+          console.error("Réponse brute :", text);
+        }
 
         if (!data.url) throw new Error("Impossible de générer le lien de téléchargement");
 

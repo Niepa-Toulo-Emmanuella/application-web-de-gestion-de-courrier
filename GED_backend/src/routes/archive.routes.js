@@ -1,3 +1,4 @@
+// archive.routes.js
 const express = require('express');
 const router = express.Router();
 const archiveController = require('../controllers/archive.controller');
@@ -11,5 +12,9 @@ router.get('/archive/status/:year', archiveController.getArchiveStatus);
 
 // 📦 3️⃣ Télécharger l’archive ZIP d’une année donnée
 router.get('/archive/download/:year', verifyToken, isAdminOrAgent, archiveController.downloadArchive);
+
+// 🔗 4️⃣ Générer un lien signé pour télécharger le ZIP
+router.get('/archive/signed-url/:year', verifyToken, isAdminOrAgent, archiveController.getSignedUrl);
+
 
 module.exports = router;
