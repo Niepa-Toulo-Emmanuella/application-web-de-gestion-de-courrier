@@ -121,14 +121,19 @@
 
       try {
         // 🚀 Lancer le job asynchrone
+        const token = localStorage.getItem('jwt');
+        console.log(localStorage.getItem('jwt'));
+
+
         const launchResponse = await fetch(`/api/archives/launch/${year}`, {
           method: 'POST',
           headers: {
-            "Authorization": "Bearer " + localStorage.getItem("token"),
+            "Authorization": "Bearer " + token,
             "Content-Type": "application/json"
           },
           body: JSON.stringify({})
         });
+
 
         if (!launchResponse.ok) {
           const errObj = await safeParseJson(launchResponse) || { message: launchResponse.statusText };
