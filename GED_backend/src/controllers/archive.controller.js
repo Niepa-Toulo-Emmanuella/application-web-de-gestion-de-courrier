@@ -95,9 +95,13 @@ async function getObjectFromB2(key) {
 /* ===========================================================
    🧠 4️⃣ Lancer un archivage asynchrone
 =========================================================== */
+/* ===========================================================
+   🧠 4️⃣ Lancer un archivage asynchrone
+=========================================================== */
 exports.launchArchive = async (req, res) => {
   const year = parseInt(req.params.year, 10);
   const userId = req.user?.id || null;
+  console.log("📥 Requête POST reçue pour l’archivage de :", req.params.year);
 
   try {
     const { rows } = await db.query(
@@ -125,17 +129,28 @@ exports.launchArchive = async (req, res) => {
       }
     });
 
-    // ✅ Réponse HTTP correcte et complète
+    // ✅ Log + Réponse HTTP complète
+    console.log("📤 Envoi de la réponse JSON :", {
+      message: `Archivage de ${year} lancé.`,
+      run_id: runId,
+      status: 'in_progress'
+    });
+
     return res.status(202).json({
       message: `Archivage de l’année ${year} lancé.`,
       run_id: runId,
       status: 'in_progress'
     });
+
   } catch (error) {
-    console.error("❌ Erreur SQL launchArchive :", error);
-    return res.status(500).json({ error: "Erreur de lancement d’archivage", details: error.message });
+    console.error("💥 Erreur dans launchArchive :", error);
+    return res.status(500).json({
+      error: "Erreur de lancement d’archivage",
+      details: error.message
+    });
   }
 };
+
 
 
 /* ===========================================================

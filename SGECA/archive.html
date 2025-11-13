@@ -1,3 +1,4 @@
+<!-- archive.html -->
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -103,7 +104,9 @@
         // 🚀 Lancer le job asynchrone
         const launchResponse = await fetch(`/api/archive/${year}`, { method: 'POST' });
         const text = await launchResponse.text();
+        console.log("🟢 Réponse brute du lancement :", text);
         let launchData = {};
+
 
         try {
           launchData = JSON.parse(text);
@@ -117,7 +120,8 @@
         const interval = setInterval(async () => {
           const statusRes = await fetch(`/api/archive/status/${year}`);
           const statusText = await statusRes.text();
-          let status = {};
+          console.log("🟡 Réponse brute statut :", statusText);
+
 
           try {
             status = JSON.parse(statusText);
@@ -172,7 +176,8 @@
       try {
         const resUrl = await fetch(`/api/archive/signed-url/${year}`);
         const text = await resUrl.text();
-        let data = {};
+        console.log("🟣 Réponse brute signed-url :", text);
+
 
         try {
           data = JSON.parse(text);
