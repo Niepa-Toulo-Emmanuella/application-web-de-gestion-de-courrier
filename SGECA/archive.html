@@ -86,9 +86,28 @@
       log.scrollTop = log.scrollHeight;
     }
 
+    // === Fonction utilitaire pour parser JSON en toute sécurité ===
+    async function safeParseJson(response) {
+      const text = await response.text();
+      if (!text) return null;
+      try {
+        return JSON.parse(text);
+      } catch (err) {
+        console.error("Réponse non JSON :", text);
+        return null;
+      }
+    }
+
     // === Fonction 1 : Archiver une année ===
     btnArchive.addEventListener('click', async () => {
       const year = yearSelect.value;
+      const token = localStorage.getItem('jwt'); // ✅ Récupération du token
+
+      if (!token) {
+        alert("⚠️ Vous devez être connecté pour effectuer cette action.");
+        return;
+      }
+
       if (!confirm(`Voulez-vous vraiment archiver les courriers de ${year} ?`)) return;
 
       btnArchive.disabled = true;
@@ -102,52 +121,64 @@
 
       try {
         // 🚀 Lancer le job asynchrone
-        const launchResponse = await fetch(`/api/archives/launch/${year}`, { method: 'POST' });
-        const text = await launchResponse.text();
-        console.log("🟢 Réponse brute du lancement :", text);
-        let launchData = {};
+        const launchResponse = await fetch(`/api/archives/launch/${year}`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
 
-
-        try {
-          launchData = JSON.parse(text);
-          logMessage(`Job lancé : ID ${launchData.run_id}`, 'info');
-        } catch {
-          logMessage("⚠️ Réponse du serveur vide ou non JSON", "error");
-          console.error("Réponse brute :", text);
+        if (!launchResponse.ok) {
+          const errObj = await safeParseJson(launchResponse) || { message: launchResponse.statusText };
+          logMessage(`Erreur lancement : ${launchResponse.status} ${errObj.message || ''}`, 'error');
+          btnArchive.disabled = false;
+          btnDownload.disabled = false;
+          return;
         }
 
+        const launchData = await safeParseJson(launchResponse) || {};
+        logMessage(`Job lancé : ID ${launchData.run_id ?? '(id non fourni)'}`, 'info');
+
         // 🔄 Surveiller le statut toutes les 5 secondes
-        const interval = setInterval(async () => {
-          const statusRes = await fetch(`/api/archives/status/${year}`);
-          const statusText = await statusRes.text();
-          console.log("🟡 Réponse brute statut :", statusText);
-
-
+        let interval = null;
+        interval = setInterval(async () => {
           try {
-            status = JSON.parse(statusText);
-          } catch {
-            logMessage("⚠️ Réponse du serveur non JSON (statut)", "error");
-            console.error("Réponse brute :", statusText);
-          }
+            const statusRes = await fetch(`/api/archives/status/${year}`, {
+              headers: { 'Authorization': `Bearer ${token}` }
+            });
 
-          if (status.status) {
-            logMessage(`Statut : ${status.status}, erreurs : ${status.errors_count ?? 0}`, 'info');
-          }
-
-          if (status.status === 'done' || status.status === 'error') {
-            clearInterval(interval);
-            if (status.status === 'done') {
-              progressBar.style.width = "100%";
-              progressBar.textContent = "100%";
-              progressBar.classList.remove("bg-danger");
-              progressBar.classList.add("bg-success");
-              logMessage(`Archivage terminé ✅`, 'success');
-            } else {
-              progressBar.classList.add("bg-danger");
-              logMessage(`Erreur lors de l’archivage ❌`, 'error');
+            if (!statusRes.ok) {
+              // Log et continuer (ou arrêter selon ton choix) — ici on log et on continue à tenter
+              logMessage(`Erreur serveur statut : ${statusRes.status} ${statusRes.statusText}`, 'error');
+              console.error('Réponse brute statut (non-ok) :', await statusRes.text());
+              return;
             }
-            btnArchive.disabled = false;
-            btnDownload.disabled = false;
+
+            // parse JSON safely
+            const status = await safeParseJson(statusRes);
+            if (!status) {
+              logMessage("Réponse statut non-JSON ou vide", 'error');
+              return;
+            }
+
+            logMessage(`Statut : ${status.status}, erreurs : ${status.errors_count ?? 0}`, 'info');
+
+            if (status.status === 'done' || status.status === 'error') {
+              clearInterval(interval);
+              if (status.status === 'done') {
+                progressBar.style.width = "100%";
+                progressBar.textContent = "100%";
+                progressBar.classList.remove("bg-danger");
+                progressBar.classList.add("bg-success");
+                logMessage(`Archivage terminé ✅`, 'success');
+              } else {
+                progressBar.classList.add("bg-danger");
+                logMessage(`Erreur lors de l’archivage ❌`, 'error');
+              }
+              btnArchive.disabled = false;
+              btnDownload.disabled = false;
+            }
+          } catch (pollErr) {
+            console.error("Erreur polling statut :", pollErr);
+            logMessage(`Erreur interrogation statut: ${pollErr.message}`, 'error');
           }
         }, 5000);
 
@@ -171,24 +202,33 @@
     // === Fonction 2 : Télécharger l’archive ZIP via signed URL ===
     btnDownload.addEventListener('click', async () => {
       const year = yearSelect.value;
+      const token = localStorage.getItem('jwt'); // ✅ Token ajouté ici aussi
+
+      if (!token) {
+        alert("⚠️ Vous devez être connecté pour télécharger l’archive.");
+        return;
+      }
+
       logMessage(`Génération du ZIP pour l’année ${year}...`);
 
       try {
-        const resUrl = await fetch(`/api/archives/signed-url/${year}`);
-        const text = await resUrl.text();
-        console.log("🟣 Réponse brute signed-url :", text);
+        const resUrl = await fetch(`/api/archives/signed-url/${year}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
 
-
-        try {
-          data = JSON.parse(text);
-        } catch {
-          logMessage("⚠️ Réponse du serveur vide ou non JSON (signed-url)", "error");
-          console.error("Réponse brute :", text);
+        if (!resUrl.ok) {
+          const errObj = await safeParseJson(resUrl) || { message: resUrl.statusText };
+          logMessage(`Erreur génération lien : ${resUrl.status} ${errObj.message || ''}`, 'error');
+          return;
         }
 
-        if (!data.url) throw new Error("Impossible de générer le lien de téléchargement");
+        const data = await safeParseJson(resUrl) || {};
+        if (!data.url) {
+          logMessage("Aucune URL renvoyée par le serveur.", 'error');
+          console.error("Réponse brute signed-url :", data);
+          return;
+        }
 
-        // Ouvrir le lien dans une nouvelle fenêtre pour télécharger
         window.open(data.url);
         logMessage(`Archive ${year} prête au téléchargement 📦`, "success");
 
