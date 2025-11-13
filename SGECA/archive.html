@@ -102,7 +102,7 @@
 
       try {
         // 🚀 Lancer le job asynchrone
-        const launchResponse = await fetch(`/api/archive/launch/${year}`, { method: 'POST' });
+        const launchResponse = await fetch(`/api/archives/launch/${year}`, { method: 'POST' });
         const text = await launchResponse.text();
         console.log("🟢 Réponse brute du lancement :", text);
         let launchData = {};
@@ -118,7 +118,7 @@
 
         // 🔄 Surveiller le statut toutes les 5 secondes
         const interval = setInterval(async () => {
-          const statusRes = await fetch(`/api/archive/status/${year}`);
+          const statusRes = await fetch(`/api/archives/status/${year}`);
           const statusText = await statusRes.text();
           console.log("🟡 Réponse brute statut :", statusText);
 
@@ -174,7 +174,7 @@
       logMessage(`Génération du ZIP pour l’année ${year}...`);
 
       try {
-        const resUrl = await fetch(`/api/archive/signed-url/${year}`);
+        const resUrl = await fetch(`/api/archives/signed-url/${year}`);
         const text = await resUrl.text();
         console.log("🟣 Réponse brute signed-url :", text);
 
