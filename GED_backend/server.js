@@ -11,8 +11,8 @@ const transporter = require('./src/config/mail');
 
 const app = express();
 
-// ✅ Ajoute ceci :
-app.set('trust proxy', 1); // Rend Render ou Nginx digne de confiance pour l'IP client
+// ✅ Rend Render/Nginx digne de confiance pour IP client
+app.set('trust proxy', 1);
 
 // 🌐 CORS — autoriser ton frontend
 app.use(cors({
@@ -22,9 +22,7 @@ app.use(cors({
   ],
   credentials: true,
 }));
-
-// ✅ Important pour les requêtes OPTIONS (préflight)
-app.options('*', cors());
+app.options('*', cors()); // OPTIONS préflight
 
 // 📧 Test d’envoi d’e-mail
 app.get('/test-mail', async (req, res) => {
@@ -42,27 +40,10 @@ app.get('/test-mail', async (req, res) => {
   }
 });
 
-app.use(express.json());
+// 📦 Middleware parsing
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
-
-// ✅ Test connexion PostgreSQL
-pool.query('SELECT NOW()', (err, res) => {
-  if (err) {
-    console.error('❌ Erreur de connexion PostgreSQL :', err.message);
-  } else {
-    console.log('✅ Connexion PostgreSQL réussie :', res.rows);
-  }
-});
-
-// 🔗 Import des routes
-const authRoutes = require('./src/routes/auth.routes');
-const courrierRoutes = require('./src/routes/courrier.routes');
-const bordereauRoutes = require('./src/routes/bordereau.routes');
-const notificationRoutes = require('./src/routes/notification.routes');
-const userRoutes = require('./src/routes/user.routes');
-const envoyerRoutes = require('./src/routes/envoyer.routes');
-const imputationRoutes = require('./src/routes/imputation.routes');
-const archiveRoutes = require('./src/routes/archive.routes');
 
 // 🔐 Sécurité
 app.use(helmet());
@@ -76,10 +57,24 @@ app.use((req, res, next) => {
   next();
 });
 
-// 📦 Middleware parsing
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true }));
-app.use(cookieParser());
+// 🔗 Import des routes
+const authRoutes = require('./src/routes/auth.routes');
+const courrierRoutes = require('./src/routes/courrier.routes');
+const bordereauRoutes = require('./src/routes/bordereau.routes');
+const notificationRoutes = require('./src/routes/notification.routes');
+const userRoutes = require('./src/routes/user.routes');
+const envoyerRoutes = require('./src/routes/envoyer.routes');
+const imputationRoutes = require('./src/routes/imputation.routes');
+const archiveRoutes = require('./src/routes/archive.routes');
+
+// ✅ Test connexion PostgreSQL
+pool.query('SELECT NOW()', (err, resDB) => {
+  if (err) {
+    console.error('❌ Erreur de connexion PostgreSQL :', err.message);
+  } else {
+    console.log('✅ Connexion PostgreSQL réussie :', resDB.rows);
+  }
+});
 
 // 🚦 Routes principales
 app.use('/api/auth', authRoutes);
@@ -91,38 +86,27 @@ app.use('/api/envoyer', envoyerRoutes);
 app.use('/api/imputations', imputationRoutes);
 app.use('/api/archives', archiveRoutes);
 
-
 // === ROUTES DE TÉLÉCHARGEMENT === //
 const router = express.Router();
 
-// === ROUTES DE TÉLÉCHARGEMENT AVEC LOGS ===
-
-// 📁 1️⃣ Fichier scanné (hébergé sur S3 / B2)
-// 📁 Téléchargement fichier scanné via query ?url=
-// Téléchargement via redirect direct
+// 📁 1️⃣ Fichier scanné
 router.get("/api/courriers/download", async (req, res) => {
   const fileUrl = req.query.url;
   if (!fileUrl) return res.status(400).json({ success: false, message: "URL manquante" });
 
   try {
     const decodedUrl = decodeURIComponent(fileUrl);
-
-    // Si c'est déjà une URL complète (http/https)
     const finalUrl = decodedUrl.startsWith("http")
       ? decodedUrl
       : `https://s3.us-east-005.backblazeb2.com/CourrierBucket2/${decodedUrl}`;
 
     console.log("📥 Redirection vers :", finalUrl);
-
-    // Rediriger le client vers le fichier pour téléchargement
     res.redirect(finalUrl);
-
   } catch (err) {
     console.error("❌ Erreur téléchargement fichier :", err);
     res.status(500).json({ success: false, message: "Fichier introuvable" });
   }
 });
-
 
 // 📄 2️⃣ Fichier d’imputation
 router.get("/api/imputations/download/:fileName", async (req, res) => {
@@ -147,7 +131,6 @@ router.get("/api/imputations/download/:fileName", async (req, res) => {
   }
 });
 
-
 // 🧾 3️⃣ Fichier bordereau
 router.get("/api/bordereaux/download/:fileName", async (req, res) => {
   const { fileName } = req.params;
@@ -171,10 +154,10 @@ router.get("/api/bordereaux/download/:fileName", async (req, res) => {
   }
 });
 
+// ✅ Monte le routeur download
 app.use(router);
-// === FIN DES ROUTES DE TÉLÉCHARGEMENT === //
 
-// 🔍 Route de test
+// 🔍 Routes de test
 app.get('/api/health', (req, res) => {
   res.json({
     success: true,
@@ -213,7 +196,6 @@ app.use((err, req, res, next) => {
 const PORT = process.env.PORT || 3000;
 
 // 🚀 Lancement du serveur
-// Démarrage correct du serveur avec timeout désactivé
 const server = app.listen(PORT, () => {
   console.log(`🚀 Serveur démarré sur le port ${PORT}`);
   console.log(`📍 URL: http://localhost:${PORT}`);
