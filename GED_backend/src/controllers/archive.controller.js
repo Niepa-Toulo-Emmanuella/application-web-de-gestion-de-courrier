@@ -94,7 +94,13 @@ exports.launchArchive = async (req, res) => {
       }
     });
 
-    return res.status(202).json({ message: `Archivage lancé`, run_id: runId, status: 'in_progress' });
+    return res.status(202).json({ message: `Archivage lancé`,
+        jobId: runId,
+        run_id: runId,
+        id: runId,
+        status: 'in_progress'
+    });
+    
   } catch (err) {
     console.error(err);
     return res.status(500).json({ error: "Erreur de lancement", details: err.message });
