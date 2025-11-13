@@ -1,4 +1,3 @@
-<!-- archive.html -->
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -49,14 +48,7 @@
 
     <div class="mb-3">
       <label for="yearSelect" class="form-label">Choisir une année à archiver :</label>
-      <select id="yearSelect" class="form-select">
-        <script>
-          const currentYear = new Date().getFullYear();
-          for (let y = currentYear; y >= 2020; y--) {
-            document.write(`<option value="${y}">${y}</option>`);
-          }
-        </script>
-      </select>
+      <select id="yearSelect" class="form-select"></select>
     </div>
 
     <div class="d-flex gap-3">
@@ -73,12 +65,21 @@
   </div>
 
   <script>
+    // === Remplir le select avec les années ===
+    const yearSelect = document.getElementById('yearSelect');
+    const currentYear = new Date().getFullYear();
+    for (let y = currentYear; y >= 2020; y--) {
+      const option = document.createElement('option');
+      option.value = y;
+      option.textContent = y;
+      yearSelect.appendChild(option);
+    }
+
     const btnArchive = document.getElementById('btnArchive');
     const btnDownload = document.getElementById('btnDownload');
     const progressContainer = document.querySelector('.progress');
     const progressBar = document.getElementById('progressBar');
     const log = document.getElementById('log');
-    const yearSelect = document.getElementById('yearSelect');
 
     function logMessage(message, type = 'info') {
       const emoji = type === 'error' ? '❌' : type === 'success' ? '✅' : 'ℹ️';
@@ -86,7 +87,6 @@
       log.scrollTop = log.scrollHeight;
     }
 
-    // === Fonction utilitaire pour parser JSON en toute sécurité ===
     async function safeParseJson(response) {
       const text = await response.text();
       if (!text) return null;
@@ -98,16 +98,11 @@
       }
     }
 
-    // === Fonction 1 : Archiver une année ===
+    // === Archiver une année ===
     btnArchive.addEventListener('click', async () => {
       const year = yearSelect.value;
-      const token = localStorage.getItem('jwt'); // ✅ Récupération du token
-
-      if (!token) {
-        alert("⚠️ Vous devez être connecté pour effectuer cette action.");
-        return;
-      }
-
+      const token = localStorage.getItem('jwt');
+      if (!token) return alert("⚠️ Vous devez être connecté pour effectuer cette action.");
       if (!confirm(`Voulez-vous vraiment archiver les courriers de ${year} ?`)) return;
 
       btnArchive.disabled = true;
@@ -120,11 +115,6 @@
       logMessage(`Début de l’archivage pour l’année ${year}...`);
 
       try {
-        // 🚀 Lancer le job asynchrone
-        const token = localStorage.getItem('jwt');
-        console.log(localStorage.getItem('jwt'));
-
-
         const launchResponse = await fetch(`/api/archives/launch/${year}`, {
           method: 'POST',
           headers: {
@@ -133,7 +123,6 @@
           },
           body: JSON.stringify({})
         });
-
 
         if (!launchResponse.ok) {
           const errObj = await safeParseJson(launchResponse) || { message: launchResponse.statusText };
@@ -146,52 +135,42 @@
         const launchData = await safeParseJson(launchResponse) || {};
         logMessage(`Job lancé : ID ${launchData.run_id ?? '(id non fourni)'}`, 'info');
 
-        // 🔄 Surveiller le statut toutes les 5 secondes
-        let interval = null;
-        interval = setInterval(async () => {
+        // Polling statut
+        let interval = setInterval(async () => {
           try {
             const statusRes = await fetch(`/api/archives/status/${year}`, {
               headers: { 'Authorization': `Bearer ${token}` }
             });
 
             if (!statusRes.ok) {
-              // Log et continuer (ou arrêter selon ton choix) — ici on log et on continue à tenter
               logMessage(`Erreur serveur statut : ${statusRes.status} ${statusRes.statusText}`, 'error');
               console.error('Réponse brute statut (non-ok) :', await statusRes.text());
               return;
             }
 
-            // parse JSON safely
             const status = await safeParseJson(statusRes);
-            if (!status) {
-              logMessage("Réponse statut non-JSON ou vide", 'error');
-              return;
-            }
+            if (!status) return logMessage("Réponse statut non-JSON ou vide", 'error');
 
             logMessage(`Statut : ${status.status}, erreurs : ${status.errors_count ?? 0}`, 'info');
 
             if (status.status === 'done' || status.status === 'error') {
               clearInterval(interval);
-              if (status.status === 'done') {
-                progressBar.style.width = "100%";
-                progressBar.textContent = "100%";
-                progressBar.classList.remove("bg-danger");
-                progressBar.classList.add("bg-success");
-                logMessage(`Archivage terminé ✅`, 'success');
-              } else {
-                progressBar.classList.add("bg-danger");
-                logMessage(`Erreur lors de l’archivage ❌`, 'error');
-              }
+              progressBar.style.width = status.status === 'done' ? "100%" : progressBar.style.width;
+              progressBar.textContent = status.status === 'done' ? "100%" : progressBar.textContent;
+              progressBar.classList.toggle("bg-success", status.status === 'done');
+              progressBar.classList.toggle("bg-danger", status.status === 'error');
+              logMessage(status.status === 'done' ? "Archivage terminé ✅" : "Erreur lors de l’archivage ❌", status.status === 'done' ? "success" : "error");
               btnArchive.disabled = false;
               btnDownload.disabled = false;
             }
+
           } catch (pollErr) {
             console.error("Erreur polling statut :", pollErr);
             logMessage(`Erreur interrogation statut: ${pollErr.message}`, 'error');
           }
         }, 5000);
 
-        // Animation de progression fictive jusqu’au statut final
+        // Animation de progression fictive
         let fakeProgress = 0;
         const progressAnim = setInterval(() => {
           fakeProgress = Math.min(90, fakeProgress + 5);
@@ -208,15 +187,11 @@
       }
     });
 
-    // === Fonction 2 : Télécharger l’archive ZIP via signed URL ===
+    // === Télécharger l’archive ZIP ===
     btnDownload.addEventListener('click', async () => {
       const year = yearSelect.value;
-      const token = localStorage.getItem('jwt'); // ✅ Token ajouté ici aussi
-
-      if (!token) {
-        alert("⚠️ Vous devez être connecté pour télécharger l’archive.");
-        return;
-      }
+      const token = localStorage.getItem('jwt');
+      if (!token) return alert("⚠️ Vous devez être connecté pour télécharger l’archive.");
 
       logMessage(`Génération du ZIP pour l’année ${year}...`);
 
