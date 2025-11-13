@@ -123,7 +123,11 @@
         // 🚀 Lancer le job asynchrone
         const launchResponse = await fetch(`/api/archives/launch/${year}`, {
           method: 'POST',
-          headers: { 'Authorization': `Bearer ${token}` }
+          headers: {
+            "Authorization": "Bearer " + localStorage.getItem("token"),
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({})
         });
 
         if (!launchResponse.ok) {
