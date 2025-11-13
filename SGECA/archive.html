@@ -102,6 +102,8 @@
     btnArchive.addEventListener('click', async () => {
       const year = yearSelect.value;
       const token = localStorage.getItem('jwt');
+      console.log(localStorage.getItem('jwt'));
+
       if (!token) return alert("⚠️ Vous devez être connecté pour effectuer cette action.");
       if (!confirm(`Voulez-vous vraiment archiver les courriers de ${year} ?`)) return;
 
