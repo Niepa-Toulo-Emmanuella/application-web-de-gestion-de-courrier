@@ -102,7 +102,7 @@
 
       try {
         // 🚀 Lancer le job asynchrone
-        const launchResponse = await fetch(`/api/archive/${year}`, { method: 'POST' });
+        const launchResponse = await fetch(`/api/archive/launch/${year}`, { method: 'POST' });
         const text = await launchResponse.text();
         console.log("🟢 Réponse brute du lancement :", text);
         let launchData = {};
