@@ -65,6 +65,8 @@
   </div>
 
   <script>
+    const API = "https://application-web-de-gestion-de-courrier-1.onrender.com";
+
     // === Remplir le select avec les années ===
     const yearSelect = document.getElementById('yearSelect');
     const currentYear = new Date().getFullYear();
@@ -102,7 +104,6 @@
     btnArchive.addEventListener('click', async () => {
       const year = yearSelect.value;
       const token = localStorage.getItem('token') || localStorage.getItem('jwt');
-      console.log(localStorage.getItem("token") || localStorage.getItem("jwt"));
 
       if (!token) return alert("⚠️ Vous devez être connecté pour effectuer cette action.");
       if (!confirm(`Voulez-vous vraiment archiver les courriers de ${year} ?`)) return;
@@ -117,7 +118,8 @@
       logMessage(`Début de l’archivage pour l’année ${year}...`);
 
       try {
-        const launchResponse = await fetch(`/api/archives/launch/${year}`, {
+        // ---- LANCEMENT ----
+        const launchResponse = await fetch(`${API}/api/archives/launch/${year}`, {
           method: 'POST',
           credentials: "include",
           headers: {
@@ -138,15 +140,13 @@
         const launchData = await safeParseJson(launchResponse) || {};
         logMessage(`Job lancé : ID ${launchData.run_id ?? '(id non fourni)'}`, 'info');
 
-        // Polling statut
+        // ---- STATUS (polling) ----
         let interval = setInterval(async () => {
           try {
-            const statusRes = await fetch(`/api/archives/status/${year}`, {
+            const statusRes = await fetch(`${API}/api/archives/status/${year}`, {
               method: "GET",
               credentials: "include",
-              headers: {
-                  "Authorization": `Bearer ${token}`
-                }
+              headers: { "Authorization": `Bearer ${token}` }
             });
 
             if (!statusRes.ok) {
@@ -203,10 +203,10 @@
       logMessage(`Génération du ZIP pour l’année ${year}...`);
 
       try {
-        const resUrl = await fetch(`/api/archives/signed-url/${year}`, {
+        // ---- SIGNED URL ----
+        const resUrl = await fetch(`${API}/api/archives/signed-url/${year}`, {
           credentials: "include",
           headers: { 'Authorization': `Bearer ${token}` }
-          
         });
 
         if (!resUrl.ok) {
