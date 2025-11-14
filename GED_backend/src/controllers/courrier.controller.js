@@ -10,7 +10,8 @@ const mime = require('mime-types'); // ajouter en haut
 const jwt = require("jsonwebtoken");
 const db = require('../models/db'); // <-- si ton fichier db.js exporte la connexion PostgreSQL
 const FormData = require("form-data");
-const { archiveSingleCourrier } = require('../services/archiveService');
+const { archiveSingleCourrier } = require('../helpers/archive.helpers');
+
 
 const s3 = new AWS.S3({
   endpoint: process.env.B2_ENDPOINT,
