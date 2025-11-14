@@ -1,7 +1,9 @@
 // archive.controller.js
 const path = require('path');
 const db = require('../models/db');
-const { s3, uploadToB2, updateYearZip } = require('../helpers/archive.helpers');
+const { s3, updateYearZip } = require('../helpers/archive.helpers');
+const mime = require('mime-types');
+
 
 /** Récupère la key B2 à partir d'une URL */
 function extractKeyFromUrl(url) {
@@ -19,7 +21,7 @@ function extractKeyFromUrl(url) {
 }
 
 
-/** Télécharge depuis B2 puis ré-upload vers un autre dossier B2 */
+/** Télécharge depuis B2 puis ré-upload vers un autre dossier avec MIME correct */
 async function copyFileInB2(fileUrl, destKey) {
   const sourceKey = extractKeyFromUrl(fileUrl);
   if (!sourceKey) throw new Error(`Impossible d'extraire la key depuis ${fileUrl}`);
@@ -31,12 +33,15 @@ async function copyFileInB2(fileUrl, destKey) {
       Key: sourceKey
     }).createReadStream();
 
+    // Déterminer le MIME type
+    const contentType = mime.lookup(sourceKey) || 'application/octet-stream';
+
     // Ré-upload vers dossier archive
     await s3.upload({
       Bucket: process.env.B2_BUCKET_NAME,
       Key: destKey,
       Body: fileStream,
-      ContentType: 'application/octet-stream'
+      ContentType: contentType
     }).promise();
 
     console.log(`✅ Copié ${sourceKey} → ${destKey}`);
@@ -120,4 +125,34 @@ async function archiveSingleCourrier(courrierId) {
   await updateYearZip(year);
 }
 
-module.exports = { archiveSingleCourrier };
+
+/** Archive uniquement le PDF d’un bordereau de transmission + met à jour le ZIP annuel */
+async function archiveBordereau(bordereauId) {
+  // 1️⃣ Récupérer le bordereau
+  const bordRes = await db.query(`SELECT * FROM bordereaux WHERE id = $1`, [bordereauId]);
+  if (!bordRes.rows.length) return;
+  const bord = bordRes.rows[0];
+
+  // 2️⃣ Récupérer le courrier parent pour connaître l'année et le numéro
+  const courrierRes = await db.query(
+    `SELECT numero_enregistrement, date_reception FROM courriers WHERE id = $1`,
+    [bord.courrier_id]
+  );
+  if (!courrierRes.rows.length) return;
+  const courrier = courrierRes.rows[0];
+
+  const year = new Date(courrier.date_reception).getFullYear();
+  const dossierCourrier = `archives/${year}/${courrier.numero_enregistrement}/`;
+
+  // 3️⃣ Copier uniquement le PDF du bordereau
+  if (bord.fichier_bordereau) {
+    const fileName = path.basename(bord.fichier_bordereau);
+    await copyFileInB2(bord.fichier_bordereau, `${dossierCourrier}${fileName}`);
+  }
+
+  // 4️⃣ Mettre à jour le ZIP annuel
+  await updateYearZip(year);
+}
+
+
+module.exports = { copyFileInB2, archiveSingleCourrier, archiveBordereau };

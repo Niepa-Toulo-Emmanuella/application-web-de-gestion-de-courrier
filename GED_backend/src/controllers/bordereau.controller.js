@@ -7,6 +7,8 @@ const AWS = require('aws-sdk');
 const chromium = require('@sparticuz/chromium');
 const puppeteer = require('puppeteer-core');
 const pool = require("../models/db");
+const { archiveBordereau } = require('../controllers/archive.controller');
+
 
 // -------- Client S3 Backblaze B2 --------
 const s3 = new AWS.S3({
@@ -317,6 +319,11 @@ exports.create = async (req, res) => {
     const result = await db.query(query, values);
 
     console.log("✅ [SQL] Bordereau inséré avec succès :", result.rows[0]);
+
+    const newBordereauId = result.rows[0].id;
+
+    // 2️⃣ Archiver automatiquement le PDF du bordereau
+    await archiveBordereau(newBordereauId);
 
     res.status(201).json({
       success: true,
