@@ -6,26 +6,45 @@ const { s3, uploadToB2, updateYearZip } = require('../helpers/archive.helpers');
 /** Récupère la key B2 à partir d'une URL */
 function extractKeyFromUrl(url) {
   const parts = url.split(".backblazeb2.com/");
-  return parts[1]; // tout ce qui vient après
+  if (parts.length < 2) return null;
+
+  let key = decodeURIComponent(parts[1]); // décode les espaces %20
+
+  // retirer le nom du bucket au début si présent
+  if (key.startsWith(process.env.B2_BUCKET_NAME + "/")) {
+    key = key.replace(process.env.B2_BUCKET_NAME + "/", "");
+  }
+
+  return key;
 }
+
 
 /** Télécharge depuis B2 puis ré-upload vers un autre dossier B2 */
 async function copyFileInB2(fileUrl, destKey) {
   const sourceKey = extractKeyFromUrl(fileUrl);
+  if (!sourceKey) throw new Error(`Impossible d'extraire la key depuis ${fileUrl}`);
 
-  // 1️⃣ Télécharger depuis B2
-  const fileStream = s3.getObject({
-    Bucket: process.env.B2_BUCKET_NAME,
-    Key: sourceKey
-  }).createReadStream();
+  try {
+    // Télécharger depuis B2
+    const fileStream = s3.getObject({
+      Bucket: process.env.B2_BUCKET_NAME,
+      Key: sourceKey
+    }).createReadStream();
 
-  // 2️⃣ Ré-upload vers dossier archive
-  await s3.upload({
-    Bucket: process.env.B2_BUCKET_NAME,
-    Key: destKey,
-    Body: fileStream
-  }).promise();
+    // Ré-upload vers dossier archive
+    await s3.upload({
+      Bucket: process.env.B2_BUCKET_NAME,
+      Key: destKey,
+      Body: fileStream,
+      ContentType: 'application/octet-stream'
+    }).promise();
+
+    console.log(`✅ Copié ${sourceKey} → ${destKey}`);
+  } catch (err) {
+    console.error(`❌ Erreur copyFileInB2 pour ${fileUrl}`, err.message);
+  }
 }
+
 
 /**
  * Archive un courrier avec tous ses fichiers associés (bordereaux + imputations)
