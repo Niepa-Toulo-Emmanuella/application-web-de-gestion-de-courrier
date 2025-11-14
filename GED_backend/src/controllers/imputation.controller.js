@@ -289,7 +289,7 @@ exports.create = async (req, res) => {
     const newImputationId = result.rows[0].id;
     
         // 2️⃣ Archiver automatiquement le PDF du bordereau
-    await archiveBordereau(newImputationId);
+    await archiveImputation(newImputationId);
 
 
     res.status(201).json({ success: true, data: result.rows[0], message: "Imputation enregistrée avec PDF ✅" });
