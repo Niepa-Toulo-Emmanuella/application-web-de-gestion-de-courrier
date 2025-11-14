@@ -174,8 +174,6 @@ async function copyBordereauInB2(fileUrl, destKey) {
 }
 
 
-
-
 /** Archive uniquement le PDF d’un bordereau de transmission + met à jour le ZIP annuel */
 async function archiveBordereau(bordereauId) {
   // 1️⃣ Récupérer le bordereau
@@ -206,4 +204,91 @@ async function archiveBordereau(bordereauId) {
 }
 
 
-module.exports = { copyFileInB2, archiveSingleCourrier, copyBordereauInB2, archiveBordereau };
+
+
+// ---------------------- Gestion B2 pour les imputations ----------------------
+
+/** Récupère la key B2 ou le chemin relatif pour un PDF d’imputation */
+function extractImputationKey(filePath) {
+  if (!filePath) return null;
+
+  // Si c'est déjà un chemin relatif, retourne tel quel
+  if (!filePath.includes(".backblazeb2.com")) {
+    return filePath;
+  }
+
+  const parts = filePath.split(".backblazeb2.com/");
+  if (parts.length < 2) return null;
+
+  let key = decodeURIComponent(parts[1]); // décode les espaces %20
+
+  // retirer le nom du bucket au début si présent
+  if (key.startsWith(process.env.B2_BUCKET_NAME + "/")) {
+    key = key.replace(process.env.B2_BUCKET_NAME + "/", "");
+  }
+
+  return key;
+}
+
+/** Copie un PDF d’imputation dans B2 */
+async function copyImputationInB2(fileUrl, destKey) {
+  const sourceKey = extractImputationKey(fileUrl);
+  if (!sourceKey) throw new Error(`Impossible d'extraire la key depuis ${fileUrl}`);
+
+  try {
+    const fileStream = s3.getObject({
+      Bucket: process.env.B2_BUCKET_NAME,
+      Key: sourceKey
+    }).createReadStream();
+
+    const contentType = mime.lookup(sourceKey) || 'application/pdf';
+
+    await s3.upload({
+      Bucket: process.env.B2_BUCKET_NAME,
+      Key: destKey,
+      Body: fileStream,
+      ContentType: contentType
+    }).promise();
+
+    console.log(`✅ Copié ${sourceKey} → ${destKey}`);
+  } catch (err) {
+    console.error(`❌ Erreur copyImputationInB2 pour ${fileUrl}`, err.message);
+  }
+}
+
+/** Archive uniquement le PDF d’une imputation + met à jour la DB */
+async function archiveImputation(imputationId) {
+  // 1️⃣ Récupérer l’imputation
+  const impRes = await db.query(`SELECT * FROM imputations WHERE id = $1`, [imputationId]);
+  if (!impRes.rows.length) return;
+  const imp = impRes.rows[0];
+
+  // 2️⃣ Récupérer le courrier parent pour connaître l'année et le numéro
+  const courrierRes = await db.query(
+    `SELECT numero_enregistrement, date_arrivee FROM courriers WHERE id = $1`,
+    [imp.courrier_id]
+  );
+  if (!courrierRes.rows.length) return;
+  const courrier = courrierRes.rows[0];
+
+  const year = new Date(courrier.date_arrivee).getFullYear();
+  const dossierCourrier = `archives/${year}/${courrier.numero_enregistrement}/`;
+
+  // 3️⃣ Copier uniquement le PDF d’imputation
+  if (imp.fichier_imputation) {
+    const fileName = path.basename(imp.fichier_imputation);
+    await copyImputationInB2(imp.fichier_imputation, `${dossierCourrier}${fileName}`);
+  }
+
+  // 4️⃣ Mettre à jour la DB pour marquer comme archivé
+  await db.query(
+    `UPDATE imputations SET statut = 'archive', fichier_imputation = $1 WHERE id = $2`,
+    [`${dossierCourrier}${path.basename(imp.fichier_imputation)}`, imputationId]
+  );
+
+  console.log(`✅ Imputation ${imputationId} archivée`);
+}
+
+
+
+module.exports = { copyFileInB2, archiveSingleCourrier, copyBordereauInB2, archiveBordereau, extractImputationKey, copyImputationInB2, archiveImputation };

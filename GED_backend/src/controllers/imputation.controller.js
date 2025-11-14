@@ -8,6 +8,7 @@ const chromium = require('@sparticuz/chromium');
 const puppeteer = require('puppeteer-core');
 const multer = require('multer');
 const upload = multer({ dest: 'uploads/' }); // dossier temporaire pour cachets
+const { archiveImputation } = require('../controllers/archive.controller');
 
 
 // S3 B2
@@ -284,6 +285,11 @@ exports.create = async (req, res) => {
       `UPDATE envois SET impute = true WHERE bordereau_id = $1`,
       [bordereau_id]
     );
+
+    const newImputationId = result.rows[0].id;
+    
+        // 2️⃣ Archiver automatiquement le PDF du bordereau
+    await archiveBordereau(newImputationId);
 
 
     res.status(201).json({ success: true, data: result.rows[0], message: "Imputation enregistrée avec PDF ✅" });
