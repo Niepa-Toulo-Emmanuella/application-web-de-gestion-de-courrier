@@ -11,19 +11,12 @@
       font-family: "Segoe UI", sans-serif;
       padding: 40px;
     }
-
     .card {
       max-width: 650px;
       margin: auto;
       box-shadow: 0 4px 10px rgba(0,0,0,0.1);
       border-radius: 15px;
     }
-
-    .progress {
-      height: 20px;
-      margin-top: 15px;
-    }
-
     #log {
       margin-top: 20px;
       font-size: 0.95rem;
@@ -34,32 +27,22 @@
       max-height: 300px;
       overflow-y: auto;
     }
-
     .btn-lg {
       width: 100%;
       font-size: 1.1rem;
     }
   </style>
 </head>
-
 <body>
   <div class="card p-4">
     <h3 class="text-center mb-3">🗄️ Archivage des Courriers</h3>
 
     <div class="mb-3">
-      <label for="yearSelect" class="form-label">Choisir une année à archiver :</label>
+      <label for="yearSelect" class="form-label">Choisir une année :</label>
       <select id="yearSelect" class="form-select"></select>
     </div>
 
-    <div class="d-flex gap-3">
-      <button id="btnArchive" class="btn btn-primary btn-lg flex-fill">🚀 Archiver</button>
-      <button id="btnDownload" class="btn btn-success btn-lg flex-fill">⬇️ Télécharger l’archive</button>
-    </div>
-
-    <div class="progress d-none">
-      <div id="progressBar" class="progress-bar progress-bar-striped progress-bar-animated" 
-           role="progressbar" style="width: 0%">0%</div>
-    </div>
+    <button id="btnDownload" class="btn btn-success btn-lg">⬇️ Télécharger l’archive</button>
 
     <div id="log"></div>
   </div>
@@ -67,7 +50,6 @@
   <script>
     const API = "https://application-web-de-gestion-de-courrier-1.onrender.com";
 
-    // === Remplir le select avec les années ===
     const yearSelect = document.getElementById('yearSelect');
     const currentYear = new Date().getFullYear();
     for (let y = currentYear; y >= 2020; y--) {
@@ -77,13 +59,10 @@
       yearSelect.appendChild(option);
     }
 
-    const btnArchive = document.getElementById('btnArchive');
     const btnDownload = document.getElementById('btnDownload');
-    const progressContainer = document.querySelector('.progress');
-    const progressBar = document.getElementById('progressBar');
     const log = document.getElementById('log');
 
-    function logMessage(message, type = 'info') {
+    function logMessage(message, type='info') {
       const emoji = type === 'error' ? '❌' : type === 'success' ? '✅' : 'ℹ️';
       log.textContent += `${emoji} ${message}\n`;
       log.scrollTop = log.scrollHeight;
@@ -92,118 +71,22 @@
     async function safeParseJson(response) {
       const text = await response.text();
       if (!text) return null;
-      try {
-        return JSON.parse(text);
-      } catch (err) {
-        console.error("Réponse non JSON :", text);
-        return null;
-      }
+      try { return JSON.parse(text); } 
+      catch { return null; }
     }
 
-    // === Archiver une année ===
-    btnArchive.addEventListener('click', async () => {
-      const year = yearSelect.value;
-      const token = localStorage.getItem('token') || localStorage.getItem('jwt');
-
-      if (!token) return alert("⚠️ Vous devez être connecté pour effectuer cette action.");
-      if (!confirm(`Voulez-vous vraiment archiver les courriers de ${year} ?`)) return;
-
-      btnArchive.disabled = true;
-      btnDownload.disabled = true;
-      log.textContent = "";
-      progressContainer.classList.remove('d-none');
-      progressBar.style.width = "0%";
-      progressBar.textContent = "0%";
-
-      logMessage(`Début de l’archivage pour l’année ${year}...`);
-
-      try {
-        // ---- LANCEMENT ----
-        const launchResponse = await fetch(`${API}/api/archives/launch/${year}`, {
-          method: 'POST',
-          credentials: "include",
-          headers: {
-              "Content-Type": "application/json",
-              "Authorization": `Bearer ${token}`,
-          },
-          body: JSON.stringify({})
-        });
-
-        if (!launchResponse.ok) {
-          const errObj = await safeParseJson(launchResponse) || { message: launchResponse.statusText };
-          logMessage(`Erreur lancement : ${launchResponse.status} ${errObj.message || ''}`, 'error');
-          btnArchive.disabled = false;
-          btnDownload.disabled = false;
-          return;
-        }
-
-        const launchData = await safeParseJson(launchResponse) || {};
-        logMessage(`Job lancé : ID ${launchData.run_id ?? '(id non fourni)'}`, 'info');
-
-        // ---- STATUS (polling) ----
-        let interval = setInterval(async () => {
-          try {
-            const statusRes = await fetch(`${API}/api/archives/status/${year}`, {
-              method: "GET",
-              credentials: "include",
-              headers: { "Authorization": `Bearer ${token}` }
-            });
-
-            if (!statusRes.ok) {
-              logMessage(`Erreur serveur statut : ${statusRes.status} ${statusRes.statusText}`, 'error');
-              console.error('Réponse brute statut (non-ok) :', await statusRes.text());
-              return;
-            }
-
-            const status = await safeParseJson(statusRes);
-            if (!status) return logMessage("Réponse statut non-JSON ou vide", 'error');
-
-            logMessage(`Statut : ${status.status}, erreurs : ${status.errors_count ?? 0}`, 'info');
-
-            if (status.status === 'done' || status.status === 'error') {
-              clearInterval(interval);
-              progressBar.style.width = status.status === 'done' ? "100%" : progressBar.style.width;
-              progressBar.textContent = status.status === 'done' ? "100%" : progressBar.textContent;
-              progressBar.classList.toggle("bg-success", status.status === 'done');
-              progressBar.classList.toggle("bg-danger", status.status === 'error');
-              logMessage(status.status === 'done' ? "Archivage terminé ✅" : "Erreur lors de l’archivage ❌", status.status === 'done' ? "success" : "error");
-              btnArchive.disabled = false;
-              btnDownload.disabled = false;
-            }
-
-          } catch (pollErr) {
-            console.error("Erreur polling statut :", pollErr);
-            logMessage(`Erreur interrogation statut: ${pollErr.message}`, 'error');
-          }
-        }, 5000);
-
-        // Animation de progression fictive
-        let fakeProgress = 0;
-        const progressAnim = setInterval(() => {
-          fakeProgress = Math.min(90, fakeProgress + 5);
-          progressBar.style.width = fakeProgress + "%";
-          progressBar.textContent = fakeProgress + "%";
-          if (fakeProgress >= 90) clearInterval(progressAnim);
-        }, 500);
-
-      } catch (err) {
-        progressBar.classList.add("bg-danger");
-        logMessage(`Erreur : ${err.message}`, "error");
-        btnArchive.disabled = false;
-        btnDownload.disabled = false;
-      }
-    });
-
-    // === Télécharger l’archive ZIP ===
+    // Télécharger l’archive ZIP
     btnDownload.addEventListener('click', async () => {
       const year = yearSelect.value;
-      const token = localStorage.getItem('jwt');
+
+      // Vérifie jwt ou token
+      const token = localStorage.getItem('jwt') || localStorage.getItem('token');
       if (!token) return alert("⚠️ Vous devez être connecté pour télécharger l’archive.");
 
+      log.textContent = "";
       logMessage(`Génération du ZIP pour l’année ${year}...`);
 
       try {
-        // ---- SIGNED URL ----
         const resUrl = await fetch(`${API}/api/archives/signed-url/${year}`, {
           credentials: "include",
           headers: { 'Authorization': `Bearer ${token}` }
@@ -211,24 +94,20 @@
 
         if (!resUrl.ok) {
           const errObj = await safeParseJson(resUrl) || { message: resUrl.statusText };
-          logMessage(`Erreur génération lien : ${resUrl.status} ${errObj.message || ''}`, 'error');
-          return;
+          return logMessage(`Erreur génération lien : ${resUrl.status} ${errObj.message}`, 'error');
         }
 
         const data = await safeParseJson(resUrl) || {};
-        if (!data.url) {
-          logMessage("Aucune URL renvoyée par le serveur.", 'error');
-          console.error("Réponse brute signed-url :", data);
-          return;
-        }
+        if (!data.url) return logMessage("Aucune URL renvoyée par le serveur.", 'error');
 
         window.open(data.url);
-        logMessage(`Archive ${year} prête au téléchargement 📦`, "success");
+        logMessage(`Archive ${year} prête au téléchargement`, 'success');
 
       } catch (err) {
-        logMessage(`Erreur lors de la génération du ZIP : ${err.message}`, "error");
+        logMessage(`Erreur lors de la génération du ZIP : ${err.message}`, 'error');
       }
     });
   </script>
+
 </body>
 </html>

@@ -1,37 +1,49 @@
+// archive.routes.js
 const express = require('express');
 const router = express.Router();
-const archiveController = require('../controllers/archive.controller');
+const stream = require('stream');
+const archiver = require('archiver');
 const { verifyToken, isAdminOrAgent } = require('../middlewares/auth.middleware');
+const { objectExistsInB2, s3 } = require('../helpers/archive.helpers');
 
-// 🟢 Lancer l'archivage pour une année donnée
-router.post(
-  '/launch/:year',
-  verifyToken,
-  isAdminOrAgent, // 🔒 Seuls les agents peuvent lancer
-  archiveController.launchArchive
-);
+router.get('/signed-url/:year', verifyToken, isAdminOrAgent, async (req, res) => {
+  try {
+    const year = req.params.year;
+    const zipKey = `archives/${year}/archive_${year}_temp.zip`;
 
-// 🟡 Vérifier le statut d’un archivage (accessible à tout utilisateur connecté)
-router.get(
-  '/status/:year',
-  verifyToken, // 🔒 Nécessite juste un token valide
-  archiveController.getArchiveStatus
-);
+    // Vérifier si le ZIP existe déjà
+    const exists = await objectExistsInB2(zipKey);
+    if (exists) {
+      const url = s3.getSignedUrl('getObject', { Bucket: process.env.B2_BUCKET_NAME, Key: zipKey, Expires: 600 });
+      return res.json({ url });
+    }
 
-// 🟢 Télécharger une archive
-router.get(
-  '/download/:year',
-  verifyToken,
-  isAdminOrAgent, // 🔒 Seuls les agents peuvent télécharger
-  archiveController.downloadArchive
-);
+    // Créer le ZIP en excluant le ZIP lui-même
+    const list = await s3.listObjectsV2({ Bucket: process.env.B2_BUCKET_NAME, Prefix: `archives/${year}/` }).promise();
+    if (!list.Contents || list.Contents.length === 0) return res.status(404).json({ message: "Aucun fichier trouvé" });
 
-// 🟢 Générer une URL signée pour téléchargement sécurisé
-router.get(
-  '/signed-url/:year',
-  verifyToken,
-  isAdminOrAgent, // 🔒 Seuls les agents peuvent obtenir l’URL
-  archiveController.getSignedUrl
-);
+    const filesToZip = list.Contents.filter(f => !f.Key.endsWith(`archive_${year}_temp.zip`));
+
+    const archiveStream = new stream.PassThrough();
+    const uploadPromise = s3.upload({ Bucket: process.env.B2_BUCKET_NAME, Key: zipKey, Body: archiveStream, ContentType: 'application/zip' }).promise();
+    const archive = archiver('zip', { zlib: { level: 9 } });
+    archive.pipe(archiveStream);
+
+    for (const obj of filesToZip) {
+      const fileStream = s3.getObject({ Bucket: process.env.B2_BUCKET_NAME, Key: obj.Key }).createReadStream();
+      archive.append(fileStream, { name: obj.Key.replace(`archives/${year}/`, '') });
+    }
+
+    await archive.finalize();
+    await uploadPromise;
+
+    const url = s3.getSignedUrl('getObject', { Bucket: process.env.B2_BUCKET_NAME, Key: zipKey, Expires: 600 });
+    res.json({ url });
+
+  } catch (err) {
+    console.error('Erreur génération ZIP :', err);
+    res.status(500).json({ success: false, message: "Erreur génération ZIP", error: err.message });
+  }
+});
 
 module.exports = router;

@@ -10,6 +10,7 @@ const mime = require('mime-types'); // ajouter en haut
 const jwt = require("jsonwebtoken");
 const db = require('../models/db'); // <-- si ton fichier db.js exporte la connexion PostgreSQL
 const FormData = require("form-data");
+const { archiveSingleCourrier } = require('../services/archiveService');
 
 const s3 = new AWS.S3({
   endpoint: process.env.B2_ENDPOINT,
@@ -126,9 +127,17 @@ const create = async (req, res) => {
     });
 
     console.log('📦 Courrier inséré avec numéro :', numero);
+    // 🚀 LANCEMENT AUTOMATIQUE DE L’ARCHIVAGE
+    // Importer la fonction archiveSingleCourrier depuis ton service d’archivage
+
+    archiveSingleCourrier(courrier.id)
+      .then(() => console.log(`Archivage terminé pour le courrier ${courrier.id}`))
+      .catch(err => console.error(`Erreur archivage courrier ${courrier.id}:`, err));
+
+    // 🔔 Réponse au front
     res.status(201).json({
       success: true,
-      message: 'Courrier créé avec succès',
+      message: 'Courrier créé et archivage lancé automatiquement',
       data: courrier,
     });
   } catch (err) {
