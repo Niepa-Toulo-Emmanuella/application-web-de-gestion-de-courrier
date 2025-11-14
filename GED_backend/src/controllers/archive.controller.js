@@ -125,6 +125,56 @@ async function archiveSingleCourrier(courrierId) {
   await updateYearZip(year);
 }
 
+/** Récupère la key B2 ou le chemin relatif pour un bordereau de transmission */
+function extractBordereauKey(filePath) {
+  if (!filePath) return null;
+
+  // Si c'est déjà un chemin relatif, retourne tel quel
+  if (!filePath.includes(".backblazeb2.com")) {
+    return filePath;
+  }
+
+  const parts = filePath.split(".backblazeb2.com/");
+  if (parts.length < 2) return null;
+
+  let key = decodeURIComponent(parts[1]); // décode les espaces %20
+
+  // retirer le nom du bucket au début si présent
+  if (key.startsWith(process.env.B2_BUCKET_NAME + "/")) {
+    key = key.replace(process.env.B2_BUCKET_NAME + "/", "");
+  }
+
+  return key;
+}
+
+
+async function copyBordereauInB2(fileUrl, destKey) {
+  const sourceKey = extractBordereauKey(fileUrl);
+  if (!sourceKey) throw new Error(`Impossible d'extraire la key depuis ${fileUrl}`);
+
+  try {
+    const fileStream = s3.getObject({
+      Bucket: process.env.B2_BUCKET_NAME,
+      Key: sourceKey
+    }).createReadStream();
+
+    const contentType = mime.lookup(sourceKey) || 'application/pdf'; // PDF par défaut
+
+    await s3.upload({
+      Bucket: process.env.B2_BUCKET_NAME,
+      Key: destKey,
+      Body: fileStream,
+      ContentType: contentType
+    }).promise();
+
+    console.log(`✅ Copié ${sourceKey} → ${destKey}`);
+  } catch (err) {
+    console.error(`❌ Erreur copyBordereauInB2 pour ${fileUrl}`, err.message);
+  }
+}
+
+
+
 
 /** Archive uniquement le PDF d’un bordereau de transmission + met à jour le ZIP annuel */
 async function archiveBordereau(bordereauId) {
@@ -147,7 +197,8 @@ async function archiveBordereau(bordereauId) {
   // 3️⃣ Copier uniquement le PDF du bordereau
   if (bord.fichier_bordereau) {
     const fileName = path.basename(bord.fichier_bordereau);
-    await copyFileInB2(bord.fichier_bordereau, `${dossierCourrier}${fileName}`);
+    await copyBordereauInB2(bord.fichier_bordereau, `${dossierCourrier}${fileName}`);
+
   }
 
   // 4️⃣ Mettre à jour le ZIP annuel
@@ -155,4 +206,4 @@ async function archiveBordereau(bordereauId) {
 }
 
 
-module.exports = { copyFileInB2, archiveSingleCourrier, archiveBordereau };
+module.exports = { copyFileInB2, archiveSingleCourrier, copyBordereauInB2, archiveBordereau };
