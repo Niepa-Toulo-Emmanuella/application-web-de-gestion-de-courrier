@@ -193,6 +193,9 @@ app.use((err, req, res, next) => {
   });
 });
 
+app.use(express.static('public'));
+
+
 const PORT = process.env.PORT || 3000;
 
 // 🚀 Lancement du serveur
