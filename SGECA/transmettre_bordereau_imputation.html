@@ -143,7 +143,7 @@
           option.value = i.id;
           option.textContent = `Objet du courrier : ${i.courrier_objet || 'Pas d’objet'} | Observation de l'imputation : ${i.observations || 'Pas d’observations'} |  ${dateText}`;
 
-          
+
           select.appendChild(option);
         });
       } catch (err) {

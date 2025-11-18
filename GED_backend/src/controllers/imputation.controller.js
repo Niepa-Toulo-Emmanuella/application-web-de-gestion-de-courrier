@@ -330,6 +330,14 @@ exports.createTransmission = async (req, res) => {
        VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *`,
       [imputation_id, destinataire_id, expediteur_id, instructions, duree_traitement, observations, priorite]
     );
+    // 🟩 Mettre à jour le statut de la transmission
+    await db.query(
+      `UPDATE transmissions_imputation
+      SET statut = 'envoye'
+      WHERE id = $1`,
+      [result.rows[0].id]
+    );
+
     await db.query(
       `UPDATE imputations SET statut = 'envoye' WHERE id = $1`,
       [imputation_id]
@@ -352,6 +360,7 @@ exports.getAll = async (req, res) => {
       SELECT i.*, c.objet AS courrier_objet
       FROM imputations i
       LEFT JOIN courriers c ON c.id = i.courrier_id
+      WHERE i.statut = 'en_attente'
       ORDER BY i.id DESC
     `
     );
