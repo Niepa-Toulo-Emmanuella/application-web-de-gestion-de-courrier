@@ -265,13 +265,13 @@ async function archiveImputation(imputationId) {
 
   // 2️⃣ Récupérer le courrier parent pour connaître l'année et le numéro
   const courrierRes = await db.query(
-    `SELECT numero_enregistrement, date_arrivee FROM courriers WHERE id = $1`,
+    `SELECT numero_enregistrement, date_reception FROM courriers WHERE id = $1`,
     [imp.courrier_id]
   );
   if (!courrierRes.rows.length) return;
   const courrier = courrierRes.rows[0];
 
-  const year = new Date(courrier.date_arrivee).getFullYear();
+  const year = new Date(courrier.date_reception).getFullYear();
   const dossierCourrier = `archives/${year}/${courrier.numero_enregistrement}/`;
 
   // 3️⃣ Copier uniquement le PDF d’imputation
