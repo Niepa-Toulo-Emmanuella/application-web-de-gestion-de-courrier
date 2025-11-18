@@ -352,9 +352,8 @@ exports.getAll = async (req, res) => {
       SELECT i.*, c.objet AS courrier_objet
       FROM imputations i
       LEFT JOIN courriers c ON c.id = i.courrier_id
-      WHERE i.statut = $1
       ORDER BY i.id DESC
-    `, ['en_attente']
+    `
     );
     res.json(result.rows);
   } catch (err) {
