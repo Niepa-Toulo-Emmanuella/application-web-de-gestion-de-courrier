@@ -17,8 +17,8 @@ app.set('trust proxy', 1);
 // 🌐 CORS — autoriser ton frontend
 app.use(cors({
   origin: [
-    "https://application-web-de-gestion-de-courrier-1.onrender.com",
-    "https://application-web-de-gestion-de-courrier.onrender.com"
+    "https://www.jurimail.site",
+    "https://jurimail.site"
   ],
   credentials: true,
 }));
@@ -52,7 +52,7 @@ app.use(helmet());
 app.use((req, res, next) => {
   res.setHeader(
     "Content-Security-Policy",
-    "frame-ancestors 'self' https://application-web-de-gestion-de-courrier.onrender.com https://application-web-de-gestion-de-courrier-1.onrender.com"
+    "frame-ancestors 'self' https://www.jurimail.site https://jurimail.site https://application-web-de-gestion-de-courrier.onrender.com https://application-web-de-gestion-de-courrier-1.onrender.com"
   );
   next();
 });
