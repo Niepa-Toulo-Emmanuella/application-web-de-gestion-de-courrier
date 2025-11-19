@@ -123,6 +123,12 @@ async function archiveSingleCourrier(courrierId) {
 
   // 📦 4️⃣ Mise à jour du ZIP annuel
   await updateYearZip(year);
+
+  // 📌 5️⃣ Marquer le courrier comme archivé
+  await db.query(
+  `UPDATE courriers SET archive_statut = 'archive' WHERE id = $1`,
+  [courrierId]
+  );
 }
 
 /** Récupère la key B2 ou le chemin relatif pour un bordereau de transmission */
@@ -201,6 +207,16 @@ async function archiveBordereau(bordereauId) {
 
   // 4️⃣ Mettre à jour le ZIP annuel
   await updateYearZip(year);
+
+  // ✅ Marquer le bordereau comme archivé (nouvelle colonne archive_statut)
+  try {
+    await db.query(
+      `UPDATE bordereaux SET archive_statut = 'archive' WHERE id = $1`,
+      [bordereauId]
+    );
+  } catch (err) {
+    console.error(`❌ Erreur mise à jour archive_statut pour bordereau ${bordereauId}:`, err.message);
+  }
 }
 
 
@@ -282,7 +298,7 @@ async function archiveImputation(imputationId) {
 
   // 4️⃣ Mettre à jour la DB pour marquer comme archivé
   await db.query(
-    `UPDATE imputations SET statut = 'archive', fichier_imputation = $1 WHERE id = $2`,
+    `UPDATE imputations SET archive_statut = 'archive', fichier_imputation = $1 WHERE id = $2`,
     [`${dossierCourrier}${path.basename(imp.fichier_imputation)}`, imputationId]
   );
 
