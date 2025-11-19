@@ -3,8 +3,19 @@ const express = require('express');
 const router = express.Router();
 const stream = require('stream');
 const archiver = require('archiver');
+const cors = require('cors');
 const { verifyToken, isAdminOrAgent } = require('../middlewares/auth.middleware');
 const { objectExistsInB2, s3 } = require('../helpers/archive.helpers');
+
+// Appliquer CORS sur toutes les routes du router
+router.use(cors({
+  origin: [
+    "https://www.jurimail.site",
+    "https://jurimail.site"
+  ],
+  credentials: true,
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 
 router.get('/signed-url/:year', verifyToken, isAdminOrAgent, async (req, res) => {
   try {
