@@ -33,6 +33,10 @@ function normalizeRole(role) {
     .trim();
 }
 
+function generateJWT(userId, role) {
+  return jwt.sign({ userId, role }, process.env.JWT_SECRET, { expiresIn: '7d' });
+}
+
 /* ------------------------------------------------------------------
    REGISTER – création d’utilisateur (réservée aux admins)
 -------------------------------------------------------------------*/
@@ -92,7 +96,7 @@ const login = async (req, res) => {
     }
 
     // 3. Générer le JWT
-    const token = generateJWT(user.id);
+    const token = generateJWT(user.id, user.role);
 
     // 4. Mettre à jour last_login
     await User.updateLastLogin(user.id);
@@ -247,4 +251,4 @@ const resetPassword = async (req, res) => {
 
 
 
-module.exports = { register, login, logout, checkAuth, forgotPassword , resetPassword};
+module.exports = { register, login, logout, checkAuth, forgotPassword , resetPassword, generateJWT};
