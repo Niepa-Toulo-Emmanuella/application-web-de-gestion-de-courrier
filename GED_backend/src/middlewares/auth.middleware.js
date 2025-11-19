@@ -63,11 +63,25 @@ const isAdminOrAgent = (req, res, next) => {
   return res.status(403).json({ success: false, message: 'Accès refusé.' });
 };
 
+const hasRole = (allowedRoles = []) => (req, res, next) => {
+  if (!req.user || !req.user.role) {
+    return res.status(403).json({ success: false, message: 'Accès refusé.' });
+  }
+
+  if (allowedRoles.includes(req.user.role)) {
+    return next();
+  }
+
+  return res.status(403).json({ success: false, message: 'Accès refusé.' });
+};
+
+
 
 
 module.exports = {
   verifyToken,
   authenticate,
   isAdmin,
-  isAdminOrAgent
+  isAdminOrAgent,
+  hasRole
 };
