@@ -18,6 +18,7 @@ router.use(cors({
 }));
 
 router.get('/signed-url/:year', verifyToken, hasRole(['agent']), async (req, res) => {
+  console.log('💡 Rôle utilisateur avant hasRole:', req.user.role);
   try {
     const year = req.params.year;
     const zipKey = `archives/${year}/archive_${year}_temp.zip`;
