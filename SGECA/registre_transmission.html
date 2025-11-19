@@ -218,9 +218,9 @@
       const date = b.date_depart ? new Date(b.date_depart).toLocaleDateString("fr-FR") : "—";
 
       // 🔸 Priorité
-      let prioriteHTML = b.priorite 
-          ? `<span class="badge bg-danger">${b.priorite}</span>` 
-          : "—";
+      let prioriteHTML = b.priorite
+        ? `<span class="badge bg-danger">${b.priorite}</span>`
+        : "—";
 
 
       // 🔸 Pièces jointes (courriers)
@@ -303,7 +303,8 @@
           (b.numero_enregistrement ?? "").toLowerCase().includes(t) ||
           (b.objet ?? "").toLowerCase().includes(t) ||
           (b.destinataire ?? "").toLowerCase().includes(t) ||
-          (b.observations ?? "").toLowerCase().includes(t)
+          (b.observations ?? "").toLowerCase().includes(t) ||
+          (b.numero_enregistrement ?? '').toLowerCase().includes(t)
       );
     }
 

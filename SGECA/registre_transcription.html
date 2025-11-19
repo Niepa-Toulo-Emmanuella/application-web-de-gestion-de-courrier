@@ -343,7 +343,8 @@
             return bordereaux.filter(b =>
                 (b.numero_reference ?? '').toLowerCase().includes(t) ||
                 (b.objet ?? '').toLowerCase().includes(t) ||
-                (b.expediteur ?? '').toLowerCase().includes(t)
+                (b.expediteur ?? '').toLowerCase().includes(t) ||
+                (b.numero_enregistrement ?? '').toLowerCase().includes(t)
             );
         }
 
