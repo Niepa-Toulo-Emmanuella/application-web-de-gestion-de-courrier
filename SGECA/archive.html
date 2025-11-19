@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -11,12 +12,14 @@
       font-family: "Segoe UI", sans-serif;
       padding: 40px;
     }
+
     .card {
       max-width: 650px;
       margin: auto;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
       border-radius: 15px;
     }
+
     #log {
       margin-top: 20px;
       font-size: 0.95rem;
@@ -27,12 +30,14 @@
       max-height: 300px;
       overflow-y: auto;
     }
+
     .btn-lg {
       width: 100%;
       font-size: 1.1rem;
     }
   </style>
 </head>
+
 <body>
   <div class="card p-4">
     <h3 class="text-center mb-3">🗄️ Archivage des Courriers</h3>
@@ -62,25 +67,36 @@
     const btnDownload = document.getElementById('btnDownload');
     const log = document.getElementById('log');
 
-    function logMessage(message, type='info') {
+    function logMessage(message, type = 'info') {
       const emoji = type === 'error' ? '❌' : type === 'success' ? '✅' : 'ℹ️';
       log.textContent += `${emoji} ${message}\n`;
       log.scrollTop = log.scrollHeight;
+      // 🔹 Log dans la console pour debug
+      if (type === 'error') console.error(message);
+      else if (type === 'success') console.info(message);
+      else console.log(message);
     }
 
     async function safeParseJson(response) {
       const text = await response.text();
+      console.log("Réponse brute du serveur :", text); // 🔹 Debug
       if (!text) return null;
-      try { return JSON.parse(text); } 
-      catch { return null; }
+      try {
+        const json = JSON.parse(text);
+        console.log("JSON parsé :", json); // 🔹 Debug
+        return json;
+      }
+      catch (err) {
+        console.error("Erreur parsing JSON :", err); // 🔹 Debug
+        return null;
+      }
     }
 
-    // Télécharger l’archive ZIP
     btnDownload.addEventListener('click', async () => {
       const year = yearSelect.value;
 
-      // Vérifie jwt ou token
       const token = localStorage.getItem('jwt') || localStorage.getItem('token');
+      console.log("Token récupéré :", token); // 🔹 Debug
       if (!token) return alert("⚠️ Vous devez être connecté pour télécharger l’archive.");
 
       log.textContent = "";
@@ -92,12 +108,15 @@
           headers: { 'Authorization': `Bearer ${token}` }
         });
 
+        console.log("Réponse fetch :", resUrl); // 🔹 Debug
+
         if (!resUrl.ok) {
           const errObj = await safeParseJson(resUrl) || { message: resUrl.statusText };
           return logMessage(`Erreur génération lien : ${resUrl.status} ${errObj.message}`, 'error');
         }
 
         const data = await safeParseJson(resUrl) || {};
+        console.log("Données récupérées :", data); // 🔹 Debug
         if (!data.url) return logMessage("Aucune URL renvoyée par le serveur.", 'error');
 
         window.open(data.url);
@@ -105,9 +124,11 @@
 
       } catch (err) {
         logMessage(`Erreur lors de la génération du ZIP : ${err.message}`, 'error');
+        console.error("Stack trace :", err); // 🔹 Debug
       }
     });
   </script>
 
 </body>
+
 </html>
