@@ -38,7 +38,14 @@ const authenticate = async (req, res, next) => {
     console.log('Rôle récupéré depuis la BDD :', `"${user.role}"`);
 
     
-    req.user = user; // stocke l’utilisateur complet (pas juste son ID)
+    // req.user = user; // stocke l’utilisateur complet (pas juste son ID)
+
+
+    // On peut directement utiliser les infos du token
+    req.user = {
+      id: decoded.userId,
+      role: decoded.role
+    };
     next();
   } catch (error) {
     res.status(401).json({ success: false, message: 'Token invalide' });
