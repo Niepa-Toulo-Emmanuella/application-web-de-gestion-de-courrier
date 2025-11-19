@@ -96,7 +96,7 @@ const login = async (req, res) => {
     const token = generateJWT(user.id, user.role);
 
     // 4. Mettre à jour last_login
-    await User.updateLastLogin(user.id);
+    await User.updateLastLogin(user.id, user.role);
 
     // 5. Option "se souvenir de moi"
     if (rememberMe) {
