@@ -361,7 +361,6 @@ exports.getAll = async (req, res) => {
       FROM imputations i
       LEFT JOIN courriers c ON c.id = i.courrier_id
       WHERE i.statut = 'en_attente'
-      // WHERE i.archive_statut = 'non_archive'
       ORDER BY i.id DESC
     `
     );
