@@ -107,7 +107,6 @@
   <table id="transmissionsTable">
     <thead>
       <tr>
-        <th>ID</th>
         <th>Destinataire</th>
         <th>Expéditeur</th>
         <!-- <th>Instructions</th>
@@ -189,7 +188,6 @@
             data.data.forEach(t => {
               const tr = document.createElement("tr");
               tr.innerHTML = `
-                <td>${t.id}</td>
                 <td>${t.destinataire || ''}</td>
                 <td>${t.expediteur_nom || ''}</td>
                 <td>${t.date_depart ? new Date(t.date_depart).toLocaleString() : ''}</td>
