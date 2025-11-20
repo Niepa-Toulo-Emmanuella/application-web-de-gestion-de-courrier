@@ -113,8 +113,16 @@
             border-radius: 12px;
         }
 
-        .badge-priorite {
+        .badge-urgent {
             background-color: #dc3545;
+            color: #fff;
+            padding: 6px 10px;
+            border-radius: 12px;
+        }
+
+        .badge-normale {
+            background-color: green;
+            /* bleu */
             color: #fff;
             padding: 6px 10px;
             border-radius: 12px;
@@ -287,7 +295,7 @@
             const dateArrivee = b.date_arrivee ? new Date(b.date_arrivee).toLocaleDateString('fr-FR') : '—';
             const heure = b.heure ?? '—';
             const statutClass = b.statut === 'envoye' ? 'badge-bg-envoye' : 'badge-bg-attente';
-            const prioriteHTML = b.priorite ? `<span class="badge-priorite">${b.priorite}</span>` : '—';
+            const prioriteHTML = b.priorite ? `<span class="${b.priorite === 'urgente' ? 'badge-urgent' : 'badge-normale'}">${b.priorite}</span>` : '—';
 
             let fichiersHTML = '—';
             if (b.fichier_scan) {
