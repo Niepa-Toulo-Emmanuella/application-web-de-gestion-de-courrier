@@ -30,7 +30,7 @@ async function genererNumeroBordereau() {
   const dernier = result.rows[0];
 
   // Valeur de départ
-  let numeroBigInt = 4975n;
+  let numeroBigInt = 5243n;
 
   if (!dernier) {
     return { numero: `BDR-${numeroBigInt.toString()}`, annee: anneeActuelle };
@@ -45,12 +45,12 @@ async function genererNumeroBordereau() {
   }
 
   // Même année → on incrémente
-  const dernierNumeroRaw = dernier.numero?.replace(/^BDR-/, '') ?? '5243';
+  const dernierNumeroRaw = dernier.numero?.replace(/^BDR-/, '') ?? '5242';
   let dernierNumeroBigInt;
   try {
     dernierNumeroBigInt = BigInt(dernierNumeroRaw);
   } catch {
-    dernierNumeroBigInt = 5243n;
+    dernierNumeroBigInt = 5242n;
   }
 
   numeroBigInt = dernierNumeroBigInt + 1n;
