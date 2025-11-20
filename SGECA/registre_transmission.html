@@ -112,8 +112,8 @@
         <thead class="table-primary">
           <tr>
             <th>Date</th>
-            <th>Référence</th>
             <th>Numéro d’enregistrement</th>
+            <th>Référence</th>
             <th>Objet</th>
             <th>Destinataire</th>
             <th>Observations</th>
@@ -280,8 +280,8 @@
       return `
       <tr>
         <td>${date}</td>
-        <td>${b.numero_reference ?? "—"}</td>
         <td>${b.numero_enregistrement ?? "—"}</td>
+        <td>${b.numero_reference ?? "—"}</td>
         <td>${b.objet ?? "—"}</td>
         <td>${Array.isArray(b.destinataire) ? b.destinataire.join(', ') : (b.destinataire ?? "—")}</td>
         <td>${b.observations ?? "—"}</td>
