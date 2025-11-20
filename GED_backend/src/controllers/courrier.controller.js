@@ -56,12 +56,12 @@ async function genererNumeroEnregistrement() {
   }
 
   // Même année → on incrémente
-  const dernierNumeroRaw = dernierCourrier.numero_enregistrement ?? '4974';
+  const dernierNumeroRaw = dernierCourrier.numero_enregistrement ?? '5243';
   let dernierNumeroBigInt;
   try {
     dernierNumeroBigInt = BigInt(dernierNumeroRaw);
   } catch {
-    dernierNumeroBigInt = 4974n;
+    dernierNumeroBigInt = 5243n;
   }
 
   numeroBigInt = dernierNumeroBigInt + 1n;

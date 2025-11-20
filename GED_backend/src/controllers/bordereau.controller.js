@@ -45,12 +45,12 @@ async function genererNumeroBordereau() {
   }
 
   // Même année → on incrémente
-  const dernierNumeroRaw = dernier.numero?.replace(/^BDR-/, '') ?? '4974';
+  const dernierNumeroRaw = dernier.numero?.replace(/^BDR-/, '') ?? '5243';
   let dernierNumeroBigInt;
   try {
     dernierNumeroBigInt = BigInt(dernierNumeroRaw);
   } catch {
-    dernierNumeroBigInt = 4974n;
+    dernierNumeroBigInt = 5243n;
   }
 
   numeroBigInt = dernierNumeroBigInt + 1n;
