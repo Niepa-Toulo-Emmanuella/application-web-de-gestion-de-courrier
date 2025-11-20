@@ -313,7 +313,7 @@ exports.createTransmission = async (req, res) => {
 
     const expediteur_id = req.user.id || req.user._id || req.user.userId; // adapte selon ton User model
 
-    const { imputation_id, destinataire_id, instructions, duree_traitement, observations } = req.body;
+    const { imputation_id, destinataire_id } = req.body;
 
     // 1️⃣ Récupérer la priorité depuis la table imputations
     const imputationRes = await db.query(
@@ -326,9 +326,9 @@ exports.createTransmission = async (req, res) => {
 
     const result = await db.query(
       `INSERT INTO transmissions_imputation
-        (imputation_id, destinataire_id, expediteur_id, instructions, duree_traitement, observations, priorite)
-       VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *`,
-      [imputation_id, destinataire_id, expediteur_id, instructions, duree_traitement, observations, priorite]
+        (imputation_id, destinataire_id, expediteur_id, priorite)
+       VALUES ($1,$2,$3,$4) RETURNING *`,
+      [imputation_id, destinataire_id, expediteur_id, priorite]
     );
     // 🟩 Mettre à jour le statut de la transmission
     await db.query(
