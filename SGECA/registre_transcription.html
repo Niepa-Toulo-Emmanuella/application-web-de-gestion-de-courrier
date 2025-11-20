@@ -237,12 +237,12 @@
             <table class="table table-striped table-hover align-middle mb-0" id="table-bordereaux">
                 <thead class="text-center">
                     <tr>
+                        <th>Numéro d'enregistrement</th>
                         <th>Référence</th>
                         <th>Objet</th>
                         <th>Expéditeur</th>
                         <th>Date du courrier</th>
                         <th>Date d'arrivée</th>
-                        <th>Numéro d'enregistrement</th>
                         <th>Heure</th>
                         <th>Priorité</th>
                         <th>Pièce jointe</th>
@@ -321,12 +321,12 @@
 
             return `
             <tr>
+                <td>${b.numero_enregistrement ?? '—'}</td>
                 <td>${b.numero_reference ?? '—'}</td>
                 <td>${b.objet ?? '—'}</td>
                 <td>${b.expediteur ?? '—'}</td>
                 <td>${dateCourrier}</td>
                 <td>${dateArrivee}</td>
-                <td>${b.numero_enregistrement ?? '—'}</td>
                 <td>${heure}</td>
                 <td>${prioriteHTML}</td>
                 <td>${fichiersHTML}</td>
