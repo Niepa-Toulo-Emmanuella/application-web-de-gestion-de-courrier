@@ -116,7 +116,6 @@
             <th>Référence</th>
             <th>Objet</th>
             <th>Destinataire</th>
-            <th>Observations</th>
             <th>Priorité</th> <!-- ← Nouvelle colonne -->
             <th>Pièce jointe</th>
             <th>Bordereau d’imputation</th>
@@ -284,7 +283,6 @@
         <td>${b.numero_reference ?? "—"}</td>
         <td>${b.objet ?? "—"}</td>
         <td>${Array.isArray(b.destinataire) ? b.destinataire.join(', ') : (b.destinataire ?? "—")}</td>
-        <td>${b.observations ?? "—"}</td>
         <td>${prioriteHTML}</td> <!-- ← Nouvelle cellule -->
         <td>${fichiersHTML}</td>
         <td>${fichierImputation}</td>
@@ -309,7 +307,6 @@
           (b.numero_enregistrement ?? "").toLowerCase().includes(t) ||
           (b.objet ?? "").toLowerCase().includes(t) ||
           (b.destinataire ?? "").toLowerCase().includes(t) ||
-          (b.observations ?? "").toLowerCase().includes(t) ||
           (b.numero_enregistrement ?? '').toLowerCase().includes(t)
       );
     }
