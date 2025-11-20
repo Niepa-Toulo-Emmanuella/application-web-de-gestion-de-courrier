@@ -218,9 +218,15 @@
       const date = b.date_depart ? new Date(b.date_depart).toLocaleDateString("fr-FR") : "—";
 
       // 🔸 Priorité
-      let prioriteHTML = b.priorite
-        ? `<span class="badge bg-danger">${b.priorite}</span>`
-        : "—";
+      let prioriteHTML = "—";
+
+      if (b.priorite) {
+        if (b.priorite.toLowerCase() === "urgent" || b.priorite.toLowerCase() === "urgente") {
+          prioriteHTML = `<span class="badge bg-danger">Urgente</span>`;
+        } else {
+          prioriteHTML = `<span class="badge bg-success">Normale</span>`;
+        }
+      }
 
 
       // 🔸 Pièces jointes (courriers)
