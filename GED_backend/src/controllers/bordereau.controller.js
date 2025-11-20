@@ -404,7 +404,6 @@ exports.registreTransmission = async (req, res) => {
         b.objet,
         b.priorite,
         i.imputations AS destinataire,
-        ti.observations,
         c.fichier_scan,
         i.fichier_imputation,
         b.fichier_bordereau
