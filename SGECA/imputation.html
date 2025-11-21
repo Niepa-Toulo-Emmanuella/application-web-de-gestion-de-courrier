@@ -78,14 +78,14 @@
     }
 
     /* Canvas signature */
-    #signature-container {
+    /* #signature-container {
       margin-top: 15px;
       border: 1px solid #ccc;
       height: 150px;
       position: relative;
-    }
+    } */
 
-    #signature-canvas {
+    /* #signature-canvas {
       width: 100%;
       height: 100%;
     }
@@ -93,10 +93,11 @@
     #clear-signature {
       margin-top: 5px;
       background-color: #e53935;
-    }
+    } */
 
     /* Upload cachet */
-    #cachet-preview {
+    #cachet-preview,
+    #signature-preview {
       margin-top: 10px;
       max-height: 150px;
       display: block;
@@ -162,7 +163,7 @@
     <label><input type="checkbox" name="instructions" value="Soit Transmis"> Soit Transmis</label>
 
     <!-- IV. Deuxième traitement du ministre -->
-    <h3>IV. DEUXIÈME TRAITEMENT DU MINISTRE</h3>
+    <!-- <h3>IV. DEUXIÈME TRAITEMENT DU MINISTRE</h3>
     <label>Date de départ : <input type="date" name="date_depart" /></label>
     <label>Durée de traitement : <input type="text" name="duree_traitement" /></label>
     <label>Date de retour : <input type="date" name="date_retour" /></label>
@@ -171,18 +172,27 @@
     <label><input type="checkbox" name="traitement_actions" value="Exécution"> Exécution</label>
     <label><input type="checkbox" name="traitement_actions" value="RDV"> RDV</label>
     <label><input type="checkbox" name="traitement_actions" value="Audience"> Audience</label>
-    <label><input type="checkbox" name="traitement_actions" value="Autres"> Autres</label>
+    <label><input type="checkbox" name="traitement_actions" value="Autres"> Autres</label> -->
 
     <!-- Observations -->
     <h3>Observations</h3>
     <textarea name="observations" rows="4"></textarea>
 
+    <!-- Instructions -->
+    <h3>Instructions supplémentaires</h3>
+    <textarea name="instructions_sup" rows="4"></textarea>
+
     <!-- Signature -->
-    <h3>Signature</h3>
+    <!-- <h3>Signature</h3>
     <div id="signature-container">
       <canvas id="signature-canvas"></canvas>
     </div>
-    <button type="button" id="clear-signature">Effacer la signature</button>
+    <button type="button" id="clear-signature">Effacer la signature</button> -->
+
+    <!-- Signature -->
+    <h3>Signature</h3>
+    <input type="file" id="signature-file" name="signature_file" accept="image/png, image/jpeg" />
+    <img id="signature-preview" src="#" alt="Prévisualisation signature" style="display:none;" />
 
     <!-- Cachet -->
     <h3>Cachet</h3>
@@ -196,78 +206,52 @@
   </form>
 
   <script>
-    // Canvas signature
-    const canvas = document.getElementById('signature-canvas');
-    const ctx = canvas.getContext('2d');
-    let drawing = false;
+    const signatureInput = document.getElementById("signature-file");
+    const signaturePreview = document.getElementById("signature-preview");
 
-    function resizeCanvas() {
-      canvas.width = canvas.offsetWidth;
-      canvas.height = canvas.offsetHeight;
-    }
-    window.addEventListener('resize', resizeCanvas);
-    resizeCanvas();
-    
-
-    let lastX = 0, lastY = 0;
-    function draw(e) {
-      if (!drawing) return;
-      ctx.lineWidth = 2;
-      ctx.lineCap = 'round';
-      ctx.strokeStyle = '#000';
-      ctx.beginPath();
-      ctx.moveTo(lastX, lastY);
-      ctx.lineTo(e.offsetX, e.offsetY);
-      ctx.stroke();
-      lastX = e.offsetX;
-      lastY = e.offsetY;
-    }
-
-    canvas.addEventListener('mousedown', (e) => { drawing = true; lastX = e.offsetX; lastY = e.offsetY; });
-    canvas.addEventListener('mouseup', () => drawing = false);
-    canvas.addEventListener('mouseout', () => drawing = false);
-    canvas.addEventListener('mousemove', draw);
-
-    document.getElementById('clear-signature').addEventListener('click', () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-    });
-
-    // Prévisualisation cachet
-    const cachetInput = document.getElementById('cachet-file');
-    const cachetPreview = document.getElementById('cachet-preview');
-    cachetInput.addEventListener('change', () => {
-      const file = cachetInput.files[0];
+    signatureInput.addEventListener("change", () => {
+      const file = signatureInput.files[0];
       if (file) {
-        cachetPreview.src = URL.createObjectURL(file);
-        cachetPreview.style.display = 'block';
+        signaturePreview.src = URL.createObjectURL(file);
+        signaturePreview.style.display = "block";
       }
     });
 
+    const cachetInput = document.getElementById("cachet-file");
+    const cachetPreview = document.getElementById("cachet-preview");
 
-    document.getElementById('form-imputation').addEventListener('submit', async (e) => {
+    cachetInput.addEventListener("change", () => {
+      const file = cachetInput.files[0];
+      if (file) {
+        cachetPreview.src = URL.createObjectURL(file);
+        cachetPreview.style.display = "block";
+      }
+    });
+
+    document.getElementById("form-imputation").addEventListener("submit", async (e) => {
       e.preventDefault();
 
-      // ✅ Récupération du token
-      let token = localStorage.getItem("jwt"); // clé habituelle
-      if (!token) token = localStorage.getItem("token"); // au cas où tu l'aurais stocké sous "token"
-      console.log("✅ JWT récupéré :", token);
-
-      // Si aucun token n'est trouvé, stoppe l'envoi
+      let token = localStorage.getItem("jwt") || localStorage.getItem("token");
       if (!token) {
-        alert("⚠️ Aucun token trouvé ! Veuillez vous reconnecter.");
+        alert("Aucun token trouvé. Veuillez vous reconnecter.");
         return;
       }
 
       const getCheckedValues = (name) =>
         Array.from(document.querySelectorAll(`input[name="${name}"]:checked`)).map(e => e.value);
 
-      // Récupération signature en base64
-      const signatureBase64 = canvas.toDataURL("image/png");
+      let signatureBase64 = null;
+      if (signatureInput.files[0]) {
+        signatureBase64 = await new Promise(resolve => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result);
+          reader.readAsDataURL(signatureInput.files[0]);
+        });
+      }
 
-      // Récupération cachet
       let cachetBase64 = null;
       if (cachetInput.files[0]) {
-        cachetBase64 = await new Promise((resolve) => {
+        cachetBase64 = await new Promise(resolve => {
           const reader = new FileReader();
           reader.onload = () => resolve(reader.result);
           reader.readAsDataURL(cachetInput.files[0]);
@@ -275,22 +259,19 @@
       }
 
       const data = {
-        bordereau_id: document.querySelector('input[name="bordereau_id"]').value,
+        bordereau_id: document.getElementById("bordereau_id").value,
         premiere_transmission: getCheckedValues("premiere_transmission"),
         imputations: getCheckedValues("imputations"),
         instructions: getCheckedValues("instructions"),
-        date_depart: document.querySelector('input[name="date_depart"]').value || null,
-        duree_traitement: document.querySelector('input[name="duree_traitement"]').value || null,
-        date_retour: document.querySelector('input[name="date_retour"]').value || null,
-        traitement_actions: getCheckedValues("traitement_actions"),
-        observations: document.querySelector('textarea[name="observations"]').value,
-        priorite: sessionStorage.getItem("priorite") || "Normale",  // ✅ ajouter la priorité ici
+        observations: document.querySelector("textarea[name='observations']").value,
+        instructions_sup: document.querySelector("textarea[name='instructions_sup']").value,
+        priorite: sessionStorage.getItem("priorite") || "Normale",
         signature: signatureBase64,
         cachet: cachetBase64
       };
 
       try {
-        const res = await fetch("https://application-web-de-gestion-de-courrier.onrender.com/api/imputations", {
+        const res = await fetch("https://application-web-de-gestion-de-courrier-1.onrender.com/api/imputations", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -300,35 +281,26 @@
         });
 
         const result = await res.json();
-        if (result.success) {
-          alert("✅ Imputation enregistrée avec succès !");
-          console.log(result.data);
-          ctx.clearRect(0, 0, canvas.width, canvas.height);
-          cachetPreview.style.display = 'none';
 
-          // 🔹 Vider le formulaire
-          document.getElementById('form-imputation').reset();
-
-          // 🔹 Si tu veux aussi vider le bordereau_id dans le hidden
-          // document.getElementById('bordereau_id').value = "";
-
+        if (res.ok && result.success) {
+          alert("Imputation enregistrée !");
+          document.getElementById("form-imputation").reset();
+          signaturePreview.style.display = "none";
+          cachetPreview.style.display = "none";
         } else {
-          alert("❌ Erreur : " + result.message);
+          alert("Erreur : " + result.message);
         }
+
       } catch (err) {
+        alert("Erreur réseau.");
         console.error(err);
-        alert("Erreur réseau ou serveur");
       }
     });
 
     document.addEventListener("DOMContentLoaded", () => {
       const bordereauId = sessionStorage.getItem("bordereau_id");
-      const priorite = sessionStorage.getItem("priorite") || "Normale";
       if (bordereauId) {
         document.getElementById("bordereau_id").value = bordereauId;
-        console.log("✅ ID récupéré et injecté :", bordereauId);
-      } else {
-        console.warn("⚠️ Aucun bordereau_id trouvé !");
       }
     });
   </script>

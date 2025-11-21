@@ -27,20 +27,21 @@ async function generateImputationPDF(data) {
 
  // Remplacer les champs simples
   html = html.replace(/{{INSTRUCTIONS_TEXT}}/g, (data.instructions || []).join(', '))
-             .replace(/{{DATE_DEPART}}/g, data.date_depart || '')
-             .replace(/{{DUREE_TRAITEMENT}}/g, data.duree_traitement || '')
-             .replace(/{{DATE_RETOUR}}/g, data.date_retour || '')
-             .replace(/{{TRAITEMENT_ACTIONS_TEXT}}/g, (data.traitement_actions || []).join(', '))
-             .replace(/{{OBSERVATIONS}}/g, data.observations || '');
+            //  .replace(/{{DATE_DEPART}}/g, data.date_depart || '')
+            //  .replace(/{{DUREE_TRAITEMENT}}/g, data.duree_traitement || '')
+            //  .replace(/{{DATE_RETOUR}}/g, data.date_retour || '')
+            //  .replace(/{{TRAITEMENT_ACTIONS_TEXT}}/g, (data.traitement_actions || []).join(', '))
+             .replace(/{{OBSERVATIONS}}/g, data.observations || '')
+             .replace(/{{INSTRUCTIONS_SUP}}/g, data.instructions_sup || '');
 
   // ---------- SIGNATURE et CACHET : utiliser data URLs ----------
   // data.signature attendu sous la forme "data:image/png;base64,...." ou seulement base64 (on normalise)
-  function normalizeToDataUrl(maybeData) {
-    if (!maybeData) return null;
-    if (maybeData.startsWith('data:image')) return maybeData; // déjà data url
-    // sinon on suppose que c'est du base64 pur (début "iVBORw0..." ou " /9j/4AAQ...")
-    return 'data:image/png;base64,' + maybeData.replace(/^data:image\/\w+;base64,/, '');
-  }
+  // function normalizeToDataUrl(maybeData) {
+  //   if (!maybeData) return null;
+  //   if (maybeData.startsWith('data:image')) return maybeData; // déjà data url
+  //   // sinon on suppose que c'est du base64 pur (début "iVBORw0..." ou " /9j/4AAQ...")
+  //   return 'data:image/png;base64,' + maybeData.replace(/^data:image\/\w+;base64,/, '');
+  // }
 
   const signatureDataUrl = normalizeToDataUrl(data.signature);
   const cachetDataUrl = normalizeToDataUrl(data.cachet);
@@ -124,12 +125,12 @@ async function generateImputationPDF(data) {
     { label: "Soit Transmis", placeholder: "CHECK_SOIT_TRANSMIS", section: "instructions" },
 
     // IV. Deuxième traitement du ministre
-    { label: "Classement définitif", placeholder: "CHECK_CLASSEMENT_DEFINITIF_DEUXIEME_TRAITEMENT", section: "traitement_actions" },
-    { label: "Classement en attente", placeholder: "CHECK_CLASSEMENT_EN_ATTENTE_DEUXIEME_TRAITEMENT", section: "traitement_actions" },
-    { label: "Exécution", placeholder: "CHECK_EXECUTION_DEUXIEME_TRAITEMENT", section: "traitement_actions" },
-    { label: "RDV", placeholder: "CHECK_RDV", section: "traitement_actions" },
-    { label: "Audience", placeholder: "CHECK_AUDIENCE", section: "traitement_actions" },
-    { label: "Autres", placeholder: "CHECK_AUTRES_DEUXIEME_TRAITEMENT", section: "traitement_actions" }
+    // { label: "Classement définitif", placeholder: "CHECK_CLASSEMENT_DEFINITIF_DEUXIEME_TRAITEMENT", section: "traitement_actions" },
+    // { label: "Classement en attente", placeholder: "CHECK_CLASSEMENT_EN_ATTENTE_DEUXIEME_TRAITEMENT", section: "traitement_actions" },
+    // { label: "Exécution", placeholder: "CHECK_EXECUTION_DEUXIEME_TRAITEMENT", section: "traitement_actions" },
+    // { label: "RDV", placeholder: "CHECK_RDV", section: "traitement_actions" },
+    // { label: "Audience", placeholder: "CHECK_AUDIENCE", section: "traitement_actions" },
+    // { label: "Autres", placeholder: "CHECK_AUTRES_DEUXIEME_TRAITEMENT", section: "traitement_actions" }
   ];
 
   // 🧾 Remplacement des placeholders selon la section correspondante
@@ -146,9 +147,9 @@ async function generateImputationPDF(data) {
       case "instructions":
         sourceArray = data.instructions || [];
         break;
-      case "traitement_actions":
-        sourceArray = data.traitement_actions || [];
-        break;
+      // case "traitement_actions":
+      //   sourceArray = data.traitement_actions || [];
+      //   break;
     }
 
     const isChecked =
@@ -189,10 +190,8 @@ exports.create = async (req, res) => {
       imputations,
       instructions,
       date_depart,
-      duree_traitement,
-      date_retour,
-      traitement_actions,
       observations,
+      instructions_sup,
       signature,
       cachet,
       destinataire_id, // on suppose que le frontend l’envoie
@@ -202,6 +201,14 @@ exports.create = async (req, res) => {
     // Récupération signature (base64 venant du front) — front envoie data.signature = canvas.toDataURL(...)
     const signatureBase64 = signature || null; // peut être "data:image/png;base64,...." ou base64 pur
     const cachetBase64 = cachet || null;       // si le front envoie le cachet en base64
+
+    let signatureFromMulterBase64 = null;
+    if (!signatureBase64 && req.file) {
+      const raw = fs.readFileSync(req.file.path);
+      signatureFromMulterBase64 = raw.toString('base64');
+      // si tu veux, supprime le fichier temporaire après lecture :
+      try { fs.unlinkSync(req.file.path); } catch(e){ /* ignore */ }
+    }
 
     // Si tu utilises multer upload (fichier), tu peux aussi convertir le fichier uploadé en base64 ici
     let cachetFromMulterBase64 = null;
@@ -217,7 +224,8 @@ exports.create = async (req, res) => {
 
     console.log("🧾 Corps reçu :", req.body);
 
-    console.log('signature (prefix) =', (req.body.signature || '' || signature).slice(0,40));
+    // console.log('signature (prefix) =', (req.body.signature || '' || signature).slice(0,40));
+    console.log('signature present?', !!(req.body.signature || req.file || signature));
     console.log('cachet present?', !!(req.body.cachet || req.file || cachet));
 
 
@@ -227,12 +235,9 @@ exports.create = async (req, res) => {
       premiere_transmission,
       imputations,
       instructions,
-      date_depart,
-      duree_traitement,
-      date_retour,
-      traitement_actions,
       observations,
-      signature: signatureBase64,            // <-- base64 / data url
+      instructions_sup,
+      signature: signatureBase64 || signatureFromMulterBase64,            // <-- base64 / data url
       cachet: cachetBase64 || cachetFromMulterBase64  // <-- base64
     });
 
@@ -261,8 +266,8 @@ exports.create = async (req, res) => {
     // 4️⃣ Insertion en DB
     const result = await db.query(
       `INSERT INTO imputations 
-        (bordereau_id, premiere_transmission, imputations, courrier_id, expediteur_id, instructions, date_depart, duree_traitement, date_retour, traitement_actions, observations, fichier_imputation, priorite)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
+        (bordereau_id, premiere_transmission, imputations, courrier_id, expediteur_id, instructions, observations, instructions_sup, fichier_imputation, priorite)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
        RETURNING *`,
       [
         bordereau_id,
@@ -271,11 +276,8 @@ exports.create = async (req, res) => {
         courrier_id,
         expediteur_id,
         instructions,
-        date_depart,
-        duree_traitement,
-        date_retour,
-        traitement_actions,
         observations,
+        instructions_sup,
         fichier_imputation,
         priorite
       ]
