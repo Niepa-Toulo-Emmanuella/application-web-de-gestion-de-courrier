@@ -122,15 +122,14 @@
   <table id="transmissionsTable">
     <thead>
       <tr>
-        <th>ID</th>
         <th>Expéditeur</th>
-        <th>Date de d'envoi</th>
+        <th>Date d'envoi</th>
         <th>Priorité</th>
       </tr>
     </thead>
     <tbody>
       <tr>
-        <td colspan="4" class="center">Chargement...</td>
+        <td colspan="3" class="center">Chargement...</td>
       </tr>
     </tbody>
   </table>
@@ -331,7 +330,6 @@
             const tr = document.createElement("tr");
             tr.onclick = () => showDetails(t);
             tr.innerHTML = `
-              <td>${t.id}</td>
               <td>${t.expediteur_nom || ''} ${t.expediteur_prenom || ''}</td>
               <td>${t.date_depart ? new Date(t.date_depart).toLocaleString() : ''}</td>
               <td style="color:${t.priorite === 'Urgente' ? 'red' : t.priorite === 'Haute' ? 'orange' : 'green'};">
@@ -341,11 +339,11 @@
             tbody.appendChild(tr);
           });
         } else {
-          tbody.innerHTML = '<tr><td colspan="6" class="center">Aucune transmission reçue</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="3" class="center">Aucune transmission reçue</td></tr>';
         }
       } catch (err) {
         console.error(err);
-        tbody.innerHTML = '<tr><td colspan="6" class="center">❌ Erreur réseau</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="3" class="center">❌ Erreur réseau</td></tr>';
       }
     }
 
