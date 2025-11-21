@@ -144,25 +144,27 @@
 
     /* ✅ Ligne urgente */
     tr.urgent {
-      background-color: white !important; /* rouge très clair */
+      background-color: white !important;
+      /* rouge très clair */
       border-left: 6px solid white;
     }
 
     tr.urgent:hover {
-      background-color: #eef6f4 !important; /* un peu plus foncé au survol */
+      background-color: #eef6f4 !important;
+      /* un peu plus foncé au survol */
     }
+
     /* ✅ Texte rouge vif pour la priorité urgente */
     .priorite-urgente {
       color: #d32f2f;
       font-weight: bold;
     }
+
     /* ✅ Pour les priorités normales */
     .priorite-normale {
       color: green;
       font-weight: bold;
     }
-
-
   </style>
 </head>
 
@@ -176,13 +178,17 @@
         <th>Objet</th>
         <th>Expéditeur</th>
         <th>Date</th>
-        <th>Priorité</th>  <!-- ✅ Nouvelle colonne -->
+        <th>Priorité</th> <!-- ✅ Nouvelle colonne -->
         <th>Bordereau</th>
         <th>Courrier</th>
         <th>Action</th>
       </tr>
     </thead>
-    <tbody><tr><td colspan='8' style='text-align:center;color:#999;'>Aucune notification reçue</td></tr></tbody>
+    <tbody>
+      <tr>
+        <td colspan='8' style='text-align:center;color:#999;'>Aucune notification reçue</td>
+      </tr>
+    </tbody>
 
   </table>
 
@@ -309,6 +315,17 @@
     }
 
     function imputer(bordereauId, priorite) {
+      // 🔥 Supprimer automatiquement la notification du tableau
+      const row = document.querySelector(`button[onclick="imputer('${bordereauId}', '${priorite || 'Normale'}')"]`)?.closest("tr");
+      if (row) row.remove();
+
+      // 🔥 Si plus aucune notification → afficher le message
+      const tbody = document.querySelector("#notifTable tbody");
+      if (tbody.children.length === 0) {
+        tbody.innerHTML = "<tr><td colspan='8' style='text-align:center;color:#999;'>Aucune notification reçue</td></tr>";
+      }
+
+
       sessionStorage.setItem("bordereau_id", bordereauId);
       sessionStorage.setItem("priorite", priorite || 'Normale');
       window.location.href = "imputation.html";
