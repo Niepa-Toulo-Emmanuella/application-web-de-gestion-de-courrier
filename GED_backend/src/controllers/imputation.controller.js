@@ -46,6 +46,9 @@ async function generateImputationPDF(data) {
   const signatureDataUrl = normalizeToDataUrl(data.signature);
   const cachetDataUrl = normalizeToDataUrl(data.cachet);
 
+  console.log("🖊️ Signature présente ?", !!signatureDataUrl);
+  console.log("🏷️ Cachet présent ?", !!cachetDataUrl);
+
   // Remplacer placeholders par <img> avec data URLs ou par une image vide si absent
   if (signatureDataUrl) {
     html = html.replace(/{{SIGNATURE}}/g, signatureDataUrl);
@@ -162,6 +165,8 @@ async function generateImputationPDF(data) {
 
   const filePath = `temp_imputation_${Date.now()}.pdf`;
 
+  console.log("🚀 Lancement Puppeteer pour générer PDF...");
+
   // ✅ Lancer Puppeteer avec Chromium intégré (compatible Render)
   const browser = await puppeteer.launch({
     args: chromium.args,
@@ -176,6 +181,8 @@ async function generateImputationPDF(data) {
   await page.pdf({ path: filePath, format: 'A4', printBackground: true });
   await browser.close();
 
+  console.log("✅ PDF généré :", filePath);
+
   return filePath;
 }
 
@@ -183,6 +190,8 @@ async function generateImputationPDF(data) {
 // Créer un bordereau d’imputation
 exports.create = async (req, res) => {
   try {
+
+    console.log("🧾 Corps reçu :", req.body);
     // ✅ Récupération des données depuis req.body
     const {
       bordereau_id,
@@ -261,9 +270,11 @@ exports.create = async (req, res) => {
         [bordereau_id]
       );
       courrier_id = courrierResult.rows[0]?.courrier_id || null;
+      console.log("✉️ Courrier lié :", courrier_id);
     }
 
     // 4️⃣ Insertion en DB
+    console.log("💾 Insertion en DB...");
     const result = await db.query(
       `INSERT INTO imputations 
         (bordereau_id, premiere_transmission, imputations, courrier_id, expediteur_id, instructions, observations, instructions_sup, fichier_imputation, priorite)
@@ -282,6 +293,8 @@ exports.create = async (req, res) => {
         priorite
       ]
     );
+
+    console.log("✅ Imputation insérée, ID :", result.rows[0].id);
     // ✅ Marquer l’envoi comme imputé
     await db.query(
       `UPDATE envois SET impute = true WHERE bordereau_id = $1`,
