@@ -82,6 +82,7 @@
         th {
             background-color: #f0f0f0;
         }
+
         /* 🔴 Style global des urgents */
         .urgent {
             color: red !important;
@@ -90,7 +91,8 @@
 
         /* 🔴 Style pour lignes urgentes des tableaux */
         tr.urgent {
-            background-color: #d11414; /* fond rouge clair */
+            background-color: #d11414;
+            /* fond rouge clair */
             color: red;
             font-weight: bold;
         }
@@ -100,12 +102,12 @@
             color: red;
             font-weight: bold;
         }
+
         /* ✅ Pour les priorités normales */
         .priorite-normale {
             color: green;
             font-weight: bold;
         }
-
     </style>
 </head>
 
@@ -137,8 +139,8 @@
         <table id="bordereaux-en-attente">
             <thead>
                 <tr>
-                    <th>Référence</th>
                     <th>N° Enregistrement</th>
+                    <th>N° Référence</th>
                     <th>Objet</th>
                     <th>Date du courrier</th>
                     <th>Date d’arrivée</th>
@@ -153,8 +155,8 @@
         <table id="bordereauTable" border="1" style="width:100%; border-collapse:collapse;">
             <thead>
                 <tr>
-                    <th>Référence</th>
                     <th>N° Enregistrement</th>
+                    <th>N° Référence</th>
                     <th>Objet</th>
                     <th>Date du courrier</th>
                     <th>Date d’arrivée</th>
@@ -218,8 +220,8 @@
                     enAttente.forEach(b => {
                         const tr = document.createElement("tr");
                         tr.innerHTML = `
-                            <td>${b.numero_reference || "-"}</td>
                             <td>${b.numero_enregistrement || "-"}</td>
+                            <td>${b.numero_reference || "-"}</td>
                             <td>${b.objet || "-"}</td>
                             <td>${formatDate(b.date_courrier)}</td>
                             <td>${formatDate(b.date_arrivee)}</td>
@@ -345,8 +347,8 @@
                 result.data.forEach(b => {
                     const tr = document.createElement("tr");
                     tr.innerHTML = `
-                        <td>${b.numero_reference || "-"}</td>
                         <td>${b.numero_enregistrement || "-"}</td>
+                        <td>${b.numero_reference || "-"}</td>
                         <td>${b.objet || "-"}</td>
                         <td>${formatDate(b.date_courrier)}</td>
                         <td>${formatDate(b.date_arrivee)}</td>

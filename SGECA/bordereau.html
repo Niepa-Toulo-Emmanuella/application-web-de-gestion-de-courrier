@@ -111,12 +111,14 @@
     }
 
     tr.urgent {
-      background-color: white; /* rouge clair */
+      background-color: white;
+      /* rouge clair */
       font-weight: bold;
     }
 
     tr.normale {
-      background-color: white; /* white */
+      background-color: white;
+      /* white */
       font-weight: bold;
     }
 
@@ -124,19 +126,18 @@
       color: red;
       font-weight: bold;
     }
+
     /* 🔴 Style uniquement pour le texte de la priorité */
     .priorite-urgente {
       color: red;
       font-weight: bold;
     }
+
     /* ✅ Pour les priorités normales */
     .priorite-normale {
       color: green;
       font-weight: bold;
     }
-
-
-
   </style>
 </head>
 
@@ -160,7 +161,7 @@
       <div class="row">
         <label>Pièce jointe du courrier :</label>
         <div id="file-info">Aucun courrier sélectionné</div>
-        
+
       </div>
 
       <div class="section">
@@ -170,7 +171,7 @@
         </div>
         <div class="row">
           <label>Référence N° :</label>
-          <input type="text" id="reference" name="reference" readonly /> 
+          <input type="text" id="reference" name="reference" readonly />
         </div>
 
         <div class="row">
@@ -210,8 +211,8 @@
     <table id="bordereaux-en-attente">
       <thead>
         <tr>
-          <th>Numéro de référence</th>
           <th>Numéro d'enregistrement</th>
+          <th>Numéro de référence</th>
           <th>Objet</th>
           <th>Date arrivée</th>
           <th>Priorité</th> <!-- ✅ ajout visible -->
@@ -289,7 +290,7 @@
       if (courrier) {
         // Avertissement visuel si urgent
         const notif = document.getElementById("messageNotif");
-        if(courrier.priorite === "Urgente") {
+        if (courrier.priorite === "Urgente") {
           notif.textContent = "⚠️ Ce bordereau est urgent !";
           notif.classList.add("error"); // ou "urgent"
         } else {
@@ -431,31 +432,30 @@
 
         if (result.success && Array.isArray(result.data)) {
           const enAttente = result.data
-          .filter(b => b.statut === "en_attente")
-          .sort((a, b) => {
-            const prio = { "Urgente": 1, "Normale": 2 };
-            return prio[a.priorite] - prio[b.priorite]; // Urgentes en haut
-          });
+            .filter(b => b.statut === "en_attente")
+            .sort((a, b) => {
+              const prio = { "Urgente": 1, "Normale": 2 };
+              return prio[a.priorite] - prio[b.priorite]; // Urgentes en haut
+            });
 
           enAttente.forEach(b => {
             const tr = document.createElement("tr");
-            
+
             // Ajout d'une classe CSS pour les urgents
             // tr.className = b.priorite === "Urgente" ? "urgent" : "";
             tr.className = b.priorite === "Urgente" ? "urgent" : "normale";
-            
+
             tr.innerHTML = `
-              <td>${b.numero_reference}</td>
               <td>${b.numero_enregistrement}</td>
+              <td>${b.numero_reference}</td>
               <td>${b.objet}</td>
               <td>${b.date_arrivee.split("T")[0]}</td>
-              <td class="${
-                  b.priorite === 'Urgente'
-                    ? 'priorite-urgente'
-                    : b.priorite === 'Normale'
-                    ? 'priorite-normale'
-                    : ''
-                }">
+              <td class="${b.priorite === 'Urgente'
+                ? 'priorite-urgente'
+                : b.priorite === 'Normale'
+                  ? 'priorite-normale'
+                  : ''
+              }">
                   ${b.priorite}
               </td>
 
