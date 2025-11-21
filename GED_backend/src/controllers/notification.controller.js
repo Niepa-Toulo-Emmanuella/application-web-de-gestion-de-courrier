@@ -61,3 +61,20 @@ exports.marquerCommeLue = async (req, res) => {
     res.status(500).json({ success: false, message: "Erreur lors de la mise à jour" });
   }
 };
+
+exports.marquerCommeImputer = async (req, res) => {
+  try {
+    const { id } = req.params; // ID de l’envoi
+
+    await db.query(
+      `UPDATE envois SET impute = true WHERE id = $1`,
+      [id]
+    );
+
+    res.json({ success: true, message: "Notification marquée comme imputée ✅" });
+  } catch (err) {
+    console.error("❌ Erreur marquerCommeImputer :", err);
+    res.status(500).json({ success: false, message: "Erreur de mise à jour" });
+  }
+};
+

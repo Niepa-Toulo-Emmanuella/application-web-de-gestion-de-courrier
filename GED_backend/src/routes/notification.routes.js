@@ -12,4 +12,7 @@ router.get("/", notificationController.getReceptions);
 // ✅ Marquer une notification comme lue
 router.put("/:id/lire", notificationController.marquerCommeLue);
 
+router.put("/:id/imputer", notificationController.marquerCommeImputer);
+
+
 module.exports = router;

@@ -255,7 +255,7 @@
               </td>
               <td>${bordereauLink}</td>
               <td>${courrierLink}</td>
-              <td><button class="btn btn-imputer" onclick="imputer('${n.bordereau_id}', '${n.priorite || 'Normale'}')">Imputer</button></td>
+              <button class="btn btn-imputer" onclick="imputer('${n.id}', '${n.bordereau_id}', '${n.priorite || 'Normale'}')">Imputer</button>
             `;
             tbody.appendChild(tr);
           });
@@ -314,17 +314,24 @@
       document.getElementById("previewFrame").src = "";
     }
 
-    function imputer(bordereauId, priorite) {
-      // 🔥 Supprimer automatiquement la notification du tableau
-      const row = document.querySelector(`button[onclick="imputer('${bordereauId}', '${priorite || 'Normale'}')"]`)?.closest("tr");
+    async function imputer(notificationId, bordereauId, priorite) {
+      const token = localStorage.getItem("token");
+
+      // 1️⃣ Marquer comme imputée dans le backend
+      await fetch(`https://application-web-de-gestion-de-courrier.onrender.com/api/notifications/${notificationId}/imputer`, {
+        method: "PUT",
+        headers: { "Authorization": "Bearer " + token }
+      });
+
+      // 2️⃣ Retirer instantanément du tableau (front-end)
+      const row = document.querySelector(`button[onclick="imputer('${notificationId}', '${bordereauId}', '${priorite}')"]`)?.closest("tr");
       if (row) row.remove();
 
-      // 🔥 Si plus aucune notification → afficher le message
+      // 3️⃣ Message si plus rien
       const tbody = document.querySelector("#notifTable tbody");
       if (tbody.children.length === 0) {
         tbody.innerHTML = "<tr><td colspan='8' style='text-align:center;color:#999;'>Aucune notification reçue</td></tr>";
       }
-
 
       sessionStorage.setItem("bordereau_id", bordereauId);
       sessionStorage.setItem("priorite", priorite || 'Normale');
