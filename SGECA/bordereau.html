@@ -255,10 +255,10 @@
 
             // 🔥 Si le courrier est urgent, afficher clairement le symbole et la couleur
             if (courrier.priorite === "Urgente") {
-              option.textContent = `⚠️ [URGENT] ${courrier.reference || 'Réf. inconnue'} - ${courrier.objet || 'Sans objet'}`;
+              option.textContent = `⚠️ [URGENT] ${courrier.numero_enregistrement || 'Réf. inconnue'} - ${courrier.objet || 'Sans objet'}`;
               option.classList.add("urgent"); // pour couleur rouge via CSS
             } else {
-              option.textContent = `${courrier.reference || 'Réf. inconnue'} - ${courrier.objet || 'Sans objet'}`;
+              option.textContent = `${courrier.numero_enregistrement || 'Réf. inconnue'} - ${courrier.objet || 'Sans objet'}`;
             }
 
             courrierSelect.appendChild(option);
