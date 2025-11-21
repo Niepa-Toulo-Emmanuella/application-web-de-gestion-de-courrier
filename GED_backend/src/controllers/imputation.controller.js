@@ -264,8 +264,12 @@ exports.create = async (req, res) => {
       ]
     );
 
+    console.log("✅ [SQL] Bordereau inséré avec succès :", result.rows[0]);
+
+    const newImputationId = result.rows[0].id;
+
     // 5️⃣ Archiver automatiquement le PDF
-    await archiveImputation(result.rows[0].id);
+    await archiveImputation(newImputationId);
 
     res.status(201).json({ success: true, data: result.rows[0], message: "Imputation enregistrée avec PDF ✅" });
   } catch (err) {
