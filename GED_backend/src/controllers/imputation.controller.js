@@ -36,12 +36,12 @@ async function generateImputationPDF(data) {
 
   // ---------- SIGNATURE et CACHET : utiliser data URLs ----------
   // data.signature attendu sous la forme "data:image/png;base64,...." ou seulement base64 (on normalise)
-  // function normalizeToDataUrl(maybeData) {
-  //   if (!maybeData) return null;
-  //   if (maybeData.startsWith('data:image')) return maybeData; // déjà data url
-  //   // sinon on suppose que c'est du base64 pur (début "iVBORw0..." ou " /9j/4AAQ...")
-  //   return 'data:image/png;base64,' + maybeData.replace(/^data:image\/\w+;base64,/, '');
-  // }
+  function normalizeToDataUrl(maybeData) {
+    if (!maybeData) return null;
+    if (maybeData.startsWith('data:image')) return maybeData; // déjà data url
+    // sinon on suppose que c'est du base64 pur (début "iVBORw0..." ou " /9j/4AAQ...")
+    return 'data:image/png;base64,' + maybeData.replace(/^data:image\/\w+;base64,/, '');
+  }
 
   const signatureDataUrl = normalizeToDataUrl(data.signature);
   const cachetDataUrl = normalizeToDataUrl(data.cachet);
@@ -188,57 +188,29 @@ async function generateImputationPDF(data) {
 
 
 // Créer un bordereau d’imputation
+// imputation.controller.js (extrait simplifié pour create)
+
 exports.create = async (req, res) => {
   try {
-
-    console.log("🧾 Corps reçu :", req.body);
-    // ✅ Récupération des données depuis req.body
     const {
       bordereau_id,
       premiere_transmission,
       imputations,
       instructions,
-      date_depart,
       observations,
       instructions_sup,
-      signature,
-      cachet,
-      destinataire_id, // on suppose que le frontend l’envoie
+      signature, // base64 / data URL venant du front
+      cachet,    // base64 / data URL venant du front
+      destinataire_id,
       priorite
     } = req.body;
 
-    // Récupération signature (base64 venant du front) — front envoie data.signature = canvas.toDataURL(...)
-    const signatureBase64 = signature || null; // peut être "data:image/png;base64,...." ou base64 pur
-    const cachetBase64 = cachet || null;       // si le front envoie le cachet en base64
-
-    let signatureFromMulterBase64 = null;
-    if (!signatureBase64 && req.file) {
-      const raw = fs.readFileSync(req.file.path);
-      signatureFromMulterBase64 = raw.toString('base64');
-      // si tu veux, supprime le fichier temporaire après lecture :
-      try { fs.unlinkSync(req.file.path); } catch(e){ /* ignore */ }
-    }
-
-    // Si tu utilises multer upload (fichier), tu peux aussi convertir le fichier uploadé en base64 ici
-    let cachetFromMulterBase64 = null;
-    if (!cachetBase64 && req.file) {
-      const raw = fs.readFileSync(req.file.path);
-      cachetFromMulterBase64 = raw.toString('base64');
-      // si tu veux, supprime le fichier temporaire après lecture :
-      try { fs.unlinkSync(req.file.path); } catch(e){ /* ignore */ }
-    }
-
-    // ✅ Expéditeur : utilisateur connecté
     const expediteur_id = req.user?.id || req.user?.userId;
 
-    console.log("🧾 Corps reçu :", req.body);
+    console.log("🖊️ Signature présente ?", !!signature);
+    console.log("🏷️ Cachet présent ?", !!cachet);
 
-    // console.log('signature (prefix) =', (req.body.signature || '' || signature).slice(0,40));
-    console.log('signature present?', !!(req.body.signature || req.file || signature));
-    console.log('cachet present?', !!(req.body.cachet || req.file || cachet));
-
-
-    // 1️⃣ Génération du PDF
+    // 1️⃣ Génération PDF
     const pdfPath = await generateImputationPDF({
       bordereau_id,
       premiere_transmission,
@@ -246,11 +218,11 @@ exports.create = async (req, res) => {
       instructions,
       observations,
       instructions_sup,
-      signature: signatureBase64 || signatureFromMulterBase64,            // <-- base64 / data url
-      cachet: cachetBase64 || cachetFromMulterBase64  // <-- base64
+      signature, // déjà base64/data URL
+      cachet
     });
 
-    // 2️⃣ Upload sur B2
+    // 2️⃣ Upload PDF sur B2
     const fileContent = fs.readFileSync(pdfPath);
     const s3Params = {
       Bucket: process.env.B2_BUCKET_NAME,
@@ -262,7 +234,7 @@ exports.create = async (req, res) => {
     fs.unlinkSync(pdfPath);
     const fichier_imputation = s3Params.Key;
 
-    // 3️⃣ Récupérer le courrier lié au bordereau
+    // 3️⃣ Récupérer le courrier lié
     let courrier_id = null;
     if (bordereau_id) {
       const courrierResult = await db.query(
@@ -270,11 +242,9 @@ exports.create = async (req, res) => {
         [bordereau_id]
       );
       courrier_id = courrierResult.rows[0]?.courrier_id || null;
-      console.log("✉️ Courrier lié :", courrier_id);
     }
 
     // 4️⃣ Insertion en DB
-    console.log("💾 Insertion en DB...");
     const result = await db.query(
       `INSERT INTO imputations 
         (bordereau_id, premiere_transmission, imputations, courrier_id, expediteur_id, instructions, observations, instructions_sup, fichier_imputation, priorite)
@@ -294,22 +264,8 @@ exports.create = async (req, res) => {
       ]
     );
 
-    console.log("✅ Imputation insérée, ID :", result.rows[0].id);
-    // ✅ Marquer l’envoi comme imputé
-    await db.query(
-      `UPDATE envois SET impute = true WHERE bordereau_id = $1`,
-      [bordereau_id]
-    );
-
-    const newImputationId = result.rows[0].id;
-    
-        // 2️⃣ Archiver automatiquement le PDF du bordereau
-    await archiveImputation(newImputationId);
-    console.log("🔹 Archiver imputation ID :", newImputationId);
-    console.log("📁 fichier_imputation créé :", fichier_imputation);
-
-
-
+    // 5️⃣ Archiver automatiquement le PDF
+    await archiveImputation(result.rows[0].id);
 
     res.status(201).json({ success: true, data: result.rows[0], message: "Imputation enregistrée avec PDF ✅" });
   } catch (err) {
@@ -317,6 +273,7 @@ exports.create = async (req, res) => {
     res.status(500).json({ success: false, message: "Erreur serveur" });
   }
 };
+
 
 
 exports.createTransmission = async (req, res) => {
