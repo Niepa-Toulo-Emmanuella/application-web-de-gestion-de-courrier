@@ -124,9 +124,9 @@
       <tr>
         <th>ID</th>
         <th>Expéditeur</th>
-        <th>Instructions</th>
+        <!-- <th>Instructions</th>
         <th>Durée (jours)</th>
-        <th>Observations</th>
+        <th>Observations</th> -->
         <th>Date d’envoi</th>
         <th>Priorité</th>
       </tr>
@@ -264,9 +264,7 @@
 
       content.innerHTML = `
         <h4>Bordereau d’imputation</h4>
-        <p><strong>Instructions :</strong> ${t.instructions || '-'}</p>
-        <p><strong>Durée :</strong> ${t.duree_traitement || '-'} jours</p>
-        <p><strong>Observations :</strong> ${t.observations || '-'}</p>
+      
         ${t.id ? `
           <div class="file-block">
             <a class="file-link" href="${imputationLink}" target="_blank">📄 Voir le fichier de l’imputation</a>
