@@ -236,10 +236,10 @@
                         option.dataset.courrierId = b.courrier_id;
                         // 🆕 Indication visuelle dans la liste
                         if (b.priorite === "Urgente") {
-                            option.textContent = `⚠️ [URGENT] ${b.numero_reference || ''} - ${b.objet || ''}`;
+                            option.textContent = `⚠️ [URGENT] ${b.numero_enregistrement || ''} - ${b.objet || ''}`;
                             option.classList.add("urgent"); // ✅ texte rouge et gras
                         } else {
-                            option.textContent = `${b.numero_reference || ''} - ${b.objet || ''}`;
+                            option.textContent = `${b.numero_enregistrement || ''} - ${b.objet || ''}`;
                         }
                         bordereauSelect.appendChild(option);
                     });
