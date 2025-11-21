@@ -158,13 +158,16 @@
         destinataireSelect.innerHTML = '<option value="">-- Choisir --</option>';
 
         if (result.success) {
-          result.data.forEach(u => {
-            const option = document.createElement("option");
-            option.value = u.id;
-            option.textContent = `${u.first_name} ${u.last_name} (${u.role})`;
-            destinataireSelect.appendChild(option);
-          });
+          result.data
+            .filter(u => u.role && u.role.toLowerCase() === "agent") // 🔥 Ne garder que les agents
+            .forEach(u => {
+              const option = document.createElement("option");
+              option.value = u.id;
+              option.textContent = `${u.first_name} ${u.last_name}`;
+              destinataireSelect.appendChild(option);
+            });
         }
+
       } catch (err) {
         console.error("Erreur chargement destinataires:", err);
       }
