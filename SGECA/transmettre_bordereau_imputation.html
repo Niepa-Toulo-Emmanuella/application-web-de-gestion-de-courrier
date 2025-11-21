@@ -138,7 +138,6 @@
         imputations.forEach(i => {
           console.log(i); // <-- ajoute ça pour voir toutes les propriétés
           const option = document.createElement("option");
-          const dateText = i.date_depart ? new Date(i.date_depart).toLocaleDateString() : 'Date non définie';
           option.value = i.id;
           option.textContent = `Objet du courrier : ${i.courrier_objet || 'Pas d’objet'} | Observation de l'imputation : ${i.observations || 'Pas d’observations'} |  ${dateText}`;
 
