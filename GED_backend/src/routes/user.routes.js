@@ -23,6 +23,9 @@ router.get('/:id', userController.getUserById);
 router.put('/:id', userController.updateUser);
 
 // Route pour supprimer un utilisateur
-router.delete('/api/users/:id', userController.deleteUser);
+// router.delete('/api/users/:id', userController.deleteUser);
+
+// DELETE /api/users/:id
+router.delete('/:id', authenticate, isAdmin, userController.deleteUser);
 
 module.exports = router;
