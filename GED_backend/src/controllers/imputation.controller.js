@@ -6,8 +6,6 @@ const fs = require('fs');
 const AWS = require('aws-sdk');
 const chromium = require('@sparticuz/chromium');
 const puppeteer = require('puppeteer-core');
-const multer = require('multer');
-const upload = multer({ dest: 'uploads/' }); // dossier temporaire pour cachets
 const { archiveImputation } = require('../controllers/archive.controller');
 
 
@@ -33,36 +31,7 @@ async function generateImputationPDF(data) {
             //  .replace(/{{TRAITEMENT_ACTIONS_TEXT}}/g, (data.traitement_actions || []).join(', '))
              .replace(/{{OBSERVATIONS}}/g, data.observations || '')
              .replace(/{{INSTRUCTIONS_SUP}}/g, data.instructions_sup || '');
-
-  // ---------- SIGNATURE et CACHET : utiliser data URLs ----------
-  // data.signature attendu sous la forme "data:image/png;base64,...." ou seulement base64 (on normalise)
-  function normalizeToDataUrl(maybeData) {
-    if (!maybeData) return null;
-    if (maybeData.startsWith('data:image')) return maybeData; // déjà data url
-    // sinon on suppose que c'est du base64 pur (début "iVBORw0..." ou " /9j/4AAQ...")
-    return 'data:image/png;base64,' + maybeData.replace(/^data:image\/\w+;base64,/, '');
-  }
-
-  const signatureDataUrl = normalizeToDataUrl(data.signature);
-  const cachetDataUrl = normalizeToDataUrl(data.cachet);
-
-  console.log("🖊️ Signature présente ?", !!signatureDataUrl);
-  console.log("🏷️ Cachet présent ?", !!cachetDataUrl);
-
-  // Remplacer placeholders par <img> avec data URLs ou par une image vide si absent
-  if (signatureDataUrl) {
-    html = html.replace(/{{SIGNATURE}}/g, signatureDataUrl);
-  } else {
-    // si tu veux une image de fallback, remplace par un petit transparent 1x1
-    html = html.replace(/{{SIGNATURE}}/g, '');
-  }
-
-  if (cachetDataUrl) {
-    html = html.replace(/{{CACHET}}/g, cachetDataUrl);
-  } else {
-    html = html.replace(/{{CACHET}}/g, '');
-  }
-  
+ 
 
   // 🧩 Helper : normalise les textes pour comparer sans accent / casse
   function normalizeText(s) {
@@ -199,16 +168,11 @@ exports.create = async (req, res) => {
       instructions,
       observations,
       instructions_sup,
-      signature, // base64 / data URL venant du front
-      cachet,    // base64 / data URL venant du front
       destinataire_id,
       priorite
     } = req.body;
 
     const expediteur_id = req.user?.id || req.user?.userId;
-
-    console.log("🖊️ Signature présente ?", !!signature);
-    console.log("🏷️ Cachet présent ?", !!cachet);
 
     // 1️⃣ Génération PDF
     const pdfPath = await generateImputationPDF({
@@ -217,9 +181,7 @@ exports.create = async (req, res) => {
       imputations,
       instructions,
       observations,
-      instructions_sup,
-      signature, // déjà base64/data URL
-      cachet
+      instructions_sup
     });
 
     // 2️⃣ Upload PDF sur B2

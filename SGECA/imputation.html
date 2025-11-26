@@ -107,6 +107,27 @@
 
 <body>
   <form id="form-imputation">
+    <!-- Modal OTP -->
+    <div id="otpModal" style="
+        display:none;
+        position:fixed;
+        top:0; left:0;
+        width:100%; height:100%;
+        background:rgba(0,0,0,0.5);
+        justify-content:center;
+        align-items:center;
+     ">
+      <div style="background:white;padding:20px;border-radius:8px;max-width:300px;text-align:center">
+        <h3>Validation OTP</h3>
+        <input id="otpInput" placeholder="Code reçu par email" style="width:100%;padding:8px;margin-bottom:10px">
+        <button type="button" onclick="verifyOtp()"
+          style="padding:8px 15px;background:#1a237e;color:white;border:none;border-radius:4px;">Valider</button>
+      </div>
+    </div>
+
+
+
+
     <!-- I. Première transmission -->
     <h3>I. PREMIÈRE TRANSMISSION</h3>
     <label><input type="checkbox" name="premiere_transmission" value="MINISTRE"> MINISTRE</label>
@@ -191,8 +212,9 @@
 
     <!-- Signature -->
     <h3>Signature</h3>
-    <input type="file" id="signature-file" name="signature_file" accept="image/png, image/jpeg" />
-    <img id="signature-preview" src="#" alt="Prévisualisation signature" style="display:none;" />
+    <button id="signBtn" type="button" onclick="requestOtp()">Signer le bordereau</button>
+
+
 
     <!-- Cachet -->
     <h3>Cachet</h3>
@@ -206,30 +228,16 @@
   </form>
 
   <script>
-    const signatureInput = document.getElementById("signature-file");
-    const signaturePreview = document.getElementById("signature-preview");
 
-    signatureInput.addEventListener("change", () => {
-      const file = signatureInput.files[0];
-      if (file) {
-        signaturePreview.src = URL.createObjectURL(file);
-        signaturePreview.style.display = "block";
-      }
-    });
-
-    const cachetInput = document.getElementById("cachet-file");
-    const cachetPreview = document.getElementById("cachet-preview");
-
-    cachetInput.addEventListener("change", () => {
-      const file = cachetInput.files[0];
-      if (file) {
-        cachetPreview.src = URL.createObjectURL(file);
-        cachetPreview.style.display = "block";
-      }
-    });
+    let otpVerified = false; // ⭐ Obligatoire !
 
     document.getElementById("form-imputation").addEventListener("submit", async (e) => {
       e.preventDefault();
+
+      // 🔥 l'utilisateur tente d'envoyer sans signer
+      if (!otpVerified) {
+        return alert("Veuillez signer avant d’enregistrer.");
+      }
 
       let token = localStorage.getItem("jwt") || localStorage.getItem("token");
       if (!token) {
@@ -240,24 +248,6 @@
       const getCheckedValues = (name) =>
         Array.from(document.querySelectorAll(`input[name="${name}"]:checked`)).map(e => e.value);
 
-      let signatureBase64 = null;
-      if (signatureInput.files[0]) {
-        signatureBase64 = await new Promise(resolve => {
-          const reader = new FileReader();
-          reader.onload = () => resolve(reader.result);
-          reader.readAsDataURL(signatureInput.files[0]);
-        });
-      }
-
-      let cachetBase64 = null;
-      if (cachetInput.files[0]) {
-        cachetBase64 = await new Promise(resolve => {
-          const reader = new FileReader();
-          reader.onload = () => resolve(reader.result);
-          reader.readAsDataURL(cachetInput.files[0]);
-        });
-      }
-
       const data = {
         bordereau_id: document.getElementById("bordereau_id").value,
         premiere_transmission: getCheckedValues("premiere_transmission"),
@@ -265,9 +255,7 @@
         instructions: getCheckedValues("instructions"),
         observations: document.querySelector("textarea[name='observations']").value,
         instructions_sup: document.querySelector("textarea[name='instructions_sup']").value,
-        priorite: sessionStorage.getItem("priorite") || "Normale",
-        signature: signatureBase64,
-        cachet: cachetBase64
+        priorite: sessionStorage.getItem("priorite") || "Normale"
       };
 
       try {
@@ -285,8 +273,6 @@
         if (res.ok && result.success) {
           alert("Imputation enregistrée !");
           document.getElementById("form-imputation").reset();
-          signaturePreview.style.display = "none";
-          cachetPreview.style.display = "none";
         } else {
           alert("Erreur : " + result.message);
         }
@@ -297,13 +283,80 @@
       }
     });
 
-    document.addEventListener("DOMContentLoaded", () => {
-      const bordereauId = sessionStorage.getItem("bordereau_id");
-      if (bordereauId) {
-        document.getElementById("bordereau_id").value = bordereauId;
+
+    // OTP Modal
+    function openOtpModal() {
+      document.getElementById("otpModal").style.display = "flex";
+    }
+
+    function closeOtpModal() {
+      document.getElementById("otpModal").style.display = "none";
+    }
+
+
+    // Demander OTP
+    async function requestOtp() {
+      const bordereauId = document.getElementById("bordereau_id").value;
+      const token = localStorage.getItem('token') || localStorage.getItem('jwt');
+
+      if (!bordereauId) return alert("Aucun bordereau lié.");
+      if (!token) return alert("Vous devez vous reconnecter.");
+
+      const res = await fetch('https://application-web-de-gestion-de-courrier.onrender.com/api/signatures/request-otp', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + token
+        },
+        body: JSON.stringify({ bordereau_id: bordereauId })
+      });
+
+      const data = await res.json();
+      if (!res.ok) return alert(data.message || "Erreur lors de l’envoi du code.");
+
+      openOtpModal();
+    }
+
+
+    // Vérifier OTP
+    async function verifyOtp() {
+      const bordereauId = document.getElementById("bordereau_id").value;
+      const otp = document.getElementById("otpInput").value.trim();
+      const token = localStorage.getItem('token') || localStorage.getItem('jwt');
+
+      if (!otp) return alert("Veuillez entrer le code.");
+
+      const res = await fetch('https://application-web-de-gestion-de-courrier.onrender.com/api/signatures/verify-otp', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + token
+        },
+        body: JSON.stringify({ bordereau_id: bordereauId, otp })
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        alert(data.message || "OTP incorrect.");
+        return;
       }
-    });
+
+      // ⭐ L’OTP est validé → l’utilisateur peut signer
+      otpVerified = true;
+
+      alert("Signature validée avec succès !");
+      closeOtpModal();
+
+      // On indique visuellement que la signature est OK
+      const btn = document.getElementById("signBtn");
+      btn.innerText = "Signature validée ✔";
+      btn.style.background = "green";
+      btn.style.color = "white";
+    }
+
   </script>
+
 
 </body>
 
